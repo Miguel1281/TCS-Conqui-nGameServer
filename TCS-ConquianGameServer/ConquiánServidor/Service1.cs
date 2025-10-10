@@ -28,23 +28,5 @@ namespace ConquiánServidor
             }
             return composite;
         }
-
-        public bool RegisterPlayer(Player newPlayer)
-        {
-            try
-            {
-                using (var context = new ConquiánDBEntities())
-                {
-                    context.Player.Add(newPlayer);
-                    context.SaveChanges();
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                return false;
-            }
-        }
-
     }
 }

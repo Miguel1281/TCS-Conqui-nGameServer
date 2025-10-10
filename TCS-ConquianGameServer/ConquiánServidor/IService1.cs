@@ -18,8 +18,7 @@ namespace ConquiánServidor
         [OperationContract]
         CompositeType GetDataUsingDataContract(CompositeType composite);
 
-        [OperationContract]
-        bool RegisterPlayer(Player newPlayer);
+
         // TODO: agregue aquí sus operaciones de servicio
     }
 

@@ -9,7 +9,7 @@
           <Key>
             <PropertyRef Name="idFriendship" />
           </Key>
-          <Property Name="idFriendship" Type="int" Nullable="false" />
+          <Property Name="idFriendship" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="idOrigen" Type="int" />
           <Property Name="idDestino" Type="int" />
           <Property Name="idStatus" Type="int" />
@@ -18,7 +18,7 @@
           <Key>
             <PropertyRef Name="idGame" />
           </Key>
-          <Property Name="idGame" Type="int" Nullable="false" />
+          <Property Name="idGame" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="rival" Type="varchar" MaxLength="15" />
           <Property Name="gameTime" Type="varchar" MaxLength="5" />
           <Property Name="result" Type="varchar" MaxLength="10" />
@@ -30,19 +30,19 @@
           <Key>
             <PropertyRef Name="idGamemode" />
           </Key>
-          <Property Name="idGamemode" Type="int" Nullable="false" />
+          <Property Name="idGamemode" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="gamemode" Type="varchar" MaxLength="45" />
         </EntityType>
         <EntityType Name="Player">
           <Key>
             <PropertyRef Name="idPlayer" />
           </Key>
-          <Property Name="idPlayer" Type="int" Nullable="false" />
+          <Property Name="idPlayer" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="name" Type="varchar" MaxLength="25" />
           <Property Name="lastName" Type="varchar" MaxLength="50" />
           <Property Name="nickname" Type="varchar" MaxLength="15" />
           <Property Name="email" Type="varchar" MaxLength="45" />
-          <Property Name="password" Type="varchar" MaxLength="60" />
+          <Property Name="password" Type="varchar" MaxLength="64" />
           <Property Name="level" Type="varchar" MaxLength="2" />
           <Property Name="currentPoints" Type="varchar" MaxLength="4" />
         </EntityType>
@@ -50,7 +50,7 @@
           <Key>
             <PropertyRef Name="idSocial" />
           </Key>
-          <Property Name="idSocial" Type="int" Nullable="false" />
+          <Property Name="idSocial" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="userLink" Type="varchar" MaxLength="25" />
           <Property Name="idPlayer" Type="int" />
           <Property Name="idSocialType" Type="int" />
@@ -59,17 +59,17 @@
           <Key>
             <PropertyRef Name="idSocialType" />
           </Key>
-          <Property Name="idSocialType" Type="int" Nullable="false" />
+          <Property Name="idSocialType" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="type" Type="varchar" MaxLength="30" />
         </EntityType>
         <EntityType Name="Status">
           <Key>
             <PropertyRef Name="idStatus" />
           </Key>
-          <Property Name="idStatus" Type="int" Nullable="false" />
+          <Property Name="idStatus" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="Status" Type="varchar" MaxLength="10" />
         </EntityType>
-        <Association Name="FK__Friendshi__idDes__440B1D61">
+        <Association Name="FK_Friendship_Destino">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
@@ -81,7 +81,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Friendshi__idOri__4316F928">
+        <Association Name="FK_Friendship_Origen">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
@@ -93,7 +93,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Friendshi__idSta__44FF419A">
+        <Association Name="FK_Friendship_Status">
           <End Role="Status" Type="Self.Status" Multiplicity="0..1" />
           <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
@@ -105,7 +105,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Game__idGamemode__48CFD27E">
+        <Association Name="FK_Game_Gamemode">
           <End Role="Gamemode" Type="Self.Gamemode" Multiplicity="0..1" />
           <End Role="Game" Type="Self.Game" Multiplicity="*" />
           <ReferentialConstraint>
@@ -117,7 +117,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Game__idPlayer__47DBAE45">
+        <Association Name="FK_Game_Player">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Game" Type="Self.Game" Multiplicity="*" />
           <ReferentialConstraint>
@@ -129,7 +129,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Social__idPlayer__3F466844">
+        <Association Name="FK_Social_Player">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Social" Type="Self.Social" Multiplicity="*" />
           <ReferentialConstraint>
@@ -141,7 +141,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Social__idSocial__403A8C7D">
+        <Association Name="FK_Social_SocialType">
           <End Role="SocialType" Type="Self.SocialType" Multiplicity="0..1" />
           <End Role="Social" Type="Self.Social" Multiplicity="*" />
           <ReferentialConstraint>
@@ -161,31 +161,31 @@
           <EntitySet Name="Social" EntityType="Self.Social" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SocialType" EntityType="Self.SocialType" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Status" EntityType="Self.Status" Schema="dbo" store:Type="Tables" />
-          <AssociationSet Name="FK__Friendshi__idDes__440B1D61" Association="Self.FK__Friendshi__idDes__440B1D61">
+          <AssociationSet Name="FK_Friendship_Destino" Association="Self.FK_Friendship_Destino">
             <End Role="Player" EntitySet="Player" />
             <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
-          <AssociationSet Name="FK__Friendshi__idOri__4316F928" Association="Self.FK__Friendshi__idOri__4316F928">
+          <AssociationSet Name="FK_Friendship_Origen" Association="Self.FK_Friendship_Origen">
             <End Role="Player" EntitySet="Player" />
             <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
-          <AssociationSet Name="FK__Friendshi__idSta__44FF419A" Association="Self.FK__Friendshi__idSta__44FF419A">
+          <AssociationSet Name="FK_Friendship_Status" Association="Self.FK_Friendship_Status">
             <End Role="Status" EntitySet="Status" />
             <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
-          <AssociationSet Name="FK__Game__idGamemode__48CFD27E" Association="Self.FK__Game__idGamemode__48CFD27E">
+          <AssociationSet Name="FK_Game_Gamemode" Association="Self.FK_Game_Gamemode">
             <End Role="Gamemode" EntitySet="Gamemode" />
             <End Role="Game" EntitySet="Game" />
           </AssociationSet>
-          <AssociationSet Name="FK__Game__idPlayer__47DBAE45" Association="Self.FK__Game__idPlayer__47DBAE45">
+          <AssociationSet Name="FK_Game_Player" Association="Self.FK_Game_Player">
             <End Role="Player" EntitySet="Player" />
             <End Role="Game" EntitySet="Game" />
           </AssociationSet>
-          <AssociationSet Name="FK__Social__idPlayer__3F466844" Association="Self.FK__Social__idPlayer__3F466844">
+          <AssociationSet Name="FK_Social_Player" Association="Self.FK_Social_Player">
             <End Role="Player" EntitySet="Player" />
             <End Role="Social" EntitySet="Social" />
           </AssociationSet>
-          <AssociationSet Name="FK__Social__idSocial__403A8C7D" Association="Self.FK__Social__idSocial__403A8C7D">
+          <AssociationSet Name="FK_Social_SocialType" Association="Self.FK_Social_SocialType">
             <End Role="SocialType" EntitySet="SocialType" />
             <End Role="Social" EntitySet="Social" />
           </AssociationSet>
@@ -199,81 +199,81 @@
           <Key>
             <PropertyRef Name="idFriendship" />
           </Key>
-          <Property Name="idFriendship" Type="Int32" Nullable="false" />
+          <Property Name="idFriendship" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="idOrigen" Type="Int32" />
           <Property Name="idDestino" Type="Int32" />
           <Property Name="idStatus" Type="Int32" />
-          <NavigationProperty Name="Player" Relationship="Self.FK__Friendshi__idDes__440B1D61" FromRole="Friendship" ToRole="Player" />
-          <NavigationProperty Name="Player1" Relationship="Self.FK__Friendshi__idOri__4316F928" FromRole="Friendship" ToRole="Player" />
-          <NavigationProperty Name="Status" Relationship="Self.FK__Friendshi__idSta__44FF419A" FromRole="Friendship" ToRole="Status" />
+          <NavigationProperty Name="Player" Relationship="Self.FK_Friendship_Destino" FromRole="Friendship" ToRole="Player" />
+          <NavigationProperty Name="Player1" Relationship="Self.FK_Friendship_Origen" FromRole="Friendship" ToRole="Player" />
+          <NavigationProperty Name="Status" Relationship="Self.FK_Friendship_Status" FromRole="Friendship" ToRole="Status" />
         </EntityType>
         <EntityType Name="Game">
           <Key>
             <PropertyRef Name="idGame" />
           </Key>
-          <Property Name="idGame" Type="Int32" Nullable="false" />
+          <Property Name="idGame" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="rival" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
           <Property Name="gameTime" Type="String" MaxLength="5" FixedLength="false" Unicode="false" />
           <Property Name="result" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
           <Property Name="score" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
           <Property Name="idPlayer" Type="Int32" />
           <Property Name="idGamemode" Type="Int32" />
-          <NavigationProperty Name="Gamemode" Relationship="Self.FK__Game__idGamemode__48CFD27E" FromRole="Game" ToRole="Gamemode" />
-          <NavigationProperty Name="Player" Relationship="Self.FK__Game__idPlayer__47DBAE45" FromRole="Game" ToRole="Player" />
+          <NavigationProperty Name="Gamemode" Relationship="Self.FK_Game_Gamemode" FromRole="Game" ToRole="Gamemode" />
+          <NavigationProperty Name="Player" Relationship="Self.FK_Game_Player" FromRole="Game" ToRole="Player" />
         </EntityType>
         <EntityType Name="Gamemode">
           <Key>
             <PropertyRef Name="idGamemode" />
           </Key>
-          <Property Name="idGamemode" Type="Int32" Nullable="false" />
+          <Property Name="idGamemode" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="gamemode1" Type="String" MaxLength="45" FixedLength="false" Unicode="false" />
-          <NavigationProperty Name="Game" Relationship="Self.FK__Game__idGamemode__48CFD27E" FromRole="Gamemode" ToRole="Game" />
+          <NavigationProperty Name="Game" Relationship="Self.FK_Game_Gamemode" FromRole="Gamemode" ToRole="Game" />
         </EntityType>
         <EntityType Name="Player">
           <Key>
             <PropertyRef Name="idPlayer" />
           </Key>
-          <Property Name="idPlayer" Type="Int32" Nullable="false" />
+          <Property Name="idPlayer" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="name" Type="String" MaxLength="25" FixedLength="false" Unicode="false" />
           <Property Name="lastName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
           <Property Name="nickname" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
           <Property Name="email" Type="String" MaxLength="45" FixedLength="false" Unicode="false" />
-          <Property Name="password" Type="String" MaxLength="60" FixedLength="false" Unicode="false" />
+          <Property Name="password" Type="String" MaxLength="64" FixedLength="false" Unicode="false" />
           <Property Name="level" Type="String" MaxLength="2" FixedLength="false" Unicode="false" />
           <Property Name="currentPoints" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
-          <NavigationProperty Name="Friendship" Relationship="Self.FK__Friendshi__idDes__440B1D61" FromRole="Player" ToRole="Friendship" />
-          <NavigationProperty Name="Friendship1" Relationship="Self.FK__Friendshi__idOri__4316F928" FromRole="Player" ToRole="Friendship" />
-          <NavigationProperty Name="Game" Relationship="Self.FK__Game__idPlayer__47DBAE45" FromRole="Player" ToRole="Game" />
-          <NavigationProperty Name="Social" Relationship="Self.FK__Social__idPlayer__3F466844" FromRole="Player" ToRole="Social" />
+          <NavigationProperty Name="Friendship" Relationship="Self.FK_Friendship_Destino" FromRole="Player" ToRole="Friendship" />
+          <NavigationProperty Name="Friendship1" Relationship="Self.FK_Friendship_Origen" FromRole="Player" ToRole="Friendship" />
+          <NavigationProperty Name="Game" Relationship="Self.FK_Game_Player" FromRole="Player" ToRole="Game" />
+          <NavigationProperty Name="Social" Relationship="Self.FK_Social_Player" FromRole="Player" ToRole="Social" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
             <PropertyRef Name="idSocial" />
           </Key>
-          <Property Name="idSocial" Type="Int32" Nullable="false" />
+          <Property Name="idSocial" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="userLink" Type="String" MaxLength="25" FixedLength="false" Unicode="false" />
           <Property Name="idPlayer" Type="Int32" />
           <Property Name="idSocialType" Type="Int32" />
-          <NavigationProperty Name="Player" Relationship="Self.FK__Social__idPlayer__3F466844" FromRole="Social" ToRole="Player" />
-          <NavigationProperty Name="SocialType" Relationship="Self.FK__Social__idSocial__403A8C7D" FromRole="Social" ToRole="SocialType" />
+          <NavigationProperty Name="Player" Relationship="Self.FK_Social_Player" FromRole="Social" ToRole="Player" />
+          <NavigationProperty Name="SocialType" Relationship="Self.FK_Social_SocialType" FromRole="Social" ToRole="SocialType" />
         </EntityType>
         <EntityType Name="SocialType">
           <Key>
             <PropertyRef Name="idSocialType" />
           </Key>
-          <Property Name="idSocialType" Type="Int32" Nullable="false" />
+          <Property Name="idSocialType" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="type" Type="String" MaxLength="30" FixedLength="false" Unicode="false" />
-          <NavigationProperty Name="Social" Relationship="Self.FK__Social__idSocial__403A8C7D" FromRole="SocialType" ToRole="Social" />
+          <NavigationProperty Name="Social" Relationship="Self.FK_Social_SocialType" FromRole="SocialType" ToRole="Social" />
         </EntityType>
         <EntityType Name="Status">
           <Key>
             <PropertyRef Name="idStatus" />
           </Key>
-          <Property Name="idStatus" Type="Int32" Nullable="false" />
+          <Property Name="idStatus" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="Status1" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
-          <NavigationProperty Name="Friendship" Relationship="Self.FK__Friendshi__idSta__44FF419A" FromRole="Status" ToRole="Friendship" />
+          <NavigationProperty Name="Friendship" Relationship="Self.FK_Friendship_Status" FromRole="Status" ToRole="Friendship" />
         </EntityType>
-        <Association Name="FK__Friendshi__idDes__440B1D61">
+        <Association Name="FK_Friendship_Destino">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
@@ -285,7 +285,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Friendshi__idOri__4316F928">
+        <Association Name="FK_Friendship_Origen">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
@@ -297,7 +297,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Friendshi__idSta__44FF419A">
+        <Association Name="FK_Friendship_Status">
           <End Role="Status" Type="Self.Status" Multiplicity="0..1" />
           <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
@@ -309,7 +309,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Game__idGamemode__48CFD27E">
+        <Association Name="FK_Game_Gamemode">
           <End Role="Gamemode" Type="Self.Gamemode" Multiplicity="0..1" />
           <End Role="Game" Type="Self.Game" Multiplicity="*" />
           <ReferentialConstraint>
@@ -321,7 +321,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Game__idPlayer__47DBAE45">
+        <Association Name="FK_Game_Player">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Game" Type="Self.Game" Multiplicity="*" />
           <ReferentialConstraint>
@@ -333,7 +333,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Social__idPlayer__3F466844">
+        <Association Name="FK_Social_Player">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Social" Type="Self.Social" Multiplicity="*" />
           <ReferentialConstraint>
@@ -345,7 +345,7 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK__Social__idSocial__403A8C7D">
+        <Association Name="FK_Social_SocialType">
           <End Role="SocialType" Type="Self.SocialType" Multiplicity="0..1" />
           <End Role="Social" Type="Self.Social" Multiplicity="*" />
           <ReferentialConstraint>
@@ -365,31 +365,31 @@
           <EntitySet Name="Social" EntityType="Self.Social" />
           <EntitySet Name="SocialType" EntityType="Self.SocialType" />
           <EntitySet Name="Status" EntityType="Self.Status" />
-          <AssociationSet Name="FK__Friendshi__idDes__440B1D61" Association="Self.FK__Friendshi__idDes__440B1D61">
+          <AssociationSet Name="FK_Friendship_Destino" Association="Self.FK_Friendship_Destino">
             <End Role="Player" EntitySet="Player" />
             <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
-          <AssociationSet Name="FK__Friendshi__idOri__4316F928" Association="Self.FK__Friendshi__idOri__4316F928">
+          <AssociationSet Name="FK_Friendship_Origen" Association="Self.FK_Friendship_Origen">
             <End Role="Player" EntitySet="Player" />
             <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
-          <AssociationSet Name="FK__Friendshi__idSta__44FF419A" Association="Self.FK__Friendshi__idSta__44FF419A">
+          <AssociationSet Name="FK_Friendship_Status" Association="Self.FK_Friendship_Status">
             <End Role="Status" EntitySet="Status" />
             <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
-          <AssociationSet Name="FK__Game__idGamemode__48CFD27E" Association="Self.FK__Game__idGamemode__48CFD27E">
+          <AssociationSet Name="FK_Game_Gamemode" Association="Self.FK_Game_Gamemode">
             <End Role="Gamemode" EntitySet="Gamemode" />
             <End Role="Game" EntitySet="Game" />
           </AssociationSet>
-          <AssociationSet Name="FK__Game__idPlayer__47DBAE45" Association="Self.FK__Game__idPlayer__47DBAE45">
+          <AssociationSet Name="FK_Game_Player" Association="Self.FK_Game_Player">
             <End Role="Player" EntitySet="Player" />
             <End Role="Game" EntitySet="Game" />
           </AssociationSet>
-          <AssociationSet Name="FK__Social__idPlayer__3F466844" Association="Self.FK__Social__idPlayer__3F466844">
+          <AssociationSet Name="FK_Social_Player" Association="Self.FK_Social_Player">
             <End Role="Player" EntitySet="Player" />
             <End Role="Social" EntitySet="Social" />
           </AssociationSet>
-          <AssociationSet Name="FK__Social__idSocial__403A8C7D" Association="Self.FK__Social__idSocial__403A8C7D">
+          <AssociationSet Name="FK_Social_SocialType" Association="Self.FK_Social_SocialType">
             <End Role="SocialType" EntitySet="SocialType" />
             <End Role="Social" EntitySet="Social" />
           </AssociationSet>

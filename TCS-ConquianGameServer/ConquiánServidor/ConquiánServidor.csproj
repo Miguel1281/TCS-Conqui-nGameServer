@@ -93,6 +93,7 @@
     </Compile>
     <Compile Include="Contracts\ILogin.cs" />
     <Compile Include="Contracts\ISignUp.cs" />
+    <Compile Include="DataContract\Player.cs" />
     <Compile Include="IService1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service1.cs" />
@@ -112,6 +113,9 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="ConquiánDB\ConquiánModelDB.Context.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <DependentUpon>ConquiánModelDB.edmx</DependentUpon>
@@ -122,9 +126,6 @@
       <DependentUpon>ConquiánModelDB.edmx</DependentUpon>
       <LastGenOutput>ConquiánModelDB.cs</LastGenOutput>
     </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="ba01947a79f240468892f468aa2700d6" Name="Diagram1">
+      <Diagram DiagramId="1552aff102864aa5b6bca09897c01e9e" Name="Diagram1" ZoomLevel="81">
         <EntityTypeShape EntityType="ConquiánDBModel.Friendship" Width="1.5" PointX="3" PointY="4.5" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Game" Width="1.5" PointX="6" PointY="4.25" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Gamemode" Width="1.5" PointX="3.75" PointY="7.875" IsExpanded="true" />
@@ -12,13 +12,13 @@
         <EntityTypeShape EntityType="ConquiánDBModel.Social" Width="1.5" PointX="3" PointY="1.625" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.SocialType" Width="1.5" PointX="0.75" PointY="0.875" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Status" Width="1.5" PointX="0.75" PointY="8.875" IsExpanded="true" />
-        <AssociationConnector Association="ConquiánDBModel.FK__Friendshi__idDes__440B1D61" ManuallyRouted="false" />
-        <AssociationConnector Association="ConquiánDBModel.FK__Friendshi__idOri__4316F928" ManuallyRouted="false" />
-        <AssociationConnector Association="ConquiánDBModel.FK__Friendshi__idSta__44FF419A" ManuallyRouted="false" />
-        <AssociationConnector Association="ConquiánDBModel.FK__Game__idGamemode__48CFD27E" ManuallyRouted="false" />
-        <AssociationConnector Association="ConquiánDBModel.FK__Game__idPlayer__47DBAE45" ManuallyRouted="false" />
-        <AssociationConnector Association="ConquiánDBModel.FK__Social__idPlayer__3F466844" ManuallyRouted="false" />
-        <AssociationConnector Association="ConquiánDBModel.FK__Social__idSocial__403A8C7D" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Friendship_Destino" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Friendship_Origen" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Friendship_Status" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Game_Gamemode" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Game_Player" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Social_Player" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Social_SocialType" ManuallyRouted="false" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

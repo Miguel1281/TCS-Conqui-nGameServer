@@ -1,5 +1,6 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts;
+using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
@@ -23,7 +24,7 @@ namespace ConquiánServidor.Services
 
                     if (playerToUpdate != null)
                     {
-                        playerToUpdate.password = finalPlayerData.password;
+                        playerToUpdate.password = PasswordHasher.hashPassword(finalPlayerData.password);
                         playerToUpdate.nickname = finalPlayerData.nickname;
                         playerToUpdate.name = finalPlayerData.name;
                         playerToUpdate.lastName = finalPlayerData.lastName;

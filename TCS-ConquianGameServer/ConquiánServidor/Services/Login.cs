@@ -1,5 +1,6 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts;
+using ConquiánServidor.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,8 +17,14 @@ namespace ConquiánServidor.Services
             {
                 using (var context = new ConquiánDBEntities())
                 {
-                    var player = context.Player.FirstOrDefault(p => p.email == playerEmail && p.password == playerPassword);
-                    return player != null;
+                    var player = context.Player.FirstOrDefault(p => p.email == playerEmail);
+
+                    if (player != null)
+                    {
+                        return PasswordHasher.verifyPassword(playerPassword, player.password);
+                    }
+
+                    return false;
                 }
             }
             catch (Exception ex)

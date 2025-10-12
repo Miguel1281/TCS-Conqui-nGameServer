@@ -28,6 +28,8 @@ namespace ConquiánServidor.Services
                         playerToUpdate.name = finalPlayerData.name;
                         playerToUpdate.lastName = finalPlayerData.lastName;
                         playerToUpdate.pathPhoto = finalPlayerData.pathPhoto;
+                        playerToUpdate.level = "1";
+                        playerToUpdate.currentPoints = "0";
                         playerToUpdate.verificationCode = null;
                         playerToUpdate.codeExpiryDate = null;
 

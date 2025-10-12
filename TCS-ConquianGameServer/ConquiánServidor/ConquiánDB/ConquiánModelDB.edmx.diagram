@@ -4,11 +4,11 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="1552aff102864aa5b6bca09897c01e9e" Name="Diagram1" ZoomLevel="81">
+      <Diagram DiagramId="39667d28f9e94463a8df7091fecd54dc" Name="Diagram1">
         <EntityTypeShape EntityType="ConquiánDBModel.Friendship" Width="1.5" PointX="3" PointY="4.5" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Game" Width="1.5" PointX="6" PointY="4.25" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Gamemode" Width="1.5" PointX="3.75" PointY="7.875" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.Player" Width="1.5" PointX="0.75" PointY="4" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Player" Width="1.5" PointX="0.75" PointY="3.875" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Social" Width="1.5" PointX="3" PointY="1.625" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.SocialType" Width="1.5" PointX="0.75" PointY="0.875" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Status" Width="1.5" PointX="0.75" PointY="8.875" IsExpanded="true" />

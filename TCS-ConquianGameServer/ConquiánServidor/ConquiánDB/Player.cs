@@ -31,6 +31,7 @@ namespace ConquiánServidor.ConquiánDB
         public string password { get; set; }
         public string level { get; set; }
         public string currentPoints { get; set; }
+        public string pathPhoto { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Friendship> Friendship { get; set; }

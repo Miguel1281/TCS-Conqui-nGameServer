@@ -91,14 +91,17 @@
     <Compile Include="ConquiánDB\Status.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
-    <Compile Include="Contracts\ILogin.cs" />
-    <Compile Include="Contracts\ISignUp.cs" />
-    <Compile Include="DataContract\Player.cs" />
+    <Compile Include="Contracts\ServiceContracts\ILogin.cs" />
+    <Compile Include="Contracts\ServiceContracts\ISignUp.cs" />
+    <Compile Include="Contracts\DataContracts\Player.cs" />
     <Compile Include="IService1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service1.cs" />
     <Compile Include="Services\Login.cs" />
     <Compile Include="Services\SignUp.cs" />
+    <Compile Include="Utilities\Email\EmailService.cs" />
+    <Compile Include="Utilities\Email\IEmailTemplate.cs" />
+    <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

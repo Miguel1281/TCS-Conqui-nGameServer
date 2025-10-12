@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="ConquiánDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="ConquiánDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Friendship">
           <Key>
             <PropertyRef Name="idFriendship" />
@@ -46,6 +46,8 @@
           <Property Name="level" Type="varchar" MaxLength="2" />
           <Property Name="currentPoints" Type="varchar" MaxLength="4" />
           <Property Name="pathPhoto" Type="varchar" MaxLength="255" Nullable="false" />
+          <Property Name="verificationCode" Type="varchar" MaxLength="6" />
+          <Property Name="codeExpiryDate" Type="datetime" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
@@ -191,8 +193,7 @@
             <End Role="Social" EntitySet="Social" />
           </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="ConquiánDBModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -247,6 +248,8 @@
           <NavigationProperty Name="Friendship1" Relationship="Self.FK_Friendship_Origen" FromRole="Player" ToRole="Friendship" />
           <NavigationProperty Name="Game" Relationship="Self.FK_Game_Player" FromRole="Player" ToRole="Game" />
           <NavigationProperty Name="Social" Relationship="Self.FK_Social_Player" FromRole="Player" ToRole="Social" />
+          <Property Name="verificationCode" Type="String" MaxLength="6" FixedLength="false" Unicode="false" />
+          <Property Name="codeExpiryDate" Type="DateTime" Precision="3" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
@@ -436,6 +439,8 @@
           <EntitySetMapping Name="Player">
             <EntityTypeMapping TypeName="ConquiánDBModel.Player">
               <MappingFragment StoreEntitySet="Player">
+                <ScalarProperty Name="codeExpiryDate" ColumnName="codeExpiryDate" />
+                <ScalarProperty Name="verificationCode" ColumnName="verificationCode" />
                 <ScalarProperty Name="idPlayer" ColumnName="idPlayer" />
                 <ScalarProperty Name="name" ColumnName="name" />
                 <ScalarProperty Name="lastName" ColumnName="lastName" />

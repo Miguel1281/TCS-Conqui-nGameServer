@@ -45,7 +45,7 @@
           <Property Name="password" Type="varchar" MaxLength="64" />
           <Property Name="level" Type="varchar" MaxLength="2" />
           <Property Name="currentPoints" Type="varchar" MaxLength="4" />
-          <Property Name="pathPhoto" Type="varchar" MaxLength="255" Nullable="false" />
+          <Property Name="pathPhoto" Type="varchar" MaxLength="255" />
           <Property Name="verificationCode" Type="varchar" MaxLength="6" />
           <Property Name="codeExpiryDate" Type="datetime" />
         </EntityType>
@@ -243,7 +243,7 @@
           <Property Name="password" Type="String" MaxLength="64" FixedLength="false" Unicode="false" />
           <Property Name="level" Type="String" MaxLength="2" FixedLength="false" Unicode="false" />
           <Property Name="currentPoints" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
-          <Property Name="pathPhoto" Type="String" MaxLength="255" FixedLength="false" Unicode="false" Nullable="false" />
+          <Property Name="pathPhoto" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
           <NavigationProperty Name="Friendship" Relationship="Self.FK_Friendship_Destino" FromRole="Player" ToRole="Friendship" />
           <NavigationProperty Name="Friendship1" Relationship="Self.FK_Friendship_Origen" FromRole="Player" ToRole="Friendship" />
           <NavigationProperty Name="Game" Relationship="Self.FK_Game_Player" FromRole="Player" ToRole="Game" />

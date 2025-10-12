@@ -16,5 +16,8 @@ namespace ConquiánServidor.Contracts
 
         [OperationContract]
         string SendVerificationCode(string email);
+
+        [OperationContract]
+        bool VerifyCode(string email, string code);
     }
 }

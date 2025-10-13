@@ -81,6 +81,12 @@ namespace ConquiánServidor.Services
                         playerToUpdate.lastName = playerDto.lastName;
                         playerToUpdate.nickname = playerDto.nickname;
                         playerToUpdate.pathPhoto = playerDto.pathPhoto;
+
+                        if (!string.IsNullOrEmpty(playerDto.password))
+                        {
+                            playerToUpdate.password = ConquiánServidor.Utilities.PasswordHasher.hashPassword(playerDto.password);
+                        }
+
                         context.Entry(playerToUpdate).State = System.Data.Entity.EntityState.Modified;
 
 
@@ -95,7 +101,6 @@ namespace ConquiánServidor.Services
             }
             return false;
         }
-
         public async Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socialDtos)
         {
             if (socialDtos == null) return false;

@@ -1,5 +1,6 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
@@ -16,7 +17,7 @@ namespace ConquiánServidor.Services
     {
         private readonly EmailService emailService = new EmailService();
 
-        public async Task<bool> RegisterPlayerAsync(Player finalPlayerData)
+        public async Task<bool> RegisterPlayerAsync(PlayerDto finalPlayerData)
         {
             try
             {

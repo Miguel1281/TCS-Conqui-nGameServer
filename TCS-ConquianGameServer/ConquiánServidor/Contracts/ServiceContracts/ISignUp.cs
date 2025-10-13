@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace ConquiánServidor.Contracts
     public interface ISignUp
     {
         [OperationContract]
-        Task<bool> RegisterPlayerAsync(Player newPlayer);
+        Task<bool> RegisterPlayerAsync(PlayerDto newPlayer);
 
         [OperationContract]
         Task<string> SendVerificationCodeAsync(string email);

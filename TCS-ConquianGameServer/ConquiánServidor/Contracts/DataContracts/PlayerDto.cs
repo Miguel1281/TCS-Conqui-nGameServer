@@ -5,13 +5,16 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.DataContract
+namespace ConquiánServidor.Contracts.DataContracts
 {
     [DataContract]
-    public partial class Player
+    public class PlayerDto
     {
         [DataMember]
         public int idPlayer { get; set; }
+
+        [DataMember]
+        public string password { get; set; }
 
         [DataMember]
         public string name { get; set; }
@@ -33,5 +36,7 @@ namespace ConquiánServidor.DataContract
 
         [DataMember]
         public string pathPhoto { get; set; }
+
+
     }
 }

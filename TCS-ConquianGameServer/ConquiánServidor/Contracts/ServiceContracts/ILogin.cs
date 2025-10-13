@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts.DataContracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,6 @@ namespace ConquiánServidor.Contracts
     internal interface ILogin
     {
         [OperationContract]
-        Task<Player> AuthenticatePlayerAsync(string email, string password);
+        Task<PlayerDto> AuthenticatePlayerAsync(string email, string password);
     }
 }

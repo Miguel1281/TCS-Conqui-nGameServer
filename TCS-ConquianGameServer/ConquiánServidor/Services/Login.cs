@@ -1,5 +1,6 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Utilities;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ namespace ConquiánServidor.Services
 {
     public class Login : ILogin
     {
-         public async Task<Player> AuthenticatePlayerAsync(string playerEmail, string playerPassword)
+         public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)
          {
             using (var context = new ConquiánDBEntities())
             {
@@ -20,14 +21,11 @@ namespace ConquiánServidor.Services
 
                 if (playerFromDb != null && PasswordHasher.verifyPassword(playerPassword, playerFromDb.password))
                 {
-                    return new Player
+                    return new PlayerDto
                     {
+                        idPlayer = playerFromDb.idPlayer,
                         nickname = playerFromDb.nickname,
-                        email = playerFromDb.email,
-                        name = playerFromDb.name,
-                        lastName = playerFromDb.lastName,
                         pathPhoto = playerFromDb.pathPhoto,
-                        level = playerFromDb.level
                     };
                 }
             } 

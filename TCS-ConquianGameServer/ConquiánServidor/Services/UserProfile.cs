@@ -133,5 +133,31 @@ namespace ConquiánServidor.Services
                 throw new FaultException("Ocurrió un error al actualizar las redes sociales.");
             }
         }
+
+        public async Task<bool> UpdateProfilePictureAsync(int idPlayer, string newPath)
+        {
+            try
+            {
+                using (var context = new ConquiánDBEntities())
+                {
+                    var playerToUpdate = await context.Player
+                        .FirstOrDefaultAsync(p => p.idPlayer == idPlayer);
+
+                    if (playerToUpdate != null)
+                    {
+                        playerToUpdate.pathPhoto = newPath;
+
+                        await context.SaveChangesAsync();
+
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                return false;
+            }
+        }
     }
 }

@@ -22,5 +22,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract]
         Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socials);
+
+        [OperationContract]
+        Task<bool> UpdateProfilePictureAsync(int idPlayer, string newPath);
     }
 }

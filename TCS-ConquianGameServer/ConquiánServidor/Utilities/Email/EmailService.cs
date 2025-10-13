@@ -17,7 +17,7 @@ namespace ConquiánServidor.Utilities.Email
             return new string(Enumerable.Repeat(chars, 6)
               .Select(s => s[random.Next(s.Length)]).ToArray());
         } 
-        public void SendEmail(string toEmail, IEmailTemplate template)
+        public async Task SendEmailAsync(string toEmail, IEmailTemplate template)
         {
             string fromMail = "proyectoconquian@gmail.com";
             string fromPassword = "maey tztt bnka oses";
@@ -37,7 +37,7 @@ namespace ConquiánServidor.Utilities.Email
                 EnableSsl = true,
             };
 
-            smtpClient.Send(message);
+            await smtpClient.SendMailAsync(message);
         }
     }
 }

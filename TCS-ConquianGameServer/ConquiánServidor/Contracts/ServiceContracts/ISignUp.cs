@@ -12,12 +12,12 @@ namespace ConquiánServidor.Contracts
     public interface ISignUp
     {
         [OperationContract]
-        bool RegisterPlayer(Player newPlayer);
+        Task<bool> RegisterPlayerAsync(Player newPlayer);
 
         [OperationContract]
-        string SendVerificationCode(string email);
+        Task<string> SendVerificationCodeAsync(string email);
 
         [OperationContract]
-        bool VerifyCode(string email, string code);
+        Task<bool> VerifyCodeAsync(string email, string code);
     }
 }

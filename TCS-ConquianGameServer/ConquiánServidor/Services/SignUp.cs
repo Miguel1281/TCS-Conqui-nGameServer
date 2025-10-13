@@ -4,9 +4,11 @@ using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
-using System.Data.Entity.Validation; // Necesario para un logging de errores más detallado
+using System.Data.Entity;
+using System.Data.Entity.Validation; 
 using System.Data.SqlClient;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ConquiánServidor.Services
 {
@@ -14,13 +16,13 @@ namespace ConquiánServidor.Services
     {
         private readonly EmailService emailService = new EmailService();
 
-        public bool RegisterPlayer(Player finalPlayerData)
+        public async Task<bool> RegisterPlayerAsync(Player finalPlayerData)
         {
             try
             {
                 using (var context = new ConquiánDBEntities())
                 {
-                    var playerToUpdate = context.Player.FirstOrDefault(p => p.email == finalPlayerData.email);
+                    var playerToUpdate = await context.Player.FirstOrDefaultAsync(p => p.email == finalPlayerData.email);
 
                     if (playerToUpdate != null)
                     {
@@ -47,11 +49,11 @@ namespace ConquiánServidor.Services
             }
         }
 
-        public string SendVerificationCode(string email)
+        public async Task<string> SendVerificationCodeAsync(string email)
         {
             using (var context = new ConquiánDBEntities())
             {
-                var existingPlayer = context.Player.FirstOrDefault(p => p.email == email && p.password != null);
+                var existingPlayer = await context.Player.FirstOrDefaultAsync(p => p.email == email && p.password != null);
                 if (existingPlayer != null)
                 {
                     return "ERROR_EMAIL_EXISTS";
@@ -63,7 +65,7 @@ namespace ConquiánServidor.Services
             {
                 using (var context = new ConquiánDBEntities())
                 {
-                    var playerToVerify = context.Player.FirstOrDefault(p => p.email == email);
+                    var playerToVerify = await context.Player.FirstOrDefaultAsync(p => p.email == email);
 
                     if (playerToVerify == null)
                     {
@@ -73,12 +75,12 @@ namespace ConquiánServidor.Services
 
                     playerToVerify.email = email;
                     playerToVerify.verificationCode = verificationCode;
-                    playerToVerify.codeExpiryDate = DateTime.UtcNow.AddMinutes(1); 
+                    playerToVerify.codeExpiryDate = DateTime.UtcNow.AddMinutes(1);
 
-                    context.SaveChanges();
+                    await context.SaveChangesAsync();
 
                     var emailTemplate = new VerificationEmailTemplate(verificationCode);
-                    emailService.SendEmail(email, emailTemplate);
+                    await emailService.SendEmailAsync(email, emailTemplate);
 
                     return verificationCode;
                 }
@@ -89,13 +91,13 @@ namespace ConquiánServidor.Services
                 return string.Empty;
             }
         }
-        public bool VerifyCode(string email, string code)
+        public async Task<bool> VerifyCodeAsync(string email, string code)
         {
             try
             {
                 using (var context = new ConquiánDBEntities())
                 {
-                    var player = context.Player.FirstOrDefault(p => p.email == email);
+                    var player = await context.Player.FirstOrDefaultAsync(p => p.email == email);
 
                     if (player == null)
                     {

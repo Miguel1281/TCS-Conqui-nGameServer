@@ -12,6 +12,6 @@ namespace ConquiánServidor.Contracts
     internal interface ILogin
     {
         [OperationContract]
-        bool SignIn(string mail, string password);
+        Task<Player> AuthenticatePlayerAsync(string email, string password);
     }
 }

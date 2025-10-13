@@ -30,5 +30,8 @@ namespace ConquiánServidor.DataContract
 
         [DataMember]
         public string currentPoints { get; set; }
+
+        [DataMember]
+        public string pathPhoto { get; set; }
     }
 }

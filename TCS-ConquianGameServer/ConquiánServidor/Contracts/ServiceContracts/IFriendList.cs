@@ -17,5 +17,11 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract]
         Task<bool> SendFriendRequestAsync(int idSender, int idReceiver);
+
+        [OperationContract]
+        Task<List<FriendRequestDto>> GetFriendRequestsAsync(int idPlayer);
+
+        [OperationContract]
+        Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int idStatus);
     }
 }

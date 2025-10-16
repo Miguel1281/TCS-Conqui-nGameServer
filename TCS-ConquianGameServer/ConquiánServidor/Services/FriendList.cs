@@ -107,5 +107,49 @@ namespace ConquiánServidor.Services
                 throw new FaultException("Error al enviar la solicitud de amistad.");
             }
         }
+
+        public async Task<List<FriendRequestDto>> GetFriendRequestsAsync(int idPlayer)
+        {
+            try
+            {
+                using (var context = new ConquiánDBEntities())
+                {
+                    var requests = await context.Friendship
+                        .Where(f => f.idDestino == idPlayer && f.idStatus == 3)
+                        .Select(f => new FriendRequestDto
+                        {
+                            IdFriendship = f.idFriendship,
+                            Nickname = f.Player.nickname
+                        }).ToListAsync();
+                    return requests;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new FaultException("Error al recuperar las solicitudes de amistad.");
+            }
+        }
+
+        public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int idStatus)
+        {
+            try
+            {
+                using (var context = new ConquiánDBEntities())
+                {
+                    var request = await context.Friendship.FindAsync(idFriendship);
+                    if (request != null)
+                    {
+                        request.idStatus = idStatus;
+                        await context.SaveChangesAsync();
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new FaultException("Error al actualizar la solicitud de amistad.");
+            }
+        }
     }
 }

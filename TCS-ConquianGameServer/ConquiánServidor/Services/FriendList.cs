@@ -87,7 +87,16 @@ namespace ConquiánServidor.Services
 
                     if (existingRequest != null)
                     {
-                        return false; 
+                        if (existingRequest.idStatus == 2)
+                        {
+                            existingRequest.idOrigen = idSender;
+                            existingRequest.idDestino = idReceiver;
+                            existingRequest.idStatus = 3; 
+                            await context.SaveChangesAsync();
+                            return true;
+                        }
+
+                        return false;
                     }
 
                     var newFriendship = new Friendship
@@ -116,17 +125,23 @@ namespace ConquiánServidor.Services
                 {
                     var requests = await context.Friendship
                         .Where(f => f.idDestino == idPlayer && f.idStatus == 3)
-                        .Select(f => new FriendRequestDto
-                        {
-                            IdFriendship = f.idFriendship,
-                            Nickname = f.Player.nickname
-                        }).ToListAsync();
+                        .Join(context.Player,
+                              friendship => friendship.idOrigen, 
+                              player => player.idPlayer,         
+                              (friendship, player) => new FriendRequestDto 
+                              {
+                                  IdFriendship = friendship.idFriendship,
+                                  Nickname = player.nickname 
+                              })
+                        .ToListAsync();
+
                     return requests;
                 }
             }
             catch (Exception ex)
             {
-                throw new FaultException("Error al recuperar las solicitudes de amistad.");
+                // Es una buena práctica registrar el error para futura depuración.
+                throw new FaultException("Error al obtener las solicitudes de amistad.");
             }
         }
 
@@ -149,6 +164,32 @@ namespace ConquiánServidor.Services
             catch (Exception ex)
             {
                 throw new FaultException("Error al actualizar la solicitud de amistad.");
+            }
+        }
+
+        public async Task<bool> DeleteFriendAsync(int idPlayer, int idFriend)
+        {
+            try
+            {
+                using (var context = new ConquiánDBEntities())
+                {
+                    var friendship = await context.Friendship.FirstOrDefaultAsync(f =>
+                        ((f.idOrigen == idPlayer && f.idDestino == idFriend) ||
+                         (f.idOrigen == idFriend && f.idDestino == idPlayer))
+                        && f.idStatus == 1);
+
+                    if (friendship != null)
+                    {
+                        context.Friendship.Remove(friendship);
+                        await context.SaveChangesAsync();
+                        return true;
+                    }
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new FaultException("Error al eliminar la amistad.");
             }
         }
     }

@@ -30,6 +30,7 @@ namespace ConquiánServidor.Services
                             lastName = dbPlayer.lastName,
                             nickname = dbPlayer.nickname,
                             email = dbPlayer.email,
+                            level = dbPlayer.level,
                             pathPhoto = dbPlayer.pathPhoto,
                         };
                     }

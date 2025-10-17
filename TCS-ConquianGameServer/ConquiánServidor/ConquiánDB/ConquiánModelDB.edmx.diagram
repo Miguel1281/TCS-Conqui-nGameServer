@@ -4,21 +4,26 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="39667d28f9e94463a8df7091fecd54dc" Name="Diagram1">
-        <EntityTypeShape EntityType="ConquiánDBModel.Friendship" Width="1.5" PointX="3" PointY="4.5" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.Game" Width="1.5" PointX="6" PointY="4.25" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.Gamemode" Width="1.5" PointX="3.75" PointY="7.875" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.Player" Width="1.5" PointX="0.75" PointY="3.875" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.Social" Width="1.5" PointX="3" PointY="1.625" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.SocialType" Width="1.5" PointX="0.75" PointY="0.875" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.Status" Width="1.5" PointX="0.75" PointY="8.875" IsExpanded="true" />
+      <Diagram DiagramId="c2b29fbe943a4cbc986e80e85298d09f" Name="Diagram1" ZoomLevel="71">
+        <EntityTypeShape EntityType="ConquiánDBModel.Friendship" Width="1.5" PointX="7.5" PointY="4.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Game" Width="1.5" PointX="10.5" PointY="4.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Gamemode" Width="1.5" PointX="8.25" PointY="7.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Lobby" Width="1.5" PointX="3" PointY="4.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Player" Width="1.5" PointX="5.25" PointY="3.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Social" Width="1.5" PointX="7.5" PointY="1.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.SocialType" Width="1.5" PointX="5.25" PointY="0.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Status" Width="1.5" PointX="5.25" PointY="8.875" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.StatusLobby" Width="1.5" PointX="0.75" PointY="4.875" IsExpanded="true" />
         <AssociationConnector Association="ConquiánDBModel.FK_Friendship_Destino" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Friendship_Origen" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Friendship_Status" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Game_Gamemode" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Game_Player" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Lobby_HostPlayer" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Lobby_Status" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Social_Player" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Social_SocialType" ManuallyRouted="false" />
+        <AssociationConnector Association="ConquiánDBModel.LobbyPlayer" ManuallyRouted="false" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

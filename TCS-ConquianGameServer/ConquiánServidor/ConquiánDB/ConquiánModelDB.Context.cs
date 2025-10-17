@@ -28,9 +28,11 @@ namespace ConquiánServidor.ConquiánDB
         public virtual DbSet<Friendship> Friendship { get; set; }
         public virtual DbSet<Game> Game { get; set; }
         public virtual DbSet<Gamemode> Gamemode { get; set; }
+        public virtual DbSet<Lobby> Lobby { get; set; }
         public virtual DbSet<Player> Player { get; set; }
         public virtual DbSet<Social> Social { get; set; }
         public virtual DbSet<SocialType> SocialType { get; set; }
         public virtual DbSet<Status> Status { get; set; }
+        public virtual DbSet<StatusLobby> StatusLobby { get; set; }
     }
 }

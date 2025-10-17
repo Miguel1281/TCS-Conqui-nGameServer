@@ -7,7 +7,7 @@ using System.ServiceModel;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.Contracts
+namespace ConquiánServidor.Contracts.ServiceContracts
 {
     [ServiceContract]
     internal interface ILogin

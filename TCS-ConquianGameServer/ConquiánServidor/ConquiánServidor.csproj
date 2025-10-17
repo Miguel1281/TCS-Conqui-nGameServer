@@ -95,6 +95,9 @@
     <Compile Include="ConquiánDB\Gamemode.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="ConquiánDB\Lobby.cs">
+      <DependentUpon>ConquiánModelDB.tt</DependentUpon>
+    </Compile>
     <Compile Include="ConquiánDB\Player.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
@@ -107,10 +110,16 @@
     <Compile Include="ConquiánDB\Status.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="ConquiánDB\StatusLobby.cs">
+      <DependentUpon>ConquiánModelDB.tt</DependentUpon>
+    </Compile>
     <Compile Include="Contracts\DataContracts\FriendRequestDto.cs" />
+    <Compile Include="Contracts\DataContracts\LobbyDto.cs" />
+    <Compile Include="Contracts\DataContracts\MessageDto.cs" />
     <Compile Include="Contracts\DataContracts\PlayerDto.cs" />
     <Compile Include="Contracts\DataContracts\SocialDto.cs" />
     <Compile Include="Contracts\ServiceContracts\IFriendList.cs" />
+    <Compile Include="Contracts\ServiceContracts\ILobby.cs" />
     <Compile Include="Contracts\ServiceContracts\ILogin.cs" />
     <Compile Include="Contracts\ServiceContracts\ISignUp.cs" />
     <Compile Include="Contracts\ServiceContracts\IUserProfile.cs" />
@@ -118,6 +127,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service1.cs" />
     <Compile Include="Services\FriendList.cs" />
+    <Compile Include="Services\Lobby.cs" />
     <Compile Include="Services\Login.cs" />
     <Compile Include="Services\SignUp.cs" />
     <Compile Include="Services\UserProfile.cs" />

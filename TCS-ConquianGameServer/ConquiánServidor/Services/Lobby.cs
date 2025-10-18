@@ -37,7 +37,8 @@ namespace ConquiánServidor.Services
                                 idPlayer = p.idPlayer,
                                 nickname = p.nickname,
                                 pathPhoto = p.pathPhoto
-                            }).ToList()
+                            }).ToList(),
+                            ChatMessages = chatHistories.ContainsKey(roomCode) ? chatHistories[roomCode] : new List<MessageDto>()
                         };
                         return lobbyState;
                     }
@@ -82,6 +83,8 @@ namespace ConquiánServidor.Services
                     context.Lobby.Add(newLobby);
                     await context.SaveChangesAsync();
 
+                    chatHistories.TryAdd(newRoomCode, new List<MessageDto>());
+
                     return newRoomCode;
                 }
             }
@@ -91,7 +94,6 @@ namespace ConquiánServidor.Services
                 return null;
             }
         }
-
         public async Task<bool> JoinLobbyAsync(string roomCode, int idPlayer)
         {
             try
@@ -104,7 +106,8 @@ namespace ConquiánServidor.Services
 
                     if (lobby == null || playerToJoin == null)
                     {
-                        return false;                     }
+                        return false;
+                    }
                     if (lobby.Player1.Count >= 2)
                     {
                         return false;
@@ -144,7 +147,7 @@ namespace ConquiánServidor.Services
 
                     if (lobby.idHostPlayer == idPlayer)
                     {
-                        lobby.idStatusLobby = 3; 
+                        lobby.idStatusLobby = 3;
                     }
                     else
                     {
@@ -162,20 +165,14 @@ namespace ConquiánServidor.Services
                 // TODO: log del error
             }
         }
-
         public Task SendMessageAsync(string roomCode, MessageDto message)
         {
-            if (chatHistories.TryGetValue(roomCode, out var messages))
+            if (chatHistories.ContainsKey(roomCode))
             {
-                messages.Add(message);
+                message.Timestamp = DateTime.UtcNow;
+                chatHistories[roomCode].Add(message);
             }
             return Task.CompletedTask;
-        }
-
-        public Task<List<MessageDto>> GetChatMessagesAsync(string roomCode)
-        {
-            chatHistories.TryGetValue(roomCode, out var messages);
-            return Task.FromResult(messages ?? new List<MessageDto>());
         }
 
         private string GenerateRandomCode(int length = 5)

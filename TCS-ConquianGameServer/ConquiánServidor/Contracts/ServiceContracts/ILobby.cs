@@ -25,8 +25,5 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract]
         Task SendMessageAsync(string roomCode, MessageDto message);
-
-        [OperationContract]
-        Task<List<MessageDto>> GetChatMessagesAsync(string roomCode);
     }
 }

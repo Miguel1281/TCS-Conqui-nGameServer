@@ -24,5 +24,8 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public string StatusLobby { get; set; }
+
+        [DataMember]
+        public List<MessageDto> ChatMessages { get; set; }
     }
 }

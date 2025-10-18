@@ -81,21 +81,21 @@ namespace ConquiánServidor.Services
             {
                 using (var context = new ConquiánDBEntities())
                 {
-                    var existingRequest = await context.Friendship.FirstOrDefaultAsync(f =>
-                        (f.idOrigen == idSender && f.idDestino == idReceiver) ||
-                        (f.idOrigen == idReceiver && f.idDestino == idSender));
+                    var requestFromReceiver = await context.Friendship.FirstOrDefaultAsync(f =>
+                        f.idOrigen == idReceiver && f.idDestino == idSender);
 
-                    if (existingRequest != null)
+                    if (requestFromReceiver != null && requestFromReceiver.idStatus == 3) 
                     {
-                        if (existingRequest.idStatus == 2)
-                        {
-                            existingRequest.idOrigen = idSender;
-                            existingRequest.idDestino = idReceiver;
-                            existingRequest.idStatus = 3; 
-                            await context.SaveChangesAsync();
-                            return true;
-                        }
+                        requestFromReceiver.idStatus = 1;
+                        await context.SaveChangesAsync();
+                        return true; 
+                    }
 
+                    var requestFromSender = await context.Friendship.FirstOrDefaultAsync(f =>
+                        f.idOrigen == idSender && f.idDestino == idReceiver);
+
+                    if (requestFromSender != null)
+                    {
                         return false;
                     }
 

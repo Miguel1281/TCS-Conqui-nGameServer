@@ -36,6 +36,7 @@ namespace ConquiánServidor.ConquiánDB
         public string pathPhoto { get; set; }
         public string verificationCode { get; set; }
         public Nullable<System.DateTime> codeExpiryDate { get; set; }
+        public Nullable<int> IdStatus { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Friendship> Friendship { get; set; }
@@ -49,5 +50,6 @@ namespace ConquiánServidor.ConquiánDB
         public virtual ICollection<Social> Social { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Lobby> Lobby1 { get; set; }
+        public virtual StatusType StatusType { get; set; }
     }
 }

@@ -34,5 +34,6 @@ namespace ConquiánServidor.ConquiánDB
         public virtual DbSet<SocialType> SocialType { get; set; }
         public virtual DbSet<Status> Status { get; set; }
         public virtual DbSet<StatusLobby> StatusLobby { get; set; }
+        public virtual DbSet<StatusType> StatusType { get; set; }
     }
 }

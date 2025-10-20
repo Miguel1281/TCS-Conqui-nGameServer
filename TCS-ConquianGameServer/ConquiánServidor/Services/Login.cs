@@ -22,6 +22,8 @@ namespace ConquiánServidor.Services
 
                 if (playerFromDb != null && PasswordHasher.verifyPassword(playerPassword, playerFromDb.password))
                 {
+                    playerFromDb.IdStatus = 1; 
+                    await context.SaveChangesAsync();
                     return new PlayerDto
                     {
                         idPlayer = playerFromDb.idPlayer,
@@ -32,5 +34,18 @@ namespace ConquiánServidor.Services
             } 
             return null;
          }
+
+        public async Task SignOutPlayerAsync(int idPlayer)
+        {
+            using (var context = new ConquiánDBEntities())
+            {
+                var playerFromDb = await context.Player.FirstOrDefaultAsync(p => p.idPlayer == idPlayer);
+                if (playerFromDb != null)
+                {
+                    playerFromDb.IdStatus = 2; 
+                    await context.SaveChangesAsync();
+                }
+            }
+        }
     }
 }

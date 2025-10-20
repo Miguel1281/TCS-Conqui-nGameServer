@@ -113,6 +113,9 @@
     <Compile Include="ConquiánDB\StatusLobby.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="ConquiánDB\StatusType.cs">
+      <DependentUpon>ConquiánModelDB.tt</DependentUpon>
+    </Compile>
     <Compile Include="Contracts\DataContracts\FriendRequestDto.cs" />
     <Compile Include="Contracts\DataContracts\LobbyDto.cs" />
     <Compile Include="Contracts\DataContracts\MessageDto.cs" />

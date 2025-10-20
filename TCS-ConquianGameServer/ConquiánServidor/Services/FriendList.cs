@@ -63,7 +63,8 @@ namespace ConquiánServidor.Services
                         {
                             idPlayer = p.idPlayer,
                             nickname = p.nickname,
-                            level = p.level
+                            level = p.level,
+                            idStatus = p.IdStatus
                         }).ToListAsync();
 
                     return friends;

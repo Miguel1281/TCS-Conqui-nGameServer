@@ -14,5 +14,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     {
         [OperationContract]
         Task<PlayerDto> AuthenticatePlayerAsync(string email, string password);
+
+        [OperationContract]
+        Task SignOutPlayerAsync(int idPlayer);
     }
 }

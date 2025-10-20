@@ -66,6 +66,7 @@
           <Property Name="pathPhoto" Type="varchar" MaxLength="255" />
           <Property Name="verificationCode" Type="varchar" MaxLength="6" />
           <Property Name="codeExpiryDate" Type="datetime" />
+          <Property Name="IdStatus" Type="int" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
@@ -96,6 +97,13 @@
           </Key>
           <Property Name="idStatusLobby" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="statusName" Type="varchar" MaxLength="20" Nullable="false" />
+        </EntityType>
+        <EntityType Name="StatusType">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="50" Nullable="false" />
         </EntityType>
         <Association Name="FK_Friendship_Destino">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
@@ -205,6 +213,18 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Player_StatusType">
+          <End Role="StatusType" Type="Self.StatusType" Multiplicity="0..1" />
+          <End Role="Player" Type="Self.Player" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="StatusType">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Player">
+              <PropertyRef Name="IdStatus" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Social_Player">
           <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
           <End Role="Social" Type="Self.Social" Multiplicity="*" />
@@ -240,6 +260,7 @@
           <EntitySet Name="SocialType" EntityType="Self.SocialType" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Status" EntityType="Self.Status" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="StatusLobby" EntityType="Self.StatusLobby" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="StatusType" EntityType="Self.StatusType" Schema="dbo" store:Type="Tables" />
           <AssociationSet Name="FK_Friendship_Destino" Association="Self.FK_Friendship_Destino">
             <End Role="Player" EntitySet="Player" />
             <End Role="Friendship" EntitySet="Friendship" />
@@ -275,6 +296,10 @@
           <AssociationSet Name="FK_LobbyPlayer_Player" Association="Self.FK_LobbyPlayer_Player">
             <End Role="Player" EntitySet="Player" />
             <End Role="LobbyPlayer" EntitySet="LobbyPlayer" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Player_StatusType" Association="Self.FK_Player_StatusType">
+            <End Role="StatusType" EntitySet="StatusType" />
+            <End Role="Player" EntitySet="Player" />
           </AssociationSet>
           <AssociationSet Name="FK_Social_Player" Association="Self.FK_Social_Player">
             <End Role="Player" EntitySet="Player" />
@@ -357,6 +382,8 @@
           <NavigationProperty Name="Lobby" Relationship="Self.FK_Lobby_HostPlayer" FromRole="Player" ToRole="Lobby" />
           <NavigationProperty Name="Social" Relationship="Self.FK_Social_Player" FromRole="Player" ToRole="Social" />
           <NavigationProperty Name="Lobby1" Relationship="Self.LobbyPlayer" FromRole="Player" ToRole="Lobby" />
+          <Property Name="IdStatus" Type="Int32" />
+          <NavigationProperty Name="StatusType" Relationship="ConquiánDBModel.FK_Player_StatusType" FromRole="Player" ToRole="StatusType" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
@@ -555,7 +582,32 @@
             <End Role="Lobby" EntitySet="Lobby" />
             <End Role="Player" EntitySet="Player" />
           </AssociationSet>
+          <EntitySet Name="StatusType" EntityType="ConquiánDBModel.StatusType" />
+          <AssociationSet Name="FK_Player_StatusType" Association="ConquiánDBModel.FK_Player_StatusType">
+            <End Role="StatusType" EntitySet="StatusType" />
+            <End Role="Player" EntitySet="Player" />
+          </AssociationSet>
         </EntityContainer>
+        <EntityType Name="StatusType">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Player" Relationship="ConquiánDBModel.FK_Player_StatusType" FromRole="StatusType" ToRole="Player" />
+        </EntityType>
+        <Association Name="FK_Player_StatusType">
+          <End Type="ConquiánDBModel.StatusType" Role="StatusType" Multiplicity="0..1" />
+          <End Type="ConquiánDBModel.Player" Role="Player" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="StatusType">
+              <PropertyRef Name="Id" />
+            </Principal>
+            <Dependent Role="Player">
+              <PropertyRef Name="IdStatus" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -607,6 +659,7 @@
           <EntitySetMapping Name="Player">
             <EntityTypeMapping TypeName="ConquiánDBModel.Player">
               <MappingFragment StoreEntitySet="Player">
+                <ScalarProperty Name="IdStatus" ColumnName="IdStatus" />
                 <ScalarProperty Name="idPlayer" ColumnName="idPlayer" />
                 <ScalarProperty Name="name" ColumnName="name" />
                 <ScalarProperty Name="lastName" ColumnName="lastName" />
@@ -663,6 +716,14 @@
               <ScalarProperty Name="idPlayer" ColumnName="idPlayer" />
             </EndProperty>
           </AssociationSetMapping>
+          <EntitySetMapping Name="StatusType">
+            <EntityTypeMapping TypeName="ConquiánDBModel.StatusType">
+              <MappingFragment StoreEntitySet="StatusType">
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
         </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

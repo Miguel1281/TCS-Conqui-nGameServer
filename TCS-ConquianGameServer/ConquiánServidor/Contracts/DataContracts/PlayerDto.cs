@@ -37,6 +37,7 @@ namespace ConquiánServidor.Contracts.DataContracts
         [DataMember]
         public string pathPhoto { get; set; }
 
-
+        [DataMember]
+        public int? idStatus { get; set; }
     }
 }

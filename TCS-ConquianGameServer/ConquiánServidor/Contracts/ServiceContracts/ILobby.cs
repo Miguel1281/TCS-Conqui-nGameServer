@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.Contracts.ServiceContracts
 {
-    [ServiceContract]
+    [ServiceContract(CallbackContract = typeof(ILobbyCallback))]
     public interface ILobby
     {
         [OperationContract]
@@ -18,10 +18,10 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         Task<string> CreateLobbyAsync(int idHostPlayer);
 
         [OperationContract]
-        Task<bool> JoinLobbyAsync(string roomCode, int idPlayer);
+        Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer);
 
-        [OperationContract]
-        Task LeaveLobbyAsync(string roomCode, int idPlayer);
+        [OperationContract(IsOneWay = true)]
+        void LeaveAndUnsubscribe(string roomCode, int idPlayer);
 
         [OperationContract]
         Task SendMessageAsync(string roomCode, MessageDto message);

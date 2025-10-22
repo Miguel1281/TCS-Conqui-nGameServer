@@ -34,7 +34,6 @@ namespace ConquiánServidor.Services
                                 idPlayer = dbPlayer.idPlayer,
                                 nickname = dbPlayer.nickname,
                                 level = dbPlayer.level,
-                                pathPhoto = dbPlayer.pathPhoto
                             };
                         }
                     }
@@ -65,7 +64,8 @@ namespace ConquiánServidor.Services
                             idPlayer = p.idPlayer,
                             nickname = p.nickname,
                             level = p.level,
-                            idStatus = p.IdStatus
+                            idStatus = p.IdStatus,
+                            pathPhoto =p.pathPhoto
                         }).ToListAsync();
 
                     return friends;

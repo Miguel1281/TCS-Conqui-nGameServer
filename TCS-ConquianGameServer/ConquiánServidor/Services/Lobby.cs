@@ -152,9 +152,8 @@ public async Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer)
                         nickname = playerToJoin.nickname,
                         pathPhoto = playerToJoin.pathPhoto
                     };
-                    
-                    NotifyPlayersInLobby(roomCode, idPlayer, (cb) => cb.PlayerJoined(playerDto));
 
+                    NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                     return true;
                 }
             }

@@ -1,121 +1,51 @@
-﻿using ConquiánServidor.ConquiánDB;
+﻿using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using System;
+using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.DataAccess.Repositories;
+using ConquiánServidor.ConquiánDB;
 using System.Collections.Generic;
-using System.Data.Entity;
-using System.Linq;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using System;
 
 namespace ConquiánServidor.Services
 {
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple)]
     public class FriendList : IFriendList
     {
-        public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idCurrentUser)
+        private readonly FriendshipLogic friendshipLogic;
+
+        public FriendList()
+        {
+            var dbContext = new ConquiánDBEntities();
+            IFriendshipRepository friendshipRepository = new FriendshipRepository(dbContext);
+            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
+
+            friendshipLogic = new FriendshipLogic(friendshipRepository, playerRepository);
+        }
+
+        public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idPlayer)
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var dbPlayer = await context.Player.FirstOrDefaultAsync(p => p.nickname == nickname);
-
-                    if (dbPlayer != null && dbPlayer.idPlayer != idCurrentUser)
-                    {
-                        var areFriends = await context.Friendship.AnyAsync(f =>
-                            ((f.idOrigen == idCurrentUser && f.idDestino == dbPlayer.idPlayer) ||
-                             (f.idOrigen == dbPlayer.idPlayer && f.idDestino == idCurrentUser))
-                            && f.idStatus == 1); 
-
-                        if (!areFriends)
-                        {
-                            return new PlayerDto
-                            {
-                                idPlayer = dbPlayer.idPlayer,
-                                nickname = dbPlayer.nickname,
-                                level = dbPlayer.level,
-                            };
-                        }
-                    }
-                }
+                return await friendshipLogic.GetPlayerByNicknameAsync(nickname, idPlayer);
             }
             catch (Exception ex)
             {
-                throw new FaultException("Error al recuperar la información del jugador.");
+                throw new FaultException("Error al buscar jugador.");
             }
-            return null;
         }
 
         public async Task<List<PlayerDto>> GetFriendsAsync(int idPlayer)
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var friendIds = await context.Friendship
-                        .Where(f => (f.idOrigen == idPlayer || f.idDestino == idPlayer) && f.idStatus == 1)
-                        .Select(f => f.idOrigen == idPlayer ? f.idDestino : f.idOrigen)
-                        .ToListAsync();
-
-                    var friends = await context.Player
-                        .Where(p => friendIds.Contains(p.idPlayer))
-                        .Select(p => new PlayerDto
-                        {
-                            idPlayer = p.idPlayer,
-                            nickname = p.nickname,
-                            level = p.level,
-                            idStatus = p.IdStatus,
-                            pathPhoto =p.pathPhoto
-                        }).ToListAsync();
-
-                    return friends;
-                }
+                return await friendshipLogic.GetFriendsAsync(idPlayer);
             }
             catch (Exception ex)
             {
-                throw new FaultException("Error al recuperar la lista de amigos.");
-            }
-        }
-
-        public async Task<bool> SendFriendRequestAsync(int idSender, int idReceiver)
-        {
-            try
-            {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var requestFromReceiver = await context.Friendship.FirstOrDefaultAsync(f =>
-                        f.idOrigen == idReceiver && f.idDestino == idSender);
-
-                    if (requestFromReceiver != null && requestFromReceiver.idStatus == 3) 
-                    {
-                        requestFromReceiver.idStatus = 1;
-                        await context.SaveChangesAsync();
-                        return true; 
-                    }
-
-                    var requestFromSender = await context.Friendship.FirstOrDefaultAsync(f =>
-                        f.idOrigen == idSender && f.idDestino == idReceiver);
-
-                    if (requestFromSender != null)
-                    {
-                        return false;
-                    }
-
-                    var newFriendship = new Friendship
-                    {
-                        idOrigen = idSender,
-                        idDestino = idReceiver,
-                        idStatus = 3 
-                    };
-
-                    context.Friendship.Add(newFriendship);
-                    await context.SaveChangesAsync();
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new FaultException("Error al enviar la solicitud de amistad.");
+                throw new FaultException("Error al obtener la lista de amigos.");
             }
         }
 
@@ -123,49 +53,35 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var requests = await context.Friendship
-                        .Where(f => f.idDestino == idPlayer && f.idStatus == 3)
-                        .Join(context.Player,
-                              friendship => friendship.idOrigen, 
-                              player => player.idPlayer,         
-                              (friendship, player) => new FriendRequestDto 
-                              {
-                                  IdFriendship = friendship.idFriendship,
-                                  Nickname = player.nickname 
-                              })
-                        .ToListAsync();
-
-                    return requests;
-                }
+                return await friendshipLogic.GetFriendRequestsAsync(idPlayer);
             }
             catch (Exception ex)
             {
-                // Es una buena práctica registrar el error para futura depuración.
                 throw new FaultException("Error al obtener las solicitudes de amistad.");
             }
         }
 
-        public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int idStatus)
+        public async Task<bool> SendFriendRequestAsync(int idPlayer, int idFriend)
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var request = await context.Friendship.FindAsync(idFriendship);
-                    if (request != null)
-                    {
-                        request.idStatus = idStatus;
-                        await context.SaveChangesAsync();
-                        return true;
-                    }
-                    return false;
-                }
+                return await friendshipLogic.SendFriendRequestAsync(idPlayer, idFriend);
             }
             catch (Exception ex)
             {
-                throw new FaultException("Error al actualizar la solicitud de amistad.");
+                throw new FaultException("Error al enviar la solicitud.");
+            }
+        }
+
+        public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int newStatus)
+        {
+            try
+            {
+                return await friendshipLogic.UpdateFriendRequestStatusAsync(idFriendship, newStatus);
+            }
+            catch (Exception ex)
+            {
+                throw new FaultException("Error al actualizar la solicitud.");
             }
         }
 
@@ -173,25 +89,11 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var friendship = await context.Friendship.FirstOrDefaultAsync(f =>
-                        ((f.idOrigen == idPlayer && f.idDestino == idFriend) ||
-                         (f.idOrigen == idFriend && f.idDestino == idPlayer))
-                        && f.idStatus == 1);
-
-                    if (friendship != null)
-                    {
-                        context.Friendship.Remove(friendship);
-                        await context.SaveChangesAsync();
-                        return true;
-                    }
-                    return false;
-                }
+                return await friendshipLogic.DeleteFriendAsync(idPlayer, idFriend);
             }
             catch (Exception ex)
             {
-                throw new FaultException("Error al eliminar la amistad.");
+                throw new FaultException("Error al eliminar amigo.");
             }
         }
     }

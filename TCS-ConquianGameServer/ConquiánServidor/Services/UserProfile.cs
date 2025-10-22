@@ -1,64 +1,47 @@
-﻿using ConquiánServidor.ConquiánDB;
+﻿using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using System;
+using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.DataAccess.Repositories;
+using ConquiánServidor.ConquiánDB;
 using System.Collections.Generic;
-using System.Data.Entity; 
-using System.Linq;
 using System.ServiceModel;
-using System.Threading.Tasks; 
+using System.Threading.Tasks;
+using System;
 
 namespace ConquiánServidor.Services
 {
     public class UserProfile : IUserProfile
     {
+        private readonly UserProfileLogic profileLogic;
+
+        // Constructor
+        public UserProfile()
+        {
+            var dbContext = new ConquiánDBEntities();
+            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
+            ISocialRepository socialRepository = new SocialRepository(dbContext);
+            profileLogic = new UserProfileLogic(playerRepository, socialRepository);
+        }
+
         public async Task<PlayerDto> GetPlayerByIdAsync(int idPlayer)
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    context.Configuration.LazyLoadingEnabled = false;
-                    var dbPlayer = await context.Player.FirstOrDefaultAsync(p => p.idPlayer == idPlayer);
-
-                    if (dbPlayer != null)
-                    {
-                        return new PlayerDto
-                        {
-                            idPlayer = dbPlayer.idPlayer,
-                            name = dbPlayer.name,
-                            lastName = dbPlayer.lastName,
-                            nickname = dbPlayer.nickname,
-                            email = dbPlayer.email,
-                            level = dbPlayer.level,
-                            pathPhoto = dbPlayer.pathPhoto,
-                        };
-                    }
-                }
+                return await profileLogic.GetPlayerByIdAsync(idPlayer);
             }
             catch (Exception ex)
             {
+                // TO-DO: Registrar el error 'ex'
                 throw new FaultException("Error al recuperar la información del jugador.");
             }
-            return null;
         }
 
         public async Task<List<SocialDto>> GetPlayerSocialsAsync(int idPlayer)
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    context.Configuration.LazyLoadingEnabled = false;
-                    var dbSocials = await context.Social.Where(s => s.idPlayer == idPlayer).ToListAsync();
-
-                    return dbSocials.Select(dbSocial => new SocialDto
-                    {
-                        IdSocial = dbSocial.idSocial,
-                        IdSocialType = (int)dbSocial.idSocialType,
-                        UserLink = dbSocial.userLink
-                    }).ToList();
-                }
+                return await profileLogic.GetPlayerSocialsAsync(idPlayer);
             }
             catch (Exception ex)
             {
@@ -68,71 +51,21 @@ namespace ConquiánServidor.Services
 
         public async Task<bool> UpdatePlayerAsync(PlayerDto playerDto)
         {
-            if (playerDto == null) return false;
-
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var playerToUpdate = await context.Player.FirstOrDefaultAsync(p => p.idPlayer == playerDto.idPlayer);
-
-                    if (playerToUpdate != null)
-                    {
-                        playerToUpdate.name = playerDto.name;
-                        playerToUpdate.lastName = playerDto.lastName;
-                        playerToUpdate.nickname = playerDto.nickname;
-                        playerToUpdate.pathPhoto = playerDto.pathPhoto;
-
-                        if (!string.IsNullOrEmpty(playerDto.password))
-                        {
-                            playerToUpdate.password = ConquiánServidor.Utilities.PasswordHasher.hashPassword(playerDto.password);
-                        }
-
-                        context.Entry(playerToUpdate).State = System.Data.Entity.EntityState.Modified;
-
-
-                        await context.SaveChangesAsync();
-                        return true;
-                    }
-                }
+                return await profileLogic.UpdatePlayerAsync(playerDto);
             }
             catch (Exception ex)
             {
                 throw new FaultException("Error al actualizar el perfil.");
             }
-            return false;
         }
+
         public async Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socialDtos)
         {
-            if (socialDtos == null) return false;
-
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var playerExists = await context.Player.AnyAsync(p => p.idPlayer == idPlayer);
-                    if (!playerExists)
-                    {
-                        return false;
-                    }
-
-                    var existingSocials = context.Social.Where(s => s.idPlayer == idPlayer);
-                    context.Social.RemoveRange(existingSocials);
-
-                    foreach (var socialDto in socialDtos)
-                    {
-                        var newSocial = new ConquiánDB.Social
-                        {
-                            idPlayer = idPlayer,
-                            idSocialType = socialDto.IdSocialType,
-                            userLink = socialDto.UserLink
-                        };
-                        context.Social.Add(newSocial);
-                    }
-
-                    await context.SaveChangesAsync();
-                    return true;
-                }
+                return await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socialDtos);
             }
             catch (Exception ex)
             {
@@ -144,25 +77,11 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var playerToUpdate = await context.Player
-                        .FirstOrDefaultAsync(p => p.idPlayer == idPlayer);
-
-                    if (playerToUpdate != null)
-                    {
-                        playerToUpdate.pathPhoto = newPath;
-
-                        await context.SaveChangesAsync();
-
-                        return true;
-                    }
-                    return false;
-                }
+                return await profileLogic.UpdateProfilePictureAsync(idPlayer, newPath);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                return false;
+                return false; 
             }
         }
     }

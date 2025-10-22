@@ -71,6 +71,12 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BusinessLogic\AuthenticationLogic.cs" />
+    <Compile Include="BusinessLogic\FriendshipLogic.cs" />
+    <Compile Include="BusinessLogic\UserProfileLogic.cs" />
+    <Compile Include="ConquiánDB\Abstractions\IFriendshipRepository.cs" />
+    <Compile Include="ConquiánDB\Abstractions\IPlayerRepository.cs" />
+    <Compile Include="ConquiánDB\Abstractions\ISocialRepository.cs" />
     <Compile Include="ConquiánDB\ConquiánModelDB.Context.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -101,6 +107,9 @@
     <Compile Include="ConquiánDB\Player.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="ConquiánDB\Repositories\FriendshipRepository.cs" />
+    <Compile Include="ConquiánDB\Repositories\PlayerRepository.cs" />
+    <Compile Include="ConquiánDB\Repositories\SocialRepository.cs" />
     <Compile Include="ConquiánDB\Social.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>

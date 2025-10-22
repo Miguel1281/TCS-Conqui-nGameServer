@@ -1,13 +1,14 @@
-﻿using ConquiánServidor.ConquiánDB;
+﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
+using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.DataAccess.Repositories;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.ServiceModel;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.Services
@@ -21,83 +22,31 @@ namespace ConquiánServidor.Services
         private static readonly ConcurrentDictionary<string, List<MessageDto>> chatHistories =
             new ConcurrentDictionary<string, List<MessageDto>>();
 
+        private readonly LobbyLogic lobbyLogic;
+        private readonly ConquiánDBEntities dbContext; 
+
         private string currentRoomCode;
         private int currentPlayerId;
-        private ILobbyCallback currentCallback; 
+        private ILobbyCallback currentCallback;
+
+        public Lobby()
+        {
+            dbContext = new ConquiánDBEntities();
+            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
+            ILobbyRepository lobbyRepository = new LobbyRepository(dbContext);
+            lobbyLogic = new LobbyLogic(lobbyRepository, playerRepository);
+        }
+
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
         {
             try
             {
-                using (var context = new ConquiánDBEntities())
+                var lobbyState = await lobbyLogic.GetLobbyStateAsync(roomCode);
+                if (lobbyState != null)
                 {
-                    var lobby = await context.Lobby
-                        .Include(l => l.Player1)
-                        .Include(l => l.StatusLobby)
-                        .FirstOrDefaultAsync(l => l.roomCode == roomCode);
-
-                    if (lobby != null)
-                    {
-                        var lobbyState = new LobbyDto
-                        {
-                            RoomCode = lobby.roomCode,
-                            idHostPlayer = lobby.idHostPlayer,
-                            StatusLobby = lobby.StatusLobby.statusName,
-                            Players = lobby.Player1.Select(p => new PlayerDto
-                            {
-                                idPlayer = p.idPlayer,
-                                nickname = p.nickname,
-                                pathPhoto = p.pathPhoto
-                            }).ToList(),
-                            ChatMessages = chatHistories.ContainsKey(roomCode) ? chatHistories[roomCode] : new List<MessageDto>()
-                        };
-                        return lobbyState;
-                    }
+                    lobbyState.ChatMessages = chatHistories.ContainsKey(roomCode) ? chatHistories[roomCode] : new List<MessageDto>();
                 }
-            }
-            catch (Exception ex)
-            {
-                // TODO: log del error
-            }
-            return null;
-        }
-
-        public async Task<string> CreateLobbyAsync(int idHostPlayer)
-        {
-            try
-            {
-                using (var context = new ConquiánDBEntities())
-                {
-                    var hostPlayer = await context.Player.FindAsync(idHostPlayer);
-                    if (hostPlayer == null)
-                    {
-                        return null;
-                    }
-
-                    string newRoomCode;
-                    do
-                    {
-                        newRoomCode = GenerateRandomCode();
-                    }
-                    while (await context.Lobby.AnyAsync(l => l.roomCode == newRoomCode));
-
-                    var newLobby = new ConquiánDB.Lobby()
-                    {
-                        roomCode = newRoomCode,
-                        idHostPlayer = idHostPlayer,
-                        idStatusLobby = 1,
-                        creationDate = DateTime.UtcNow
-                    };
-
-                    newLobby.Player1.Add(hostPlayer);
-
-                    context.Lobby.Add(newLobby);
-                    await context.SaveChangesAsync();
-
-                    chatHistories.TryAdd(newRoomCode, new List<MessageDto>());
-                    lobbyCallbacks.TryAdd(newRoomCode, new ConcurrentDictionary<int, ILobbyCallback>());
-
-                    return newRoomCode;
-                }
+                return lobbyState;
             }
             catch (Exception ex)
             {
@@ -106,56 +55,49 @@ namespace ConquiánServidor.Services
             }
         }
 
-public async Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer)
+        public async Task<string> CreateLobbyAsync(int idHostPlayer)
+        {
+            try
+            {
+                string newRoomCode = await lobbyLogic.CreateLobbyAsync(idHostPlayer);
+                if (newRoomCode != null)
+                {
+                    chatHistories.TryAdd(newRoomCode, new List<MessageDto>());
+                    lobbyCallbacks.TryAdd(newRoomCode, new ConcurrentDictionary<int, ILobbyCallback>());
+                }
+                return newRoomCode;
+            }
+            catch (Exception ex)
+            {
+                // TODO: log del error
+                return null;
+            }
+        }
+
+        public async Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer)
         {
             var callback = OperationContext.Current.GetCallbackChannel<ILobbyCallback>();
 
             try
             {
-                using (var context = new ConquiánDBEntities())
+                if (!lobbyCallbacks.ContainsKey(roomCode))
                 {
-                    var lobby = await context.Lobby.Include(l => l.Player1)
-                        .FirstOrDefaultAsync(l => l.roomCode == roomCode);
-                    var playerToJoin = await context.Player.FindAsync(idPlayer);
-
-                    if (lobby == null || playerToJoin == null || !lobbyCallbacks.ContainsKey(roomCode))
-                    {
-                        return false; 
-                    }
-                   
-                    bool isAlreadyInLobby = lobby.Player1.Any(p => p.idPlayer == idPlayer);
-
-                    if (lobby.Player1.Count >= 2 && !isAlreadyInLobby)
-                    {
-                        return false;
-                    }
-                    if (lobby.idStatusLobby != 1)
-                    {
-                        return false;
-                    }
-
-                    if (!isAlreadyInLobby)
-                    {
-                        lobby.Player1.Add(playerToJoin);
-                        await context.SaveChangesAsync();
-                    }
-
-  
-                    lobbyCallbacks[roomCode][idPlayer] = callback;
-                    this.currentCallback = callback;
-                    this.currentRoomCode = roomCode;
-                    this.currentPlayerId = idPlayer;
-
-                    var playerDto = new PlayerDto
-                    {
-                        idPlayer = playerToJoin.idPlayer,
-                        nickname = playerToJoin.nickname,
-                        pathPhoto = playerToJoin.pathPhoto
-                    };
-
-                    NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
-                    return true;
+                    return false; 
                 }
+
+                var playerDto = await lobbyLogic.JoinLobbyAsync(roomCode, idPlayer);
+                if (playerDto == null)
+                {
+                    return false; 
+                }
+
+                lobbyCallbacks[roomCode][idPlayer] = callback;
+                this.currentCallback = callback;
+                this.currentRoomCode = roomCode;
+                this.currentPlayerId = idPlayer;
+
+                NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
+                return true;
             }
             catch (Exception ex)
             {
@@ -168,30 +110,7 @@ public async Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer)
         {
             try
             {
-                bool isHost = false;
-                using (var context = new ConquiánDBEntities())
-                {
-                    var lobby = context.Lobby.Include(l => l.Player1)
-                        .FirstOrDefault(l => l.roomCode == roomCode);
-
-                    if (lobby == null) return;
-
-                    isHost = lobby.idHostPlayer == idPlayer;
-
-                    if (isHost)
-                    {
-                        lobby.idStatusLobby = 3;
-                    }
-                    else
-                    {
-                        var playerToRemove = lobby.Player1.FirstOrDefault(p => p.idPlayer == idPlayer);
-                        if (playerToRemove != null)
-                        {
-                            lobby.Player1.Remove(playerToRemove);
-                        }
-                    }
-                    context.SaveChanges();
-                }
+                bool isHost = lobbyLogic.LeaveLobbyAsync(roomCode, idPlayer).Result;
 
                 if (isHost)
                 {
@@ -206,7 +125,7 @@ public async Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer)
                 {
                     callbacks.TryRemove(idPlayer, out _);
 
-                    if (callbacks.IsEmpty)
+                    if (callbacks.IsEmpty || isHost)
                     {
                         lobbyCallbacks.TryRemove(roomCode, out _);
                         chatHistories.TryRemove(roomCode, out _);
@@ -265,12 +184,5 @@ public async Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer)
             }
         }
 
-        private string GenerateRandomCode(int length = 5)
-        {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var random = new Random();
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
     }
 }

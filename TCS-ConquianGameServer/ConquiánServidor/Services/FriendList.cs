@@ -33,7 +33,8 @@ namespace ConquiánServidor.Services
                             {
                                 idPlayer = dbPlayer.idPlayer,
                                 nickname = dbPlayer.nickname,
-                                level = dbPlayer.level
+                                level = dbPlayer.level,
+                                pathPhoto = dbPlayer.pathPhoto
                             };
                         }
                     }

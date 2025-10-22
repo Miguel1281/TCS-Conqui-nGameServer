@@ -24,6 +24,12 @@ namespace ConquiánServidor.Services
             {
                 using (var context = new ConquiánDBEntities())
                 {
+                    var nicknameExists = await context.Player.AnyAsync(p => p.nickname == finalPlayerData.nickname);
+                    if (nicknameExists)
+                    {
+                        return false;
+                    }
+
                     var playerToUpdate = await context.Player.FirstOrDefaultAsync(p => p.email == finalPlayerData.email);
 
                     if (playerToUpdate != null)

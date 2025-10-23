@@ -32,7 +32,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                // TO-DO: Registrar el error 'ex'
+                // TODO: Registrar el error 'ex'
                 throw new FaultException("Error al recuperar la información del jugador.");
             }
         }

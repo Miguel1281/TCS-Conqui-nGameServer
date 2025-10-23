@@ -30,7 +30,9 @@ namespace ConquiánServidor.Utilities.Email.Templates
                     <h2>Recuperación de Contraseña</h2>
                     <p>Hemos recibido una solicitud para reiniciar la contraseña de tu cuenta.</p>
                     <p>Usa el siguiente código de verificación para continuar:</p>
-                    <h1 style='color:#3498db;'>{token}</h1>
+                    <div style='background-color: #f0f0f0; padding: 15px; text-align: center;'>
+                    <strong style='font-size: 24px; letter-spacing: 3px;'>{token}</strong>
+                    </div>
                     <p>Este código expira en 15 minutos.</p>
                     <p>Si no solicitaste esto, puedes ignorar este correo de forma segura.</p>
                 </body>

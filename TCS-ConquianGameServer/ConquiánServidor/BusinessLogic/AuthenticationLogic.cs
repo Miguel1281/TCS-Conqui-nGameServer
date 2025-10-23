@@ -140,5 +140,69 @@ namespace ConquiánServidor.BusinessLogic
                 return false;
             }
         }
+
+        public async Task<bool> HandlePasswordRecoveryRequestAsync(string email)
+        {
+            try
+            {
+                var player = await playerRepository.GetPlayerByEmailAsync(email);
+
+                if (player == null || string.IsNullOrEmpty(player.password))
+                {
+                    return false;
+                }
+
+                string recoveryCode = emailService.GenerateVerificationCode();
+                player.verificationCode = recoveryCode;
+                player.codeExpiryDate = DateTime.UtcNow.AddMinutes(15);
+
+                await playerRepository.SaveChangesAsync();
+
+                var emailTemplate = new RecoveryEmailTemplate(recoveryCode);
+                await emailService.SendEmailAsync(player.email, emailTemplate);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error en solicitud de recuperación: " + ex.Message);
+                return false;
+            }
+        }
+
+        public async Task<bool> HandleTokenValidationAsync(string email, string token)
+        {
+            return await VerifyCodeAsync(email, token);
+        }
+
+        public async Task<bool> HandlePasswordResetAsync(string email, string token, string newPassword)
+        {
+            try
+            {
+                if (!await HandleTokenValidationAsync(email, token))
+                {
+                    return false;
+                }
+
+                var player = await playerRepository.GetPlayerByEmailAsync(email);
+                if (player == null)
+                {
+                    return false;
+                }
+
+                player.password = PasswordHasher.hashPassword(newPassword);
+
+                player.verificationCode = null;
+                player.codeExpiryDate = null;
+
+                await playerRepository.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error al reiniciar contraseña: " + ex.Message);
+                return false;
+            }
+        }
     }
 }

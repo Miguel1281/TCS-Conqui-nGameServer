@@ -140,6 +140,7 @@
     <Compile Include="Contracts\ServiceContracts\ILobby.cs" />
     <Compile Include="Contracts\ServiceContracts\ILobbyCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\ILogin.cs" />
+    <Compile Include="Contracts\ServiceContracts\IPasswordRecovery.cs" />
     <Compile Include="Contracts\ServiceContracts\ISignUp.cs" />
     <Compile Include="Contracts\ServiceContracts\IUserProfile.cs" />
     <Compile Include="IService1.cs" />
@@ -149,10 +150,12 @@
     <Compile Include="Services\Invitation.cs" />
     <Compile Include="Services\Lobby.cs" />
     <Compile Include="Services\Login.cs" />
+    <Compile Include="Services\PasswordRecoveryService.cs" />
     <Compile Include="Services\SignUp.cs" />
     <Compile Include="Services\UserProfile.cs" />
     <Compile Include="Utilities\Email\EmailService.cs" />
     <Compile Include="Utilities\Email\IEmailTemplate.cs" />
+    <Compile Include="Utilities\Email\Templates\RecoveryEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
     <Compile Include="Utilities\PasswordHasher.cs" />
   </ItemGroup>

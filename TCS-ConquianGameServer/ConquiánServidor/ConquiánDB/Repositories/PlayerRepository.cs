@@ -1,7 +1,8 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.DataAccess.Abstractions;
+using System;
 using System.Data.Entity;
-using System.Runtime.Remoting.Contexts;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.DataAccess.Repositories

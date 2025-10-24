@@ -22,10 +22,12 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<PlayerDto> GetPlayerByIdAsync(int idPlayer)
         {
+            PlayerDto playerDto = new PlayerDto(); 
             var dbPlayer = await playerRepository.GetPlayerByIdAsync(idPlayer);
+
             if (dbPlayer != null)
             {
-                return new PlayerDto
+                playerDto = new PlayerDto
                 {
                     idPlayer = dbPlayer.idPlayer,
                     name = dbPlayer.name,
@@ -36,7 +38,7 @@ namespace ConquiánServidor.BusinessLogic
                     pathPhoto = dbPlayer.pathPhoto,
                 };
             }
-            return null;
+            return playerDto; 
         }
 
         public async Task<List<SocialDto>> GetPlayerSocialsAsync(int idPlayer)
@@ -52,64 +54,69 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<bool> UpdatePlayerAsync(PlayerDto playerDto)
         {
-            if (playerDto == null) return false;
-
-            var playerToUpdate = await playerRepository.GetPlayerByIdAsync(playerDto.idPlayer);
-            if (playerToUpdate != null)
+            bool success = false; 
+            if (playerDto != null)
             {
-                playerToUpdate.name = playerDto.name;
-                playerToUpdate.lastName = playerDto.lastName;
-                playerToUpdate.nickname = playerDto.nickname;
-                playerToUpdate.pathPhoto = playerDto.pathPhoto;
-
-                if (!string.IsNullOrEmpty(playerDto.password))
+                var playerToUpdate = await playerRepository.GetPlayerByIdAsync(playerDto.idPlayer);
+                if (playerToUpdate != null)
                 {
-                    playerToUpdate.password = PasswordHasher.hashPassword(playerDto.password);
-                }
+                    playerToUpdate.name = playerDto.name;
+                    playerToUpdate.lastName = playerDto.lastName;
+                    playerToUpdate.nickname = playerDto.nickname;
+                    playerToUpdate.pathPhoto = playerDto.pathPhoto;
 
-                await playerRepository.SaveChangesAsync();
-                return true;
+                    if (!string.IsNullOrEmpty(playerDto.password))
+                    {
+                        playerToUpdate.password = PasswordHasher.hashPassword(playerDto.password);
+                    }
+
+                    await playerRepository.SaveChangesAsync();
+                    success = true;
+                }
             }
-            return false;
+            return success; 
         }
 
         public async Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socialDtos)
         {
-            if (socialDtos == null) return false;
-
-            var playerExists = await socialRepository.DoesPlayerExistAsync(idPlayer);
-            if (!playerExists)
+            bool success = false; 
+            if (socialDtos != null)
             {
-                return false;
-            }
-
-            var existingSocials = await socialRepository.GetSocialsByPlayerIdAsync(idPlayer);
-            socialRepository.RemoveSocialsRange(existingSocials);
-
-            foreach (var socialDto in socialDtos)
-            {
-                socialRepository.AddSocial(new ConquiánDB.Social
+                var playerExists = await socialRepository.DoesPlayerExistAsync(idPlayer);
+                if (playerExists)
                 {
-                    idPlayer = idPlayer,
-                    idSocialType = socialDto.IdSocialType,
-                    userLink = socialDto.UserLink
-                });
-            }
+                    var existingSocials = await socialRepository.GetSocialsByPlayerIdAsync(idPlayer);
+                    socialRepository.RemoveSocialsRange(existingSocials);
 
-            await socialRepository.SaveChangesAsync();
-            return true;
+                    foreach (var socialDto in socialDtos)
+                    {
+                        socialRepository.AddSocial(new ConquiánDB.Social
+                        {
+                            idPlayer = idPlayer,
+                            idSocialType = socialDto.IdSocialType,
+                            userLink = socialDto.UserLink
+                        });
+                    }
+
+                    await socialRepository.SaveChangesAsync();
+                    success = true;
+                }
+            }
+            return success; 
         }
 
         public async Task<bool> UpdateProfilePictureAsync(int idPlayer, string newPath)
         {
+            bool success = false; 
             var playerToUpdate = await playerRepository.GetPlayerByIdAsync(idPlayer);
+
             if (playerToUpdate != null)
             {
                 playerToUpdate.pathPhoto = newPath;
                 await playerRepository.SaveChangesAsync();
-                return true;
+                success = true;
             }
-            return false;
+            return success; 
         }
     }
 }

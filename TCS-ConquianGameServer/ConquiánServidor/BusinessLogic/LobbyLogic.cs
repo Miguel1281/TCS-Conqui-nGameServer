@@ -20,11 +20,12 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
         {
+            LobbyDto lobbyDto = new LobbyDto(); 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
 
             if (lobby != null)
             {
-                return new LobbyDto
+                lobbyDto = new LobbyDto
                 {
                     RoomCode = lobby.roomCode,
                     idHostPlayer = lobby.idHostPlayer,
@@ -35,98 +36,101 @@ namespace ConquiánServidor.BusinessLogic
                         nickname = p.nickname,
                         pathPhoto = p.pathPhoto
                     }).ToList(),
-                    ChatMessages = new System.Collections.Generic.List<MessageDto>() 
+                    ChatMessages = new System.Collections.Generic.List<MessageDto>()
                 };
             }
-            return null;
+            return lobbyDto; 
         }
 
         public async Task<string> CreateLobbyAsync(int idHostPlayer)
         {
+            string newRoomCode = string.Empty; 
             var hostPlayer = await playerRepository.GetPlayerByIdAsync(idHostPlayer);
-            if (hostPlayer == null)
+
+            if (hostPlayer != null)
             {
-                return null;
+                string generatedCode;
+                do
+                {
+                    generatedCode = GenerateRandomCode();
+                }
+                while (await lobbyRepository.DoesRoomCodeExistAsync(generatedCode));
+
+                newRoomCode = generatedCode; 
+
+                var newLobby = new ConquiánDB.Lobby()
+                {
+                    roomCode = newRoomCode,
+                    idHostPlayer = idHostPlayer,
+                    idStatusLobby = 1,
+                    creationDate = DateTime.UtcNow
+                };
+
+                newLobby.Player1.Add(hostPlayer);
+                lobbyRepository.AddLobby(newLobby);
+                await lobbyRepository.SaveChangesAsync();
             }
 
-            string newRoomCode;
-            do
-            {
-                newRoomCode = GenerateRandomCode();
-            }
-            while (await lobbyRepository.DoesRoomCodeExistAsync(newRoomCode));
-
-            var newLobby = new ConquiánDB.Lobby()
-            {
-                roomCode = newRoomCode,
-                idHostPlayer = idHostPlayer,
-                idStatusLobby = 1, 
-                creationDate = DateTime.UtcNow
-            };
-
-            newLobby.Player1.Add(hostPlayer);
-            lobbyRepository.AddLobby(newLobby);
-            await lobbyRepository.SaveChangesAsync();
-
-            return newRoomCode;
+            return newRoomCode; 
         }
 
         public async Task<PlayerDto> JoinLobbyAsync(string roomCode, int idPlayer)
         {
+            PlayerDto playerDto = new PlayerDto(); 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             var playerToJoin = await playerRepository.GetPlayerByIdAsync(idPlayer);
 
-            if (lobby == null || playerToJoin == null)
+            if (lobby != null && playerToJoin != null)
             {
-                return null; 
+                bool isAlreadyInLobby = lobby.Player1.Any(p => p.idPlayer == idPlayer);
+                bool isFull = lobby.Player1.Count >= 2;
+                bool isOpen = lobby.idStatusLobby == 1;
+
+                if ((!isFull && isOpen) || isAlreadyInLobby)
+                {
+                    if (!isAlreadyInLobby)
+                    {
+                        lobby.Player1.Add(playerToJoin);
+                        await lobbyRepository.SaveChangesAsync();
+                    }
+
+                    playerDto = new PlayerDto
+                    {
+                        idPlayer = playerToJoin.idPlayer,
+                        nickname = playerToJoin.nickname,
+                        pathPhoto = playerToJoin.pathPhoto
+                    };
+                }
             }
 
-            bool isAlreadyInLobby = lobby.Player1.Any(p => p.idPlayer == idPlayer);
-
-            if (lobby.Player1.Count >= 2 && !isAlreadyInLobby)
-            {
-                return null; 
-            }
-            if (lobby.idStatusLobby != 1) 
-            {
-                return null; 
-            }
-
-            if (!isAlreadyInLobby)
-            {
-                lobby.Player1.Add(playerToJoin);
-                await lobbyRepository.SaveChangesAsync();
-            }
-
-            return new PlayerDto
-            {
-                idPlayer = playerToJoin.idPlayer,
-                nickname = playerToJoin.nickname,
-                pathPhoto = playerToJoin.pathPhoto
-            };
+            return playerDto; 
         }
 
         public async Task<bool> LeaveLobbyAsync(string roomCode, int idPlayer)
         {
+            bool wasHost = false; 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
-            if (lobby == null) return false;
 
-            bool isHost = lobby.idHostPlayer == idPlayer;
+            if (lobby != null)
+            {
+                wasHost = lobby.idHostPlayer == idPlayer;
 
-            if (isHost)
-            {
-                lobby.idStatusLobby = 3; 
-            }
-            else
-            {
-                var playerToRemove = lobby.Player1.FirstOrDefault(p => p.idPlayer == idPlayer);
-                if (playerToRemove != null)
+                if (wasHost)
                 {
-                    lobby.Player1.Remove(playerToRemove);
+                    lobby.idStatusLobby = 3;
                 }
+                else
+                {
+                    var playerToRemove = lobby.Player1.FirstOrDefault(p => p.idPlayer == idPlayer);
+                    if (playerToRemove != null)
+                    {
+                        lobby.Player1.Remove(playerToRemove);
+                    }
+                }
+                await lobbyRepository.SaveChangesAsync();
             }
-            await lobbyRepository.SaveChangesAsync();
-            return isHost;
+
+            return wasHost; 
         }
 
         private string GenerateRandomCode(int length = 5)

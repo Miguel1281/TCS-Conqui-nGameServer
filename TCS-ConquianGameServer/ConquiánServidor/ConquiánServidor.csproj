@@ -76,6 +76,7 @@
     <Compile Include="BusinessLogic\InvitationManager.cs" />
     <Compile Include="BusinessLogic\LobbyLogic.cs" />
     <Compile Include="BusinessLogic\UserProfileLogic.cs" />
+    <Compile Include="BusinessLogic\Validation\SignUpServerValidator.cs" />
     <Compile Include="ConquiánDB\Abstractions\IFriendshipRepository.cs" />
     <Compile Include="ConquiánDB\Abstractions\ILobbyRepository.cs" />
     <Compile Include="ConquiánDB\Abstractions\IPlayerRepository.cs" />
@@ -170,7 +171,6 @@
     </None>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>

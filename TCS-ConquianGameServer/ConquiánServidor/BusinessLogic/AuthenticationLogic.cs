@@ -1,10 +1,12 @@
-﻿using ConquiánServidor.ConquiánDB;
+﻿using ConquiánServidor.BusinessLogic.Validation;
+using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
 
@@ -52,6 +54,27 @@ namespace ConquiánServidor.BusinessLogic
         public async Task<bool> RegisterPlayerAsync(PlayerDto finalPlayerData)
         {
             bool success = false;
+            List<string> validationErrors = new List<string>();
+            validationErrors.Add(SignUpServerValidator.ValidateName(finalPlayerData.name));
+            validationErrors.Add(SignUpServerValidator.ValidateLastName(finalPlayerData.lastName));
+            validationErrors.Add(SignUpServerValidator.ValidateNickname(finalPlayerData.nickname));
+            validationErrors.Add(SignUpServerValidator.ValidatePassword(finalPlayerData.password));
+            bool hasErrors = false;
+
+            foreach (string error in validationErrors)
+            {
+                if (!string.IsNullOrEmpty(error))
+                {
+                    hasErrors = true;
+                    break;
+                }
+            }
+
+            if (hasErrors)
+            {
+                return success;
+            }
+
             try
             {
                 var nicknameExists = await playerRepository.DoesNicknameExistAsync(finalPlayerData.nickname);
@@ -77,13 +100,21 @@ namespace ConquiánServidor.BusinessLogic
             catch (SqlException ex)
             {
                 Console.WriteLine("Error de SQL: " + ex.Message);
+                success = false;
             }
-            return success; 
+            return success;
         }
 
         public async Task<string> SendVerificationCodeAsync(string email)
         {
-            string result = string.Empty; 
+            string result = string.Empty;
+
+            string emailError = SignUpServerValidator.ValidateEmail(email);
+            if (!string.IsNullOrEmpty(emailError))
+            {
+                return result; 
+            }
+
             var existingPlayer = await playerRepository.GetPlayerForVerificationAsync(email);
             if (existingPlayer != null)
             {
@@ -118,7 +149,7 @@ namespace ConquiánServidor.BusinessLogic
                     Console.WriteLine("Error al enviar correo: " + ex.Message);
                 }
             }
-            return result; 
+            return result;
         }
 
         public async Task<bool> VerifyCodeAsync(string email, string code)
@@ -174,9 +205,15 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<bool> HandlePasswordResetAsync(string email, string token, string newPassword)
         {
-            bool success = false; 
+            bool success = false;
             try
             {
+                string passwordError = SignUpServerValidator.ValidatePassword(newPassword);
+                if (!string.IsNullOrEmpty(passwordError))
+                {
+                    return success;
+                }
+
                 if (await HandleTokenValidationAsync(email, token))
                 {
                     var player = await playerRepository.GetPlayerByEmailAsync(email);
@@ -195,7 +232,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 Console.WriteLine("Error al reiniciar contraseña: " + ex.Message);
             }
-            return success; 
+            return success;
         }
     }
 }

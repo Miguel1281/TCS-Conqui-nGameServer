@@ -75,6 +75,7 @@
     <Compile Include="BusinessLogic\FriendshipLogic.cs" />
     <Compile Include="BusinessLogic\InvitationManager.cs" />
     <Compile Include="BusinessLogic\LobbyLogic.cs" />
+    <Compile Include="BusinessLogic\PresenceManager.cs" />
     <Compile Include="BusinessLogic\UserProfileLogic.cs" />
     <Compile Include="BusinessLogic\Validation\SignUpServerValidator.cs" />
     <Compile Include="ConquiánDB\Abstractions\IFriendshipRepository.cs" />
@@ -142,6 +143,8 @@
     <Compile Include="Contracts\ServiceContracts\ILobbyCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\ILogin.cs" />
     <Compile Include="Contracts\ServiceContracts\IPasswordRecovery.cs" />
+    <Compile Include="Contracts\ServiceContracts\IPresence.cs" />
+    <Compile Include="Contracts\ServiceContracts\IPresenceCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\ISignUp.cs" />
     <Compile Include="Contracts\ServiceContracts\IUserProfile.cs" />
     <Compile Include="IService1.cs" />
@@ -152,6 +155,7 @@
     <Compile Include="Services\Lobby.cs" />
     <Compile Include="Services\Login.cs" />
     <Compile Include="Services\PasswordRecoveryService.cs" />
+    <Compile Include="Services\Presence.cs" />
     <Compile Include="Services\SignUp.cs" />
     <Compile Include="Services\UserProfile.cs" />
     <Compile Include="Utilities\Email\EmailService.cs" />

@@ -5,6 +5,7 @@ using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
+using ConquiánServidor.BusinessLogic;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
@@ -31,6 +32,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 playerFromDb.IdStatus = 1;
                 await playerRepository.SaveChangesAsync();
+                await PresenceManager.Instance.NotifyStatusChange(playerFromDb.idPlayer, 1);
                 playerDto = new PlayerDto
                 {
                     idPlayer = playerFromDb.idPlayer,
@@ -48,6 +50,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 playerFromDb.IdStatus = 2;
                 await playerRepository.SaveChangesAsync();
+                await PresenceManager.Instance.NotifyStatusChange(idPlayer, 2);
             }
         }
 

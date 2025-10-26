@@ -21,17 +21,26 @@ namespace ConquiánServidor.BusinessLogic
         public async Task<List<PlayerDto>> GetFriendsAsync(int idPlayer)
         {
             var friends = await friendshipRepository.GetFriendsAsync(idPlayer);
+            var friendDtos = new List<PlayerDto>();
 
-            return friends.Select(p => new PlayerDto
+            foreach (var p in friends)
             {
-                idPlayer = p.idPlayer,
-                nickname = p.nickname,
-                pathPhoto = p.pathPhoto,
-                idStatus = (int)p.IdStatus,
-                level = p.level
-            }).ToList();
-        }
+                bool isOnline = PresenceManager.Instance.IsPlayerOnline(p.idPlayer);
 
+                friendDtos.Add(new PlayerDto
+                {
+                    idPlayer = p.idPlayer,
+                    nickname = p.nickname,
+                    pathPhoto = p.pathPhoto,
+                    IsOnline = isOnline,        
+                    idStatus = isOnline ? 1 : 2, 
+
+                    level = p.level
+                });
+            }
+
+            return friendDtos;
+        }
         public async Task<List<FriendRequestDto>> GetFriendRequestsAsync(int idPlayer)
         {
             var requests = await friendshipRepository.GetFriendRequestsAsync(idPlayer);

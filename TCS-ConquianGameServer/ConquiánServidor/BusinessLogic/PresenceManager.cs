@@ -27,6 +27,14 @@ namespace ConquiánServidor.BusinessLogic
             friendshipLogic = new FriendshipLogic(friendshipRepository, playerRepository);
         }
 
+        public bool IsPlayerOnline(int idPlayer)
+        {
+            lock (lockObj)
+            {
+                return onlineSubscribers.ContainsKey(idPlayer);
+            }
+        }
+
         public void Subscribe(int idPlayer, IPresenceCallback callback)
         {
             lock (lockObj)

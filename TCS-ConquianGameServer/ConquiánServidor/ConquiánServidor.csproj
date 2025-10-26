@@ -161,6 +161,7 @@
     <Compile Include="Services\UserProfile.cs" />
     <Compile Include="Utilities\Email\EmailService.cs" />
     <Compile Include="Utilities\Email\IEmailTemplate.cs" />
+    <Compile Include="Utilities\Email\Templates\ChangePasswordEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\RecoveryEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
     <Compile Include="Utilities\PasswordHasher.cs" />

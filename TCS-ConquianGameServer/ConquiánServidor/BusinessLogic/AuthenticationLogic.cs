@@ -107,7 +107,30 @@ namespace ConquiánServidor.BusinessLogic
             }
             return success;
         }
+        public async Task<string> GenerateAndStoreRecoveryTokenAsync(string email)
+        {
+            try
+            {
+                var player = await playerRepository.GetPlayerByEmailAsync(email);
 
+                if (player != null && !string.IsNullOrEmpty(player.password))
+                {
+                    string recoveryCode = emailService.GenerateVerificationCode();
+
+                    player.verificationCode = recoveryCode;
+                    player.codeExpiryDate = DateTime.UtcNow.AddMinutes(1); 
+
+                    await playerRepository.SaveChangesAsync();
+
+                    return recoveryCode; 
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error en GenerateAndStoreRecoveryTokenAsync: " + ex.Message);
+            }
+            return null; 
+        }
         public async Task<string> SendVerificationCodeAsync(string email)
         {
             string result = string.Empty;
@@ -175,22 +198,15 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<bool> HandlePasswordRecoveryRequestAsync(string email)
         {
-            bool success = false; 
+            bool success = false;
             try
             {
-                var player = await playerRepository.GetPlayerByEmailAsync(email);
+                string recoveryCode = await GenerateAndStoreRecoveryTokenAsync(email);
 
-                if (player != null && !string.IsNullOrEmpty(player.password))
+                if (!string.IsNullOrEmpty(recoveryCode))
                 {
-                    string recoveryCode = emailService.GenerateVerificationCode();
-                    player.verificationCode = recoveryCode;
-                    player.codeExpiryDate = DateTime.UtcNow.AddMinutes(15);
-
-                    await playerRepository.SaveChangesAsync();
-
                     var emailTemplate = new RecoveryEmailTemplate(recoveryCode);
-                    await emailService.SendEmailAsync(player.email, emailTemplate);
-
+                    await emailService.SendEmailAsync(email, emailTemplate);
                     success = true;
                 }
             }
@@ -198,7 +214,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 Console.WriteLine("Error en solicitud de recuperación: " + ex.Message);
             }
-            return success; 
+            return success;
         }
 
         public async Task<bool> HandleTokenValidationAsync(string email, string token)

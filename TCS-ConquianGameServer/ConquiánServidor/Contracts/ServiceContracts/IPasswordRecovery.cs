@@ -11,7 +11,7 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     public interface IPasswordRecovery
     {
         [OperationContract]
-        Task<bool> RequestPasswordRecoveryAsync(string email);
+        Task<bool> RequestPasswordRecoveryAsync(string email, int mode);
 
         [OperationContract]
         Task<bool> ValidateRecoveryTokenAsync(string email, string token);

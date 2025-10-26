@@ -32,9 +32,7 @@ namespace ConquiánServidor.BusinessLogic
                     idPlayer = p.idPlayer,
                     nickname = p.nickname,
                     pathPhoto = p.pathPhoto,
-                    IsOnline = isOnline,        
                     idStatus = isOnline ? 1 : 2, 
-
                     level = p.level
                 });
             }

@@ -136,6 +136,7 @@
     <Compile Include="Contracts\DataContracts\MessageDto.cs" />
     <Compile Include="Contracts\DataContracts\PlayerDto.cs" />
     <Compile Include="Contracts\DataContracts\SocialDto.cs" />
+    <Compile Include="Contracts\FaultContracts\SessionActiveFault.cs" />
     <Compile Include="Contracts\ServiceContracts\IFriendList.cs" />
     <Compile Include="Contracts\ServiceContracts\IInvitationCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\IInvitationService.cs" />

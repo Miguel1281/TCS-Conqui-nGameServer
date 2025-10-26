@@ -39,8 +39,5 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public int? idStatus { get; set; }
-
-        [DataMember]
-        public bool IsOnline { get; set; }
     }
 }

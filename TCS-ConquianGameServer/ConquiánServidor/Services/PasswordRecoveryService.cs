@@ -2,7 +2,7 @@
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories;
+using ConquiánServidor.DataAccess.Repositories; // Asumo que PlayerRepository está aquí
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
@@ -24,14 +24,16 @@ namespace ConquiánServidor.Services
             Change = 1
         }
         private readonly AuthenticationLogic authLogic;
-        private readonly EmailService emailService;
+
+        private readonly IEmailService emailService;
 
         public PasswordRecoveryService()
         {
             var dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            this.authLogic = new AuthenticationLogic(playerRepository);
-            this.emailService = new EmailService();
+            IEmailService emailServiceInstance = new EmailService();
+            this.authLogic = new AuthenticationLogic(playerRepository, emailServiceInstance);
+            this.emailService = emailServiceInstance;
         }
 
         public async Task<bool> RequestPasswordRecoveryAsync(string email, int mode)
@@ -42,7 +44,7 @@ namespace ConquiánServidor.Services
 
                 if (string.IsNullOrEmpty(token))
                 {
-                    return false; 
+                    return false;
                 }
 
                 IEmailTemplate emailTemplate;
@@ -51,7 +53,7 @@ namespace ConquiánServidor.Services
                 {
                     emailTemplate = new ChangePasswordEmailTemplate(token);
                 }
-                else 
+                else
                 {
                     emailTemplate = new RecoveryEmailTemplate(token);
                 }

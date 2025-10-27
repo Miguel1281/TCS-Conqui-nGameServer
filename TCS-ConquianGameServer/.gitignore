@@ -417,5 +417,5 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-#Credenciales de conexion a BD
+#Credenciales de conexion a Email
 credentials.config

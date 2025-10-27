@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic.Validation
 {
@@ -15,6 +11,15 @@ namespace ConquiánServidor.BusinessLogic.Validation
         private const int MAX_EMAIL_LENGTH = 45;
         private const int MIN_PASSWORD_LENGTH = 8;
         private const int MAX_PASSWORD_LENGTH = 15;
+
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(250);
+
+        private const string NamePattern = @"^[a-zA-Z\s]+$";
+        private const string LastNamePattern = @"^[a-zA-Z\s]+$";
+        private const string NicknamePattern = @"^[a-zA-Z0-9]+$";
+        private const string EmailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$";
+        private const string UppercasePattern = @"[A-Z]";
+        private const string SpecialCharPattern = @"[!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]";
 
         public const string ERROR_NAME_EMPTY = "ERROR_NAME_EMPTY";
         public const string ERROR_NAME_LENGTH = "ERROR_NAME_LENGTH";
@@ -34,6 +39,18 @@ namespace ConquiánServidor.BusinessLogic.Validation
         public const string ERROR_PASSWORD_NO_UPPERCASE = "ERROR_PASSWORD_NO_UPPERCASE";
         public const string ERROR_PASSWORD_NO_SPECIAL_CHAR = "ERROR_PASSWORD_NO_SPECIAL_CHAR";
 
+        private static bool IsMatchWithTimeout(string input, string pattern)
+        {
+            try
+            {
+                return Regex.IsMatch(input, pattern, RegexOptions.None, RegexTimeout);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return false;
+            }
+        }
+
         public static string ValidateName(string name)
         {
             if (string.IsNullOrEmpty(name))
@@ -44,7 +61,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
             {
                 return ERROR_NAME_LENGTH;
             }
-            if (!Regex.IsMatch(name, @"^[a-zA-Z\s]+$"))
+            if (!IsMatchWithTimeout(name, NamePattern))
             {
                 return ERROR_VALID_NAME;
             }
@@ -62,7 +79,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
             {
                 return ERROR_LAST_NAME_LENGTH;
             }
-            if (!Regex.IsMatch(lastName, @"^[a-zA-Z\s]+$"))
+            if (!IsMatchWithTimeout(lastName, LastNamePattern))
             {
                 return ERROR_LAST_NAME_INVALID_CHARS;
             }
@@ -80,7 +97,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
             {
                 return ERROR_NICKNAME_LENGTH;
             }
-            if (!Regex.IsMatch(nickname, @"^[a-zA-Z0-9]+$"))
+            if (!IsMatchWithTimeout(nickname, NicknamePattern))
             {
                 return ERROR_NICKNAME_INVALID_CHARS;
             }
@@ -98,8 +115,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
             {
                 return ERROR_EMAIL_LENGTH;
             }
-            string emailPattern = @"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$";
-            if (!Regex.IsMatch(email, emailPattern))
+            if (!IsMatchWithTimeout(email, EmailPattern))
             {
                 return ERROR_EMAIL_INVALID_FORMAT;
             }
@@ -120,11 +136,11 @@ namespace ConquiánServidor.BusinessLogic.Validation
             {
                 return ERROR_PASSWORD_NO_SPACES;
             }
-            if (!Regex.IsMatch(password, @"[A-Z]"))
+            if (!IsMatchWithTimeout(password, UppercasePattern))
             {
                 return ERROR_PASSWORD_NO_UPPERCASE;
             }
-            if (!Regex.IsMatch(password, @"[!@#$%^&*()_+\-=\[\]{};':""\\|,.<>\/?]"))
+            if (!IsMatchWithTimeout(password, SpecialCharPattern))
             {
                 return ERROR_PASSWORD_NO_SPECIAL_CHAR;
             }

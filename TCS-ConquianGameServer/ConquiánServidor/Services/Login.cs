@@ -5,6 +5,7 @@ using ConquiánServidor.Contracts.FaultContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
+using ConquiánServidor.Utilities.Email;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -20,7 +21,8 @@ namespace ConquiánServidor.Services
             var dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);
             this.playerRepository = playerRepository;
-            authLogic = new AuthenticationLogic(playerRepository);
+            IEmailService emailService = new EmailService();
+            authLogic = new AuthenticationLogic(playerRepository, emailService);
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)

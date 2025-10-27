@@ -16,11 +16,11 @@ namespace ConquiánServidor.BusinessLogic
     public class AuthenticationLogic
     {
         private readonly IPlayerRepository playerRepository;
-        private readonly EmailService emailService = new EmailService();
-
-        public AuthenticationLogic(IPlayerRepository playerRepository)
+        private readonly IEmailService emailService;
+        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService)
         {
             this.playerRepository = playerRepository;
+            this.emailService = emailService;
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)

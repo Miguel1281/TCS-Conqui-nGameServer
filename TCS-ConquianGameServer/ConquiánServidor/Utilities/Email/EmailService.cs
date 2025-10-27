@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
-using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
 
 namespace ConquiánServidor.Utilities.Email
 {
-    public class EmailService
+    public class EmailService : IEmailService
     {
         public string GenerateVerificationCode()
         {
@@ -19,8 +18,8 @@ namespace ConquiánServidor.Utilities.Email
         } 
         public async Task SendEmailAsync(string toEmail, IEmailTemplate template)
         {
-            string fromMail = "proyectoconquian@gmail.com";
-            string fromPassword = "maey tztt bnka oses";
+            string fromMail = ConfigurationManager.AppSettings["EmailUser"];
+            string fromPassword = ConfigurationManager.AppSettings["EmailPassword"];
 
             MailMessage message = new MailMessage();
             message.From = new MailAddress(fromMail);

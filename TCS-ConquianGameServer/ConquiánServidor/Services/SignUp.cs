@@ -1,9 +1,10 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
-using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Utilities.Email;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.Services
@@ -16,7 +17,8 @@ namespace ConquiánServidor.Services
         {
             var dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            authLogic = new AuthenticationLogic(playerRepository);
+            IEmailService emailService = new EmailService();
+            authLogic = new AuthenticationLogic(playerRepository, emailService);
         }
 
         public async Task<bool> RegisterPlayerAsync(PlayerDto finalPlayerData)

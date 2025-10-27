@@ -2,6 +2,7 @@
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.Utilities.Email;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -16,24 +17,22 @@ namespace ConquiánServidor.Tests
     {
         private readonly Mock<IPlayerRepository> mockPlayerRepository;
         private readonly AuthenticationLogic authLogic;
+        private readonly Mock<IEmailService> mockEmailService;
 
         public AuthenticationLogicTests()
         {
-            // Arrange global
             mockPlayerRepository = new Mock<IPlayerRepository>();
-            authLogic = new AuthenticationLogic(mockPlayerRepository.Object);
+            mockEmailService = new Mock<IEmailService>();
+            authLogic = new AuthenticationLogic(mockPlayerRepository.Object, mockEmailService.Object);
         }
 
         [Fact]
         public async Task SendVerificationCodeAsync_ShouldReturnEmptyString_WhenEmailFormatIsInvalid()
         {
-            // Arrange
             string invalidEmail = "correo-invalido.com";
 
-            // Act
             string result = await authLogic.SendVerificationCodeAsync(invalidEmail);
 
-            // Assert
             Assert.Equal(string.Empty, result);
             mockPlayerRepository.Verify(r => r.GetPlayerForVerificationAsync(It.IsAny<string>()), Times.Never());
         }
@@ -41,24 +40,21 @@ namespace ConquiánServidor.Tests
         [Fact]
         public async Task SendVerificationCodeAsync_ShouldReturnError_WhenEmailAlreadyExists()
         {
-            // Arrange
             string existingEmail = "yaexiste@dominio.com";
 
             mockPlayerRepository.Setup(r => r.GetPlayerForVerificationAsync(existingEmail))
                                 .ReturnsAsync(new Player()); //
 
-            // Act
             string result = await authLogic.SendVerificationCodeAsync(existingEmail);
 
-            // Assert
             Assert.Equal("ERROR_EMAIL_EXISTS", result);
         }
 
         [Fact]
         public async Task SendVerificationCodeAsync_ShouldReturnCode_WhenEmailIsNew()
         {
-            // Arrange
             string newEmail = "nuevo@dominio.com";
+            string testCode = "123456";
 
             mockPlayerRepository.Setup(r => r.GetPlayerForVerificationAsync(newEmail))
                                 .ReturnsAsync((Player)null);
@@ -66,23 +62,28 @@ namespace ConquiánServidor.Tests
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(newEmail))
                                 .ReturnsAsync((Player)null);
 
-            // Act
+            mockEmailService.Setup(s => s.GenerateVerificationCode()).Returns(testCode);
+
+            mockEmailService.Setup(s => s.SendEmailAsync(It.IsAny<string>(), It.IsAny<IEmailTemplate>()))
+                            .Returns(Task.CompletedTask);
+
             string result = await authLogic.SendVerificationCodeAsync(newEmail);
 
-            // Assert
+            Assert.Equal(testCode, result); 
+
             Assert.NotEqual(string.Empty, result);
             Assert.NotEqual("ERROR_EMAIL_EXISTS", result);
-            Assert.True(result.Length > 0);
 
             mockPlayerRepository.Verify(r => r.AddPlayer(It.IsAny<Player>()), Times.Once());
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Once());
+
+            mockEmailService.Verify(s => s.SendEmailAsync(newEmail, It.IsAny<IEmailTemplate>()), Times.Once());
         }
 
 
         [Fact]
         public async Task VerifyCodeAsync_ShouldReturnTrue_WhenCodeIsValidAndNotExpired()
         {
-            // Arrange
             string email = "test@dominio.com";
             string code = "123456";
             var player = new Player //
@@ -94,10 +95,8 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            // Act
             bool result = await authLogic.VerifyCodeAsync(email, code);
 
-            // Assert
             Assert.True(result);
         }
 
@@ -106,7 +105,6 @@ namespace ConquiánServidor.Tests
         [InlineData("123456", "wrong-code")]
         public async Task VerifyCodeAsync_ShouldReturnFalse_WhenCodeIsInvalid(string playerCode, string providedCode)
         {
-            // Arrange
             string email = "test@dominio.com";
             var player = new Player //
             {
@@ -117,20 +115,17 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            // Act
             bool result = await authLogic.VerifyCodeAsync(email, providedCode);
 
-            // Assert
             Assert.False(result);
         }
 
         [Fact]
         public async Task VerifyCodeAsync_ShouldReturnFalse_WhenCodeIsExpired()
         {
-            // Arrange
             string email = "test@dominio.com";
             string code = "123456";
-            var player = new Player //
+            var player = new Player
             {
                 email = email,
                 verificationCode = code,
@@ -139,17 +134,14 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            // Act
             bool result = await authLogic.VerifyCodeAsync(email, code);
 
-            // Assert
             Assert.False(result);
         }
 
         [Fact]
         public async Task RegisterPlayerAsync_ShouldReturnFalse_WhenValidationFails()
         {
-            // Arrange
             var invalidDto = new PlayerDto
             {
                 name = "NombreValido",
@@ -159,10 +151,8 @@ namespace ConquiánServidor.Tests
                 password = "corta"
             };
 
-            // Act
             bool result = await authLogic.RegisterPlayerAsync(invalidDto);
 
-            // Assert
             Assert.False(result);
             mockPlayerRepository.Verify(r => r.DoesNicknameExistAsync(It.IsAny<string>()), Times.Never());
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Never());
@@ -171,7 +161,6 @@ namespace ConquiánServidor.Tests
         [Fact]
         public async Task RegisterPlayerAsync_ShouldReturnFalse_WhenNicknameAlreadyExists()
         {
-            // Arrange
             var validDto = new PlayerDto //
             {
                 name = "NombreValido",
@@ -183,10 +172,8 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.DoesNicknameExistAsync("NickExistente")).ReturnsAsync(true);
 
-            // Act
             bool result = await authLogic.RegisterPlayerAsync(validDto);
 
-            // Assert
             Assert.False(result);
             mockPlayerRepository.Verify(r => r.DoesNicknameExistAsync("NickExistente"), Times.Once());
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Never());
@@ -195,7 +182,6 @@ namespace ConquiánServidor.Tests
         [Fact]
         public async Task RegisterPlayerAsync_ShouldReturnTrue_WhenDataIsValidAndNew()
         {
-            // Arrange
             var validDto = new PlayerDto //
             {
                 name = "NombreValido",
@@ -209,10 +195,8 @@ namespace ConquiánServidor.Tests
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync("correo@valido.com"))
                                 .ReturnsAsync(new Player()); //
 
-            // Act
             bool result = await authLogic.RegisterPlayerAsync(validDto);
 
-            // Assert
             Assert.True(result);
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Once());
         }

@@ -5,124 +5,141 @@ namespace ConquiánServidor.Tests
 {
     public class SignUpServerValidatorTests
     {
-        [Fact]
-        public void ValidateName_ShouldReturnEmpty_WhenNameIsValid()
+        [Theory]
+        [InlineData("Juan")]
+        [InlineData("Maria Luisa")]
+        [InlineData("a")]
+        [InlineData("Nombre De Veinticinco C")]
+        [InlineData("  Juan")]
+        [InlineData("Juan  ")] 
+        [InlineData("  Juan Carlos  ")] 
+        [InlineData("   ")]
+        public void ValidateName_ShouldReturnEmpty_WhenNameIsValidAccordingToCurrentLogic(string validName)
         {
-            // Arrange
-            string validName = "Juan Carlos";
-
-            // Act
             string result = SignUpServerValidator.ValidateName(validName);
-
-            // Assert
-            Assert.Equal(string.Empty, result);
+            Assert.Empty(result);
         }
 
         [Theory]
         [InlineData(null, SignUpServerValidator.ERROR_NAME_EMPTY)]
         [InlineData("", SignUpServerValidator.ERROR_NAME_EMPTY)]
-        [InlineData("UnNombreDemasiadoLargoQueSuperaLos25", SignUpServerValidator.ERROR_NAME_LENGTH)]
-        [InlineData("NombreConNumer0s", SignUpServerValidator.ERROR_VALID_NAME)]
-        [InlineData("NombreCon$", SignUpServerValidator.ERROR_VALID_NAME)]
+        [InlineData("NombreDemasiadoLargoQueSuperaElLimite", SignUpServerValidator.ERROR_NAME_LENGTH)]
+        [InlineData("Juan123", SignUpServerValidator.ERROR_VALID_NAME)]
+        [InlineData("Pedro!", SignUpServerValidator.ERROR_VALID_NAME)]
         public void ValidateName_ShouldReturnError_WhenNameIsInvalid(string invalidName, string expectedError)
         {
-            // Act
             string result = SignUpServerValidator.ValidateName(invalidName);
-
-            // Assert
             Assert.Equal(expectedError, result);
+        }
+
+        [Theory]
+        [InlineData("Perez")]
+        [InlineData("De La Cruz")]
+        [InlineData("a")]
+        [InlineData("Apellido Muy Largo Que Cumple Cincuenta Caracteres")]
+        [InlineData("  ApellidoConEspacios  ")]
+        public void ValidateLastName_ShouldReturnEmpty_WhenLastNameIsValid(string validLastName)
+        {
+            string result = SignUpServerValidator.ValidateLastName(validLastName);
+            Assert.Empty(result);
         }
 
         [Theory]
         [InlineData(null, SignUpServerValidator.ERROR_LAST_NAME_EMPTY)]
         [InlineData("", SignUpServerValidator.ERROR_LAST_NAME_EMPTY)]
-        [InlineData("UnApellidoDemasiadoLargoQueSuperaLosCincuentaCaracteresDefinitivamente", SignUpServerValidator.ERROR_LAST_NAME_LENGTH)]
-        [InlineData("ApellidoConNumer0s", SignUpServerValidator.ERROR_LAST_NAME_INVALID_CHARS)]
-        [InlineData("ApellidoCon$", SignUpServerValidator.ERROR_LAST_NAME_INVALID_CHARS)]
+        [InlineData("   ", SignUpServerValidator.ERROR_LAST_NAME_INVALID_CHARS)]
+        [InlineData("ApellidoExcesivamenteLargoQueSuperaLosCincuentaCaracteresPermitidos", SignUpServerValidator.ERROR_LAST_NAME_LENGTH)]
+        [InlineData("Gomez9", SignUpServerValidator.ERROR_LAST_NAME_INVALID_CHARS)]
+        [InlineData("Nuñez", SignUpServerValidator.ERROR_LAST_NAME_INVALID_CHARS)] 
+        [InlineData("O'Malley", SignUpServerValidator.ERROR_LAST_NAME_INVALID_CHARS)]
+        [InlineData("García", SignUpServerValidator.ERROR_LAST_NAME_INVALID_CHARS)]
         public void ValidateLastName_ShouldReturnError_WhenLastNameIsInvalid(string invalidLastName, string expectedError)
         {
-            // Act
             string result = SignUpServerValidator.ValidateLastName(invalidLastName);
-            // Assert
             Assert.Equal(expectedError, result);
         }
 
-        [Fact]
-        public void ValidateNickname_ShouldReturnEmpty_WhenNicknameIsValid()
+        [Theory]
+        [InlineData("Player1")]
+        [InlineData("Nickname")]
+        [InlineData("a")]
+        [InlineData("NickCon15Chars")]
+        [InlineData("  NickEspacios  ")]
+        public void ValidateNickname_ShouldReturnEmpty_WhenNicknameIsValid(string validNickname)
         {
-            // Arrange
-            string validNickname = "SeniorDev123";
-
-            // Act
             string result = SignUpServerValidator.ValidateNickname(validNickname);
-
-            // Assert
-            Assert.Equal(string.Empty, result);
+            Assert.Empty(result);
         }
 
         [Theory]
         [InlineData(null, SignUpServerValidator.ERROR_NICKNAME_EMPTY)]
         [InlineData("", SignUpServerValidator.ERROR_NICKNAME_EMPTY)]
-        [InlineData("UnNickDemasiadoLargo123456", SignUpServerValidator.ERROR_NICKNAME_LENGTH)]
-        [InlineData("e spa ci o", SignUpServerValidator.ERROR_NICKNAME_INVALID_CHARS)]
-        [InlineData("NickCon$", SignUpServerValidator.ERROR_NICKNAME_INVALID_CHARS)]
+        [InlineData("   ", SignUpServerValidator.ERROR_NICKNAME_INVALID_CHARS)]
+        [InlineData("EsteNickEsDemasiadoLargo", SignUpServerValidator.ERROR_NICKNAME_LENGTH)]
+        [InlineData("Nick Con Espacio", SignUpServerValidator.ERROR_NICKNAME_LENGTH)]
+        [InlineData("Nick-Guion", SignUpServerValidator.ERROR_NICKNAME_INVALID_CHARS)]
+        [InlineData("Ñandú", SignUpServerValidator.ERROR_NICKNAME_INVALID_CHARS)]
         public void ValidateNickname_ShouldReturnError_WhenNicknameIsInvalid(string invalidNickname, string expectedError)
         {
-            // Act
             string result = SignUpServerValidator.ValidateNickname(invalidNickname);
-
-            // Assert
             Assert.Equal(expectedError, result);
         }
 
-        [Fact]
-        public void ValidateEmail_ShouldReturnEmpty_WhenEmailIsValid()
+        [Theory]
+        [InlineData("test@example.com")]
+        [InlineData("usuario.apellido@dominio.co")]
+        [InlineData("a@b.co")]
+        [InlineData("correo.largo.con.subdominios@ejemplo.com.mx")]
+        [InlineData("correoCon45CaracteresExactos@dominioLargo.com")] 
+        [InlineData("  correo@espacios.com  ")]
+        public void ValidateEmail_ShouldReturnEmpty_WhenEmailIsValid(string validEmail)
         {
-            // Act
-            string result = SignUpServerValidator.ValidateEmail("test.valido@dominio.com");
-
-            // Assert
-            Assert.Equal(string.Empty, result);
+            string result = SignUpServerValidator.ValidateEmail(validEmail);
+            Assert.Empty(result);
         }
 
         [Theory]
         [InlineData(null, SignUpServerValidator.ERROR_EMAIL_EMPTY)]
-        [InlineData(" ", SignUpServerValidator.ERROR_EMAIL_EMPTY)]
-        [InlineData("correo-muy-largo-definitivamente-excede-los-45-caracteres@dominio.com", SignUpServerValidator.ERROR_EMAIL_LENGTH)]
-        [InlineData("correo-invalido.com", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
-        [InlineData("correo@dominio", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("", SignUpServerValidator.ERROR_EMAIL_EMPTY)]
+        [InlineData("   ", SignUpServerValidator.ERROR_EMAIL_EMPTY)]
+        [InlineData("correoextremadamentelargoquedefinitivasuperalos45@caracteres.com", SignUpServerValidator.ERROR_EMAIL_LENGTH)] // > 45
+        [InlineData("sinarroba.com", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("@dominio.com", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("usuario@", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("usuario@dominio", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("usuario@dominio.", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("usuario@.com", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("usuario con espacio@dominio.com", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("usuario@dominio .com", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
+        [InlineData("usuario@dominio.c", SignUpServerValidator.ERROR_EMAIL_INVALID_FORMAT)]
         public void ValidateEmail_ShouldReturnError_WhenEmailIsInvalid(string invalidEmail, string expectedError)
         {
-            // Act
             string result = SignUpServerValidator.ValidateEmail(invalidEmail);
-
-            // Assert
             Assert.Equal(expectedError, result);
         }
 
-        [Fact]
-        public void ValidatePassword_ShouldReturnEmpty_WhenPasswordIsValid()
+        [Theory]
+        [InlineData("Passwd1!")]
+        [InlineData("P@ssw0rdValido")]
+        [InlineData("Val1dP@sswrd15c")]
+        public void ValidatePassword_ShouldReturnEmpty_WhenPasswordIsValid(string validPassword)
         {
-            // Act
-            string result = SignUpServerValidator.ValidatePassword("P@sswordValido1");
-
-            // Assert
-            Assert.Equal(string.Empty, result);
+            string result = SignUpServerValidator.ValidatePassword(validPassword);
+            Assert.Empty(result);
         }
 
         [Theory]
-        [InlineData("corta", SignUpServerValidator.ERROR_PASSWORD_LENGTH)]
-        [InlineData("EstaClaveEsDemasiadoLarga", SignUpServerValidator.ERROR_PASSWORD_LENGTH)]
-        [InlineData("sinespacios1@", SignUpServerValidator.ERROR_PASSWORD_NO_UPPERCASE)]
-        [InlineData("SINEspecial1", SignUpServerValidator.ERROR_PASSWORD_NO_SPECIAL_CHAR)]
-        [InlineData("Con Espacios1@", SignUpServerValidator.ERROR_PASSWORD_NO_SPACES)]
+        [InlineData(null, SignUpServerValidator.ERROR_PASSWORD_EMPTY)]
         [InlineData("", SignUpServerValidator.ERROR_PASSWORD_EMPTY)]
+        [InlineData("corto1!", SignUpServerValidator.ERROR_PASSWORD_LENGTH)]
+        [InlineData("MuyLargo1!MuyLargo", SignUpServerValidator.ERROR_PASSWORD_LENGTH)]
+        [InlineData("Pass Con Espacio1!", SignUpServerValidator.ERROR_PASSWORD_LENGTH)]
+        [InlineData("password1!", SignUpServerValidator.ERROR_PASSWORD_NO_UPPERCASE)]
+        [InlineData("PASSWORD12", SignUpServerValidator.ERROR_PASSWORD_NO_SPECIAL_CHAR)]
+        [InlineData("Pass Esp1!", SignUpServerValidator.ERROR_PASSWORD_NO_SPACES)]
         public void ValidatePassword_ShouldReturnError_WhenPasswordIsInvalid(string invalidPassword, string expectedError)
         {
-            // Act
             string result = SignUpServerValidator.ValidatePassword(invalidPassword);
-
-            // Assert
             Assert.Equal(expectedError, result);
         }
     }

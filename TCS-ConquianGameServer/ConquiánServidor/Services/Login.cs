@@ -25,10 +25,10 @@ namespace ConquiánServidor.Services
             authLogic = new AuthenticationLogic(playerRepository, emailService);
         }
 
-        public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)
+        public async Task<PlayerDto> AuthenticatePlayerAsync(string email, string password)
         {
  
-            var player = await playerRepository.GetPlayerByEmailAsync(playerEmail);
+            var player = await playerRepository.GetPlayerByEmailAsync(email);
 
             if (player != null)
             {
@@ -40,7 +40,7 @@ namespace ConquiánServidor.Services
                     throw new FaultException<SessionActiveFault>(faultDetail, new FaultReason(faultDetail.Message));
                 }
             }
-            return await authLogic.AuthenticatePlayerAsync(playerEmail, playerPassword); 
+            return await authLogic.AuthenticatePlayerAsync(email, password); 
         }
 
         public async Task SignOutPlayerAsync(int idPlayer)

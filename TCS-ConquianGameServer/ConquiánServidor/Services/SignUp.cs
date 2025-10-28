@@ -21,9 +21,9 @@ namespace ConquiánServidor.Services
             authLogic = new AuthenticationLogic(playerRepository, emailService);
         }
 
-        public async Task<bool> RegisterPlayerAsync(PlayerDto finalPlayerData)
+        public async Task<bool> RegisterPlayerAsync(PlayerDto newPlayer)
         {
-            return await authLogic.RegisterPlayerAsync(finalPlayerData);
+            return await authLogic.RegisterPlayerAsync(newPlayer);
         }
 
         public async Task<string> SendVerificationCodeAsync(string email)

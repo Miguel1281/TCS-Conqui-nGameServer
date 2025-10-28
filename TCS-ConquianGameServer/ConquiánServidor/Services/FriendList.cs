@@ -25,11 +25,11 @@ namespace ConquiánServidor.Services
             friendshipLogic = new FriendshipLogic(friendshipRepository, playerRepository);
         }
 
-        public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idPlayer)
+        public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idCurrentUser)
         {
             try
             {
-                return await friendshipLogic.GetPlayerByNicknameAsync(nickname, idPlayer);
+                return await friendshipLogic.GetPlayerByNicknameAsync(nickname, idCurrentUser);
             }
             catch (Exception ex)
             {
@@ -61,11 +61,11 @@ namespace ConquiánServidor.Services
             }
         }
 
-        public async Task<bool> SendFriendRequestAsync(int idPlayer, int idFriend)
+        public async Task<bool> SendFriendRequestAsync(int idSender, int idReceiver)
         {
             try
             {
-                return await friendshipLogic.SendFriendRequestAsync(idPlayer, idFriend);
+                return await friendshipLogic.SendFriendRequestAsync(idSender, idReceiver);
             }
             catch (Exception ex)
             {
@@ -73,11 +73,11 @@ namespace ConquiánServidor.Services
             }
         }
 
-        public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int newStatus)
+        public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int idStatus)
         {
             try
             {
-                return await friendshipLogic.UpdateFriendRequestStatusAsync(idFriendship, newStatus);
+                return await friendshipLogic.UpdateFriendRequestStatusAsync(idFriendship, idStatus);
             }
             catch (Exception ex)
             {

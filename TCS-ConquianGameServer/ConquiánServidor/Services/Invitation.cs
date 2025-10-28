@@ -11,12 +11,10 @@ namespace ConquiánServidor.Services
     {
         private readonly InvitationManager manager = InvitationManager.Instance;
 
-        private int currentPlayerId;
         private IInvitationCallback currentCallback;
 
         public void Subscribe(int idPlayer)
         {
-            this.currentPlayerId = idPlayer;
             this.currentCallback = OperationContext.Current.GetCallbackChannel<IInvitationCallback>();
             manager.Subscribe(idPlayer, this.currentCallback);
         }
@@ -24,7 +22,6 @@ namespace ConquiánServidor.Services
         public void Unsubscribe(int idPlayer)
         {
             manager.Unsubscribe(idPlayer);
-            this.currentPlayerId = 0;
             this.currentCallback = null;
         }
 

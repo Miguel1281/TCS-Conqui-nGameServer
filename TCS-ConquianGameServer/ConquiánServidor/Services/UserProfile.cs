@@ -61,11 +61,11 @@ namespace ConquiánServidor.Services
             }
         }
 
-        public async Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socialDtos)
+        public async Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socials)
         {
             try
             {
-                return await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socialDtos);
+                return await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
             }
             catch (Exception ex)
             {

@@ -7,7 +7,6 @@ using ConquiánServidor.DataAccess.Repositories;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -24,10 +23,6 @@ namespace ConquiánServidor.Services
 
         private readonly LobbyLogic lobbyLogic;
         private readonly ConquiánDBEntities dbContext; 
-
-        private string currentRoomCode;
-        private int currentPlayerId;
-        private ILobbyCallback currentCallback;
 
         public Lobby()
         {
@@ -92,9 +87,6 @@ namespace ConquiánServidor.Services
                 }
 
                 lobbyCallbacks[roomCode][idPlayer] = callback;
-                this.currentCallback = callback;
-                this.currentRoomCode = roomCode;
-                this.currentPlayerId = idPlayer;
 
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return true;
@@ -131,9 +123,6 @@ namespace ConquiánServidor.Services
                         chatHistories.TryRemove(roomCode, out _);
                     }
                 }
-                this.currentCallback = null;
-                this.currentRoomCode = null;
-                this.currentPlayerId = 0;
             }
             catch (Exception ex)
             {

@@ -5,9 +5,6 @@ using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities.Email;
 using Moq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -43,7 +40,7 @@ namespace ConquiánServidor.Tests
             string existingEmail = "yaexiste@dominio.com";
 
             mockPlayerRepository.Setup(r => r.GetPlayerForVerificationAsync(existingEmail))
-                                .ReturnsAsync(new Player()); //
+                                .ReturnsAsync(new Player());
 
             string result = await authLogic.SendVerificationCodeAsync(existingEmail);
 
@@ -86,7 +83,7 @@ namespace ConquiánServidor.Tests
         {
             string email = "test@dominio.com";
             string code = "123456";
-            var player = new Player //
+            var player = new Player
             {
                 email = email,
                 verificationCode = code,
@@ -106,7 +103,7 @@ namespace ConquiánServidor.Tests
         public async Task VerifyCodeAsync_ShouldReturnFalse_WhenCodeIsInvalid(string playerCode, string providedCode)
         {
             string email = "test@dominio.com";
-            var player = new Player //
+            var player = new Player
             {
                 email = email,
                 verificationCode = playerCode,
@@ -161,7 +158,7 @@ namespace ConquiánServidor.Tests
         [Fact]
         public async Task RegisterPlayerAsync_ShouldReturnFalse_WhenNicknameAlreadyExists()
         {
-            var validDto = new PlayerDto //
+            var validDto = new PlayerDto
             {
                 name = "NombreValido",
                 lastName = "ApellidoValido",
@@ -182,7 +179,7 @@ namespace ConquiánServidor.Tests
         [Fact]
         public async Task RegisterPlayerAsync_ShouldReturnTrue_WhenDataIsValidAndNew()
         {
-            var validDto = new PlayerDto //
+            var validDto = new PlayerDto
             {
                 name = "NombreValido",
                 lastName = "ApellidoValido",
@@ -193,7 +190,7 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.DoesNicknameExistAsync("NickNuevo")).ReturnsAsync(false);
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync("correo@valido.com"))
-                                .ReturnsAsync(new Player()); //
+                                .ReturnsAsync(new Player());
 
             bool result = await authLogic.RegisterPlayerAsync(validDto);
 

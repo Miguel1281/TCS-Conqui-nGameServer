@@ -1,20 +1,21 @@
-﻿using System;
+﻿using System.Configuration;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
-using System.Configuration;
 
 namespace ConquiánServidor.Utilities.Email
 {
     public class EmailService : IEmailService
     {
+        private static readonly RandomNumberGenerator randomGenerator = RandomNumberGenerator.Create();
         public string GenerateVerificationCode()
         {
-            Random random = new Random();
             const string chars = "0123456789";
-            return new string(Enumerable.Repeat(chars, 6)
-              .Select(s => s[random.Next(s.Length)]).ToArray());
+            var data = new byte[6];
+            randomGenerator.GetBytes(data);
+            return new string(data.Select(b => chars[b % chars.Length]).ToArray());
         } 
         public async Task SendEmailAsync(string toEmail, IEmailTemplate template)
         {

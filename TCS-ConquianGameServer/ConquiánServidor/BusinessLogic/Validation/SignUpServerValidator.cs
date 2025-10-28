@@ -41,14 +41,17 @@ namespace ConquiánServidor.BusinessLogic.Validation
 
         private static bool IsMatchWithTimeout(string input, string pattern)
         {
+            bool isMatch;
+
             try
             {
-                return Regex.IsMatch(input, pattern, RegexOptions.None, RegexTimeout);
+                isMatch = Regex.IsMatch(input, pattern, RegexOptions.None, RegexTimeout);
             }
             catch (RegexMatchTimeoutException)
             {
-                return false;
+                isMatch = false;
             }
+            return isMatch;
         }
 
         public static string ValidateName(string name)
@@ -57,6 +60,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
             {
                 return ERROR_NAME_EMPTY;
             }
+            name = name.Trim();
             if (name.Length > MAX_NAME_LENGTH)
             {
                 return ERROR_NAME_LENGTH;

@@ -12,7 +12,7 @@
   <HasBeginStepCommandLineTruststorePassword>false</HasBeginStepCommandLineTruststorePassword>
   <SonarQubeHostUrl>http://localhost:9000</SonarQubeHostUrl>
   <SonarQubeVersion>25.10.0.114319</SonarQubeVersion>
-  <SonarProjectKey>ConquianServer2</SonarProjectKey>
+  <SonarProjectKey>ConquianServer3</SonarProjectKey>
   <AdditionalConfig>
     <ConfigSetting Id="BuildUri" />
     <ConfigSetting Id="TfsUri" />
@@ -148,7 +148,7 @@
     <Property Name="sonar.java.jvmframeworkconfig.activate">true</Property>
     <Property Name="sonar.updatecenter.url">https://downloads.sonarsource.com/sonarqube/update/update-center.properties</Property>
     <Property Name="sonar.core.id">147B411E-AZoi3OJmphjU0MA0zwpu</Property>
-    <Property Name="sonar.core.startTime">26/10/2025 06:43:43 p. m.</Property>
+    <Property Name="sonar.core.startTime">27/10/2025 08:23:06 p. m.</Property>
   </ServerSettings>
   <LocalSettings>
     <Property Name="sonar.host.url">http://localhost:9000</Property>

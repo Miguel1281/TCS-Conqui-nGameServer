@@ -3,6 +3,7 @@ using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
@@ -11,6 +12,7 @@ namespace ConquiánServidor.BusinessLogic
     {
         private readonly ILobbyRepository lobbyRepository;
         private readonly IPlayerRepository playerRepository;
+        private static readonly RandomNumberGenerator randomGenerator = RandomNumberGenerator.Create();
 
         public LobbyLogic(ILobbyRepository lobbyRepository, IPlayerRepository playerRepository)
         {
@@ -136,9 +138,9 @@ namespace ConquiánServidor.BusinessLogic
         private string GenerateRandomCode(int length = 5)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var random = new Random();
-            return new string(Enumerable.Repeat(chars, length)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
+            var data = new byte[length];
+            randomGenerator.GetBytes(data);
+            return new string(data.Select(b => chars[b % chars.Length]).ToArray());
         }
     }
 }

@@ -419,3 +419,6 @@ FodyWeavers.xsd
 
 #Credenciales de conexion a Email
 credentials.config
+
+# SonarQube
+.sonarqube/

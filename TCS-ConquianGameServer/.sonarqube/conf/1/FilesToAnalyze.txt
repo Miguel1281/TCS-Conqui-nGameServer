@@ -1,7 +1,0 @@
-﻿C:\Users\PC\Documents\.uv\5 semestre\TCS\Proyecto\TCS-Conqui-nGameServer\TCS-ConquianGameServer\ConquiánServidor.Tests\AuthenticationLogicTests.cs
-C:\Users\PC\Documents\.uv\5 semestre\TCS\Proyecto\TCS-Conqui-nGameServer\TCS-ConquianGameServer\ConquiánServidor.Tests\SignUpServerValidatorTests.cs
-C:\Users\PC\Documents\.uv\5 semestre\TCS\Proyecto\TCS-Conqui-nGameServer\TCS-ConquianGameServer\ConquiánServidor.Tests\Properties\AssemblyInfo.cs
-C:\Users\PC\.nuget\packages\xunit.runner.visualstudio\2.4.1\build\_common\xunit.runner.visualstudio.testadapter.dll
-C:\Users\PC\.nuget\packages\xunit.runner.visualstudio\2.4.1\build\_common\xunit.runner.reporters.net452.dll
-C:\Users\PC\.nuget\packages\xunit.runner.visualstudio\2.4.1\build\_common\xunit.runner.utility.net452.dll
-C:\Users\PC\.nuget\packages\xunit.runner.visualstudio\2.4.1\build\_common\xunit.abstractions.dll

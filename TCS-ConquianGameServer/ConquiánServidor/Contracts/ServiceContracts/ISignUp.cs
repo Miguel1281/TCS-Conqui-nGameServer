@@ -15,5 +15,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract]
         Task<bool> VerifyCodeAsync(string email, string code);
+
+        [OperationContract]
+        Task<bool> CancelRegistrationAsync(string email);
     }
 }

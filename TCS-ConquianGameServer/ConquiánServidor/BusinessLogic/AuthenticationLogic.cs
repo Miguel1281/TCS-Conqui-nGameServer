@@ -5,10 +5,10 @@ using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
-using ConquiánServidor.BusinessLogic;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
@@ -62,16 +62,8 @@ namespace ConquiánServidor.BusinessLogic
             validationErrors.Add(SignUpServerValidator.ValidateLastName(finalPlayerData.lastName));
             validationErrors.Add(SignUpServerValidator.ValidateNickname(finalPlayerData.nickname));
             validationErrors.Add(SignUpServerValidator.ValidatePassword(finalPlayerData.password));
-            bool hasErrors = false;
 
-            foreach (string error in validationErrors)
-            {
-                if (!string.IsNullOrEmpty(error))
-                {
-                    hasErrors = true;
-                    break;
-                }
-            }
+            bool hasErrors = validationErrors.Any(error => !string.IsNullOrEmpty(error));
 
             if (hasErrors)
             {
@@ -118,7 +110,7 @@ namespace ConquiánServidor.BusinessLogic
                     string recoveryCode = emailService.GenerateVerificationCode();
 
                     player.verificationCode = recoveryCode;
-                    player.codeExpiryDate = DateTime.UtcNow.AddMinutes(1); 
+                    player.codeExpiryDate = DateTime.UtcNow.AddMinutes(10); 
 
                     await playerRepository.SaveChangesAsync();
 
@@ -161,7 +153,7 @@ namespace ConquiánServidor.BusinessLogic
 
                     playerToVerify.email = email;
                     playerToVerify.verificationCode = verificationCode;
-                    playerToVerify.codeExpiryDate = DateTime.UtcNow.AddMinutes(1);
+                    playerToVerify.codeExpiryDate = DateTime.UtcNow.AddMinutes(10);
 
                     await playerRepository.SaveChangesAsync();
 
@@ -251,6 +243,26 @@ namespace ConquiánServidor.BusinessLogic
             {
                 Console.WriteLine("Error al reiniciar contraseña: " + ex.Message);
             }
+            return success;
+        }
+
+        public async Task<bool> DeleteTemporaryPlayerAsync(string email)
+        {
+            bool success = false;
+            try
+            {
+                var player = await playerRepository.GetPlayerByEmailAsync(email);
+
+                if (player != null && string.IsNullOrEmpty(player.name))
+                {
+                    success = await playerRepository.DeletePlayerAsync(player);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en DeleteTemporaryPlayerAsync: {ex.Message}");
+            }
+
             return success;
         }
     }

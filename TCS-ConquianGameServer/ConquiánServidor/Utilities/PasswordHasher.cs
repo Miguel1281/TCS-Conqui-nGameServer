@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.Utilities
 {
-    public class PasswordHasher
+    public static class PasswordHasher
     {
         public static string hashPassword(string password)
         {

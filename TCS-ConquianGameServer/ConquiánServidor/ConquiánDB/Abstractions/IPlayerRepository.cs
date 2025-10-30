@@ -12,5 +12,6 @@ namespace ConquiánServidor.DataAccess.Abstractions
         Task<Player> GetPlayerByNicknameAsync(string nickname); 
         void AddPlayer(Player player);
         Task<int> SaveChangesAsync();
+        Task<bool> DeletePlayerAsync(Player playerToDelete);
     }
 }

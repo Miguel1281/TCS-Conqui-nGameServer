@@ -19,28 +19,22 @@ namespace ConquiánServidor.Services
         public Login()
         {
             var dbContext = new ConquiánDBEntities();
-            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            this.playerRepository = playerRepository;
+            this.playerRepository = new PlayerRepository(dbContext);
             IEmailService emailService = new EmailService();
-            authLogic = new AuthenticationLogic(playerRepository, emailService);
+            authLogic = new AuthenticationLogic(this.playerRepository, emailService);
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string email, string password)
         {
- 
             var player = await playerRepository.GetPlayerByEmailAsync(email);
-
-            if (player != null)
+            if (player != null && PresenceManager.Instance.IsPlayerOnline(player.idPlayer))
             {
-                if (PresenceManager.Instance.IsPlayerOnline(player.idPlayer)) 
-                {
-                    SessionActiveFault faultDetail = new SessionActiveFault(
-                        "Ya cuenta con una sesión activa, por favor cierre la sesión activa para poder abrir una nueva"
-                    );
-                    throw new FaultException<SessionActiveFault>(faultDetail, new FaultReason(faultDetail.Message));
-                }
+                SessionActiveFault faultDetail = new SessionActiveFault(
+                    "Ya cuenta con una sesión activa, por favor cierre la sesión activa para poder abrir una nueva"
+                );
+                throw new FaultException<SessionActiveFault>(faultDetail, new FaultReason(faultDetail.Message));
             }
-            return await authLogic.AuthenticatePlayerAsync(email, password); 
+            return await authLogic.AuthenticatePlayerAsync(email, password);
         }
 
         public async Task SignOutPlayerAsync(int idPlayer)

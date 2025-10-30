@@ -135,7 +135,7 @@ namespace ConquiánServidor.BusinessLogic
             return wasHost; 
         }
 
-        private string GenerateRandomCode(int length = 5)
+        private static string GenerateRandomCode(int length = 5)
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var data = new byte[length];

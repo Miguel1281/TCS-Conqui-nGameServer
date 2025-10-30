@@ -33,7 +33,7 @@ namespace ConquiánServidor.Utilities.Email.Templates
                     <div style='background-color: #f0f0f0; padding: 15px; text-align: center;'>
                     <strong style='font-size: 24px; letter-spacing: 3px;'>{token}</strong>
                     </div>
-                    <p>Este código expira en 15 minutos.</p>
+                    <p>Este código expira en 10 minutos.</p>
                     <p>Si no solicitaste esto, puedes ignorar este correo de forma segura.</p>
                 </body>
                 </html>";

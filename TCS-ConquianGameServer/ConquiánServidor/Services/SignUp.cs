@@ -35,5 +35,10 @@ namespace ConquiánServidor.Services
         {
             return await authLogic.VerifyCodeAsync(email, code);
         }
+
+        public async Task<bool> CancelRegistrationAsync(string email)
+        {
+            return await authLogic.DeleteTemporaryPlayerAsync(email);
+        }
     }
 }

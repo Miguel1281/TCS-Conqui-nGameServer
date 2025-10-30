@@ -6,18 +6,12 @@ namespace ConquiánServidor.Contracts.FaultContracts
     [DataContract]
     public class SessionActiveFault
     {
-        private string message;
-
         [DataMember]
-        public string Message
-        {
-            get { return message; }
-            set { message = value; }
-        }
+        public string Message { get; set; }
 
         public SessionActiveFault(string message)
         {
-            this.message = message;
+            this.Message = message;
         }
     }
 }

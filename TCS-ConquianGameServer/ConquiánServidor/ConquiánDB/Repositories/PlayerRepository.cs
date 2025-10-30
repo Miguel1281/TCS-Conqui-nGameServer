@@ -50,5 +50,17 @@ namespace ConquiánServidor.DataAccess.Repositories
         {
             return await context.SaveChangesAsync();
         }
+
+        public async Task<bool> DeletePlayerAsync(Player playerToDelete)
+        {
+            if (playerToDelete == null)
+            {
+                return false;
+            }
+
+            context.Player.Remove(playerToDelete);
+            int result = await context.SaveChangesAsync();
+            return result > 0;
+        }
     }
 }

@@ -197,5 +197,86 @@ namespace ConquiánServidor.Tests
             Assert.True(result);
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Once());
         }
+
+        [Fact]
+        public async Task DeleteTemporaryPlayerAsync_ShouldReturnTrue_WhenPlayerIsIncomplete()
+        {
+            string email = "incomplete@test.com";
+            var incompletePlayer = new Player
+            {
+                email = email,
+                name = null
+            };
+
+            mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
+                                .ReturnsAsync(incompletePlayer);
+
+            mockPlayerRepository.Setup(r => r.DeletePlayerAsync(incompletePlayer))
+                                .ReturnsAsync(true);
+
+            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
+
+            Assert.True(result);
+            mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
+            mockPlayerRepository.Verify(r => r.DeletePlayerAsync(incompletePlayer), Times.Once());
+        }
+
+        [Fact]
+        public async Task DeleteTemporaryPlayerAsync_ShouldReturnFalse_WhenPlayerIsAlreadyComplete()
+        {
+            string email = "complete@test.com";
+            var completePlayer = new Player
+            {
+                email = email,
+                name = "UsuarioCompleto"
+            };
+
+            mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
+                                .ReturnsAsync(completePlayer);
+
+            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
+
+            Assert.False(result);
+            mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
+            mockPlayerRepository.Verify(r => r.DeletePlayerAsync(It.IsAny<Player>()), Times.Never());
+        }
+
+        [Fact]
+        public async Task DeleteTemporaryPlayerAsync_ShouldReturnFalse_WhenPlayerNotFound()
+        {
+            string email = "notfound@test.com";
+
+            mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
+                                .ReturnsAsync((Player)null);
+
+            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
+
+            Assert.False(result);
+            mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
+            mockPlayerRepository.Verify(r => r.DeletePlayerAsync(It.IsAny<Player>()), Times.Never());
+        }
+
+        [Fact]
+        public async Task DeleteTemporaryPlayerAsync_ShouldReturnFalse_WhenRepositoryDeleteFails()
+        {
+            string email = "deletefail@test.com";
+            var incompletePlayer = new Player
+            {
+                email = email,
+                name = null
+            };
+
+            mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
+                                .ReturnsAsync(incompletePlayer);
+
+            mockPlayerRepository.Setup(r => r.DeletePlayerAsync(incompletePlayer))
+                                .ReturnsAsync(false);
+
+            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
+
+            Assert.False(result);
+            mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
+            mockPlayerRepository.Verify(r => r.DeletePlayerAsync(incompletePlayer), Times.Once());
+        }
     }
 }

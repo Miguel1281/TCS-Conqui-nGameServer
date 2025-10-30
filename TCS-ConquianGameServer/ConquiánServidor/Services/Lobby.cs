@@ -141,7 +141,7 @@ namespace ConquiánServidor.Services
             return Task.CompletedTask;
         }
 
-        private void NotifyPlayersInLobby(string roomCode, int? idPlayerToExclude, Action<ILobbyCallback> action)
+        private static void NotifyPlayersInLobby(string roomCode, int? idPlayerToExclude, Action<ILobbyCallback> action)
         {
             if (!lobbyCallbacks.TryGetValue(roomCode, out var callbacks))
             {

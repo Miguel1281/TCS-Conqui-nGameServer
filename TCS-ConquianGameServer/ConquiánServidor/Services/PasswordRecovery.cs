@@ -2,20 +2,17 @@
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories; // Asumo que PlayerRepository está aquí
+using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.Services
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Reentrant)]
-    public class PasswordRecoveryService : IPasswordRecovery
+    public class PasswordRecovery : IPasswordRecovery
     {
 
         private enum PasswordUpdateMode
@@ -27,7 +24,7 @@ namespace ConquiánServidor.Services
 
         private readonly IEmailService emailService;
 
-        public PasswordRecoveryService()
+        public PasswordRecovery()
         {
             var dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);

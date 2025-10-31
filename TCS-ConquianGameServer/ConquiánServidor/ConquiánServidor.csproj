@@ -154,7 +154,7 @@
     <Compile Include="Services\Invitation.cs" />
     <Compile Include="Services\Lobby.cs" />
     <Compile Include="Services\Login.cs" />
-    <Compile Include="Services\PasswordRecoveryService.cs" />
+    <Compile Include="Services\PasswordRecovery.cs" />
     <Compile Include="Services\Presence.cs" />
     <Compile Include="Services\SignUp.cs" />
     <Compile Include="Services\UserProfile.cs" />

@@ -12,10 +12,10 @@ namespace ConquiánServidor.Utilities.Email
         private static readonly RandomNumberGenerator randomGenerator = RandomNumberGenerator.Create();
         public string GenerateVerificationCode()
         {
-            const string chars = "0123456789";
+            const string CHAR = "0123456789";
             var data = new byte[6];
             randomGenerator.GetBytes(data);
-            return new string(data.Select(b => chars[b % chars.Length]).ToArray());
+            return new string(data.Select(b => CHAR[b % CHAR.Length]).ToArray());
         } 
         public async Task SendEmailAsync(string toEmail, IEmailTemplate template)
         {

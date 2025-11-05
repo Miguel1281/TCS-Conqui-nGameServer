@@ -15,7 +15,6 @@ namespace ConquiánServidor.Services
     {
         private readonly UserProfileLogic profileLogic;
 
-        // Constructor
         public UserProfile()
         {
             var dbContext = new ConquiánDBEntities();

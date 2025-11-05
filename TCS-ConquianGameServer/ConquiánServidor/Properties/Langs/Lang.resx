@@ -1,0 +1,255 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="GlobalDbEntityValidationError" xml:space="preserve">
+    <value>Error de validación de entidad (DbEntityValidationException): {0}</value>
+  </data>
+  <data name="GlobalDbUpdateError" xml:space="preserve">
+    <value>Error al guardar en BD (DbUpdateException): {0}</value>
+  </data>
+  <data name="GlobalSmtpError" xml:space="preserve">
+    <value>Error al enviar correo (SmtpException): {0}</value>
+  </data>
+  <data name="GlobalSqlError" xml:space="preserve">
+    <value>Error de SQL (SqlException): {0}</value>
+  </data>
+  <data name="LogAuthLogicAuthAttempt" xml:space="preserve">
+    <value>Intento de autenticación para: {0}</value>
+  </data>
+  <data name="LogAuthLogicAuthFailed" xml:space="preserve">
+    <value>Autenticación fallida para: {0} (Usuario no encontrado o contraseña incorrecta)</value>
+  </data>
+  <data name="LogAuthLogicAuthSuccess" xml:space="preserve">
+    <value>Jugador autenticado exitosamente: {0} (ID: {1})</value>
+  </data>
+  <data name="LogAuthLogicDeleteTempDbUpdateError" xml:space="preserve">
+    <value>Error al borrar jugador temporal (DbUpdateException): {0}</value>
+  </data>
+  <data name="LogAuthLogicDeleteTempNotFound" xml:space="preserve">
+    <value>No se eliminó jugador temporal {0} (no encontrado o ya registrado).</value>
+  </data>
+  <data name="LogAuthLogicDeleteTempSqlError" xml:space="preserve">
+    <value>Error de SQL al borrar jugador temporal (SqlException): {0}</value>
+  </data>
+  <data name="LogAuthLogicDeleteTempSuccess" xml:space="preserve">
+    <value>Jugador temporal eliminado: {0}</value>
+  </data>
+  <data name="LogAuthLogicDeleteTempUnexpectedError" xml:space="preserve">
+    <value>Error inesperado en DeleteTemporaryPlayerAsync: {0}</value>
+  </data>
+  <data name="LogAuthLogicGenTokenDbUpdateError" xml:space="preserve">
+    <value>Error al actualizar token en BD (DbUpdateException): {0}</value>
+  </data>
+  <data name="LogAuthLogicGenTokenNotFound" xml:space="preserve">
+    <value>No se generó token para {0}: Jugador no encontrado o sin contraseña.</value>
+  </data>
+  <data name="LogAuthLogicGenTokenSqlError" xml:space="preserve">
+    <value>Error de SQL en GenerateAndStoreRecoveryTokenAsync (SqlException): {0}</value>
+  </data>
+  <data name="LogAuthLogicGenTokenSuccess" xml:space="preserve">
+    <value>Token de recuperación generado para: {0}</value>
+  </data>
+  <data name="LogAuthLogicGenTokenUnexpectedError" xml:space="preserve">
+    <value>Error inesperado en GenerateAndStoreRecoveryTokenAsync: {0}</value>
+  </data>
+  <data name="LogAuthLogicPassRecoverySmtpError" xml:space="preserve">
+    <value>Error al enviar correo de recuperación (SmtpException): {0}</value>
+  </data>
+  <data name="LogAuthLogicPassRecoverySuccess" xml:space="preserve">
+    <value>Email de recuperación enviado a: {0}</value>
+  </data>
+  <data name="LogAuthLogicPassRecoveryTokenFailed" xml:space="preserve">
+    <value>Solicitud de recuperación de contraseña fallida para {0}: No se pudo generar el token.</value>
+  </data>
+  <data name="LogAuthLogicPassRecoveryUnexpectedError" xml:space="preserve">
+    <value>Error inesperado en solicitud de recuperación: {0}</value>
+  </data>
+  <data name="LogAuthLogicPassResetDbUpdateError" xml:space="preserve">
+    <value>Error al reiniciar contraseña en BD (DbUpdateException): {0}</value>
+  </data>
+  <data name="LogAuthLogicPassResetInvalidPassword" xml:space="preserve">
+    <value>Reinicio de contraseña fallido para {0}: Contraseña no válida.</value>
+  </data>
+  <data name="LogAuthLogicPassResetPlayerNotFound" xml:space="preserve">
+    <value>Reinicio de contraseña fallido para {0}: Jugador no encontrado (post-validación).</value>
+  </data>
+  <data name="LogAuthLogicPassResetSqlError" xml:space="preserve">
+    <value>Error de SQL al reiniciar contraseña (SqlException): {0}</value>
+  </data>
+  <data name="LogAuthLogicPassResetSuccess" xml:space="preserve">
+    <value>Contraseña reiniciada exitosamente para: {0}</value>
+  </data>
+  <data name="LogAuthLogicPassResetTokenFailed" xml:space="preserve">
+    <value>Reinicio de contraseña fallido para {0}: Token inválido o expirado.</value>
+  </data>
+  <data name="LogAuthLogicPassResetUnexpectedError" xml:space="preserve">
+    <value>Error inesperado al reiniciar contraseña: {0}</value>
+  </data>
+  <data name="LogAuthLogicRegisterNicknameExists" xml:space="preserve">
+    <value>Intento de registro fallido para {0}: El nickname {1} ya existe.</value>
+  </data>
+  <data name="LogAuthLogicRegisterPlayerUnexpectedError" xml:space="preserve">
+    <value>Error inesperado en RegisterPlayerAsync: {0}</value>
+  </data>
+  <data name="LogAuthLogicRegisterSuccess" xml:space="preserve">
+    <value>Jugador registrado exitosamente: {0} (Email: {1})</value>
+  </data>
+  <data name="LogAuthLogicRegisterValidationFailed" xml:space="preserve">
+    <value>Validación de registro fallida para {0}: {1}</value>
+  </data>
+  <data name="LogAuthLogicSendCodeDbUpdateError" xml:space="preserve">
+    <value>Error al guardar código en BD (DbUpdateException): {0}</value>
+  </data>
+  <data name="LogAuthLogicSendCodeEfValidationError" xml:space="preserve">
+    <value>Error de validación de entidad en SendVerificationCodeAsync (DbEntityValidationException): {0}</value>
+  </data>
+  <data name="LogAuthLogicSendCodeEmailExists" xml:space="preserve">
+    <value>Intento de enviar código de verificación fallido: Email {0} ya existe.</value>
+  </data>
+  <data name="LogAuthLogicSendCodeInvalidEmail" xml:space="preserve">
+    <value>Intento de enviar código de verificación fallido: Email inválido {0}</value>
+  </data>
+  <data name="LogAuthLogicSendCodeSqlError" xml:space="preserve">
+    <value>Error de SQL en SendVerificationCodeAsync (SqlException): {0}</value>
+  </data>
+  <data name="LogAuthLogicSendCodeSuccess" xml:space="preserve">
+    <value>Código de verificación enviado a: {0}</value>
+  </data>
+  <data name="LogAuthLogicSendCodeUnexpectedError" xml:space="preserve">
+    <value>Error inesperado en SendVerificationCodeAsync: {0}</value>
+  </data>
+  <data name="LogAuthLogicSignOutAttempt" xml:space="preserve">
+    <value>Intento de cierre de sesión para ID: {0}</value>
+  </data>
+  <data name="LogAuthLogicSignOutSuccess" xml:space="preserve">
+    <value>Jugador {0} cerró sesión exitosamente.</value>
+  </data>
+  <data name="LogAuthLogicVerifyCodeFailed" xml:space="preserve">
+    <value>Verificación de código fallida para: {0} (código incorrecto o expirado)</value>
+  </data>
+  <data name="LogAuthLogicVerifyCodeSqlError" xml:space="preserve">
+    <value>Error de SQL al verificar el código (SqlException): {0}</value>
+  </data>
+  <data name="LogAuthLogicVerifyCodeSuccess" xml:space="preserve">
+    <value>Código verificado exitosamente para: {0}</value>
+  </data>
+  <data name="LogAuthLogicVerifyCodeUnexpectedError" xml:space="preserve">
+    <value>Error inesperado al verificar el código: {0}</value>
+  </data>
+</root>

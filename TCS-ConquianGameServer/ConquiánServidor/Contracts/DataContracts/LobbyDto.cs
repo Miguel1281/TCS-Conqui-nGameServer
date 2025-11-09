@@ -27,5 +27,8 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public List<MessageDto> ChatMessages { get; set; }
+
+        [DataMember]
+        public int? idGamemode { get; set; }
     }
 }

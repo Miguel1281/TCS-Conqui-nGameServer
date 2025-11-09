@@ -22,5 +22,11 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void MessageReceived(MessageDto message);
+
+        [OperationContract(IsOneWay = true)]
+        void NotifyGamemodeChanged(int newGamemodeId);
+
+        [OperationContract(IsOneWay = true)]
+        void NotifyGameStarting();
     }
 }

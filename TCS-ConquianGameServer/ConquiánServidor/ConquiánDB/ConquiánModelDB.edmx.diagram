@@ -26,6 +26,7 @@
         <AssociationConnector Association="ConquiánDBModel.LobbyPlayer" ManuallyRouted="false" />
         <EntityTypeShape EntityType="ConquiánDBModel.StatusType" Width="1.5" PointX="3" PointY="8" />
         <AssociationConnector Association="ConquiánDBModel.FK_Player_StatusType" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Lobby_Gamemode" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

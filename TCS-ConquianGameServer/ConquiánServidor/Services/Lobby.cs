@@ -141,6 +141,33 @@ namespace ConquiánServidor.Services
             return Task.CompletedTask;
         }
 
+        public async Task SelectGamemodeAsync(string roomCode, int idGamemode)
+        {
+            try
+            {
+                await lobbyLogic.SelectGamemodeAsync(roomCode, idGamemode);
+
+                NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGamemodeChanged(idGamemode));
+            }
+            catch (Exception ex)
+            {
+                // TODO: log del error
+            }
+        }
+
+        public async Task StartGameAsync(string roomCode)
+        {
+            try
+            {
+                await lobbyLogic.StartGameAsync(roomCode);
+
+                NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGameStarting());
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+
         private static void NotifyPlayersInLobby(string roomCode, int? idPlayerToExclude, Action<ILobbyCallback> action)
         {
             if (!lobbyCallbacks.TryGetValue(roomCode, out var callbacks))

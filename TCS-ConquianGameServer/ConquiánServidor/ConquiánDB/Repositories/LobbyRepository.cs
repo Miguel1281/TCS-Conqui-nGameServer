@@ -29,6 +29,7 @@ namespace ConquiánServidor.DataAccess.Repositories
             return await context.Lobby
                 .Include(l => l.Player1)
                 .Include(l => l.StatusLobby)
+                .Include(l => l.Gamemode)
                 .FirstOrDefaultAsync(l => l.roomCode == roomCode);
         }
 

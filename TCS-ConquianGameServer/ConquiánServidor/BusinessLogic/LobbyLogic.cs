@@ -1,10 +1,11 @@
-﻿using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using ConquiánServidor.BusinessLogic.Game;
+using System.Data.Entity;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -22,7 +23,7 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
         {
-            LobbyDto lobbyDto = new LobbyDto(); 
+            LobbyDto lobbyDto = null;
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
 
             if (lobby != null)
@@ -32,6 +33,8 @@ namespace ConquiánServidor.BusinessLogic
                     RoomCode = lobby.roomCode,
                     idHostPlayer = lobby.idHostPlayer,
                     StatusLobby = lobby.StatusLobby.statusName,
+                    idGamemode = lobby.idGamemode,       
+                    GameMode = lobby.Gamemode?.gamemode1,
                     Players = lobby.Player1.Select(p => new PlayerDto
                     {
                         idPlayer = p.idPlayer,
@@ -46,7 +49,7 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<string> CreateLobbyAsync(int idHostPlayer)
         {
-            string newRoomCode = string.Empty; 
+            string newRoomCode = null;
             var hostPlayer = await playerRepository.GetPlayerByIdAsync(idHostPlayer);
 
             if (hostPlayer != null)
@@ -65,7 +68,8 @@ namespace ConquiánServidor.BusinessLogic
                     roomCode = newRoomCode,
                     idHostPlayer = idHostPlayer,
                     idStatusLobby = 1,
-                    creationDate = DateTime.UtcNow
+                    creationDate = DateTime.UtcNow,
+                    idGamemode = null
                 };
 
                 newLobby.Player1.Add(hostPlayer);
@@ -78,7 +82,7 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<PlayerDto> JoinLobbyAsync(string roomCode, int idPlayer)
         {
-            PlayerDto playerDto = new PlayerDto(); 
+            PlayerDto playerDto = null;
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             var playerToJoin = await playerRepository.GetPlayerByIdAsync(idPlayer);
 
@@ -141,6 +145,51 @@ namespace ConquiánServidor.BusinessLogic
             var data = new byte[length];
             randomGenerator.GetBytes(data);
             return new string(data.Select(b => chars[b % chars.Length]).ToArray());
+        }
+
+        public async Task SelectGamemodeAsync(string roomCode, int idGamemode)
+        {
+            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+            if (lobby != null)
+            {
+                lobby.idGamemode = idGamemode;
+                await lobbyRepository.SaveChangesAsync();
+            }
+            else
+            {
+                throw new Exception("Lobby no encontrado al seleccionar modo de juego.");
+            }
+        }
+
+        public async Task StartGameAsync(string roomCode)
+        {
+            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+
+            if (lobby == null)
+            {
+                throw new Exception("El lobby no existe.");
+            }
+            if (!lobby.idGamemode.HasValue)
+            {
+                throw new Exception("No se ha seleccionado un modo de juego.");
+            }
+            if (lobby.Player1.Count < 2)
+            {
+                throw new Exception("No hay suficientes jugadores para iniciar.");
+            }
+
+            int gamemodeId = lobby.idGamemode.Value;
+
+            var players = lobby.Player1.Select(p => new PlayerDto
+            {
+                idPlayer = p.idPlayer,
+                nickname = p.nickname,
+                pathPhoto = p.pathPhoto
+            }).ToList();
+
+            GameSessionManager.Instance.CreateGame(roomCode, gamemodeId, players);
+            lobby.idStatusLobby = 2;
+            await lobbyRepository.SaveChangesAsync();
         }
     }
 }

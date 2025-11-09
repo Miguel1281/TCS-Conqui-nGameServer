@@ -25,10 +25,12 @@ namespace ConquiánServidor.ConquiánDB
         public int idHostPlayer { get; set; }
         public int idStatusLobby { get; set; }
         public System.DateTime creationDate { get; set; }
+        public Nullable<int> idGamemode { get; set; }
     
         public virtual Player Player { get; set; }
         public virtual StatusLobby StatusLobby { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Player> Player1 { get; set; }
+        public virtual Gamemode Gamemode { get; set; }
     }
 }

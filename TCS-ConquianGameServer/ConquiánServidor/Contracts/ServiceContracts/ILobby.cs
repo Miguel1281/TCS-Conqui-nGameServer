@@ -25,5 +25,11 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract]
         Task SendMessageAsync(string roomCode, MessageDto message);
+
+        [OperationContract]
+        Task SelectGamemodeAsync(string roomCode, int idGamemode);
+
+        [OperationContract]
+        Task StartGameAsync(string roomCode);
     }
 }

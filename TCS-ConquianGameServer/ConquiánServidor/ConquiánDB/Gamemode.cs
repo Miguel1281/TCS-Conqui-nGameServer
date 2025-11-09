@@ -18,6 +18,7 @@ namespace ConquiánServidor.ConquiánDB
         public Gamemode()
         {
             this.Game = new HashSet<Game>();
+            this.Lobby = new HashSet<Lobby>();
         }
     
         public int idGamemode { get; set; }
@@ -25,5 +26,7 @@ namespace ConquiánServidor.ConquiánDB
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Game> Game { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<Lobby> Lobby { get; set; }
     }
 }

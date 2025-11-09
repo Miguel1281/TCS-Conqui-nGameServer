@@ -4,6 +4,8 @@ using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
+using ConquiánServidor.Utilities.Email;
+using ConquiánServidor.Utilities.Email.Templates;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -22,7 +24,7 @@ namespace ConquiánServidor.Services
             new ConcurrentDictionary<string, List<MessageDto>>();
 
         private readonly LobbyLogic lobbyLogic;
-        private readonly ConquiánDBEntities dbContext; 
+        private readonly ConquiánDBEntities dbContext;
 
         public Lobby()
         {

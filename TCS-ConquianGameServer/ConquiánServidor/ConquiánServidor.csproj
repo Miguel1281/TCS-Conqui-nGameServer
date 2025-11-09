@@ -112,6 +112,9 @@
     <Compile Include="ConquiánDB\Gamemode.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="ConquiánDB\GuestInvite.cs">
+      <DependentUpon>ConquiánModelDB.tt</DependentUpon>
+    </Compile>
     <Compile Include="ConquiánDB\Lobby.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
@@ -144,6 +147,7 @@
     <Compile Include="Contracts\DataContracts\SocialDto.cs" />
     <Compile Include="Contracts\FaultContracts\SessionActiveFault.cs" />
     <Compile Include="Contracts\ServiceContracts\IFriendList.cs" />
+    <Compile Include="Contracts\ServiceContracts\IGuestInvitation.cs" />
     <Compile Include="Contracts\ServiceContracts\IInvitationCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\IInvitationService.cs" />
     <Compile Include="Contracts\ServiceContracts\ILobby.cs" />
@@ -166,6 +170,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Services\FriendList.cs" />
+    <Compile Include="Services\GuestInvitation.cs" />
     <Compile Include="Services\Invitation.cs" />
     <Compile Include="Services\Lobby.cs" />
     <Compile Include="Services\Login.cs" />
@@ -177,6 +182,7 @@
     <Compile Include="Utilities\Email\IEmailService.cs" />
     <Compile Include="Utilities\Email\IEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\ChangePasswordEmailTemplate.cs" />
+    <Compile Include="Utilities\Email\Templates\GuestInviteEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\RecoveryEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
     <Compile Include="Utilities\PasswordHasher.cs" />
@@ -190,7 +196,7 @@
     <None Include="ConquiánDB\ConquiánModelDB.edmx.diagram">
       <DependentUpon>ConquiánModelDB.edmx</DependentUpon>
     </None>
-    <None Include="credentials.config">
+    <None Include="Credentials.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />

@@ -129,6 +129,9 @@
   <data name="GlobalSqlError" xml:space="preserve">
     <value>Error de SQL (SqlException): {0}</value>
   </data>
+  <data name="GuestEmailSubject" xml:space="preserve">
+    <value>¡Estás invitado a una partida de Conquián!</value>
+  </data>
   <data name="LogAuthLogicAuthAttempt" xml:space="preserve">
     <value>Intento de autenticación para: {0}</value>
   </data>

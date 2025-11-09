@@ -97,6 +97,15 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a ¡Estás invitado a una partida de Conquián!.
+        /// </summary>
+        public static string GuestEmailSubject {
+            get {
+                return ResourceManager.GetString("GuestEmailSubject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Intento de autenticación para: {0}.
         /// </summary>
         public static string LogAuthLogicAuthAttempt {

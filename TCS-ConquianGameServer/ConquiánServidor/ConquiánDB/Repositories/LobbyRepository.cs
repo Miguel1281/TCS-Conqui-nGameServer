@@ -1,9 +1,8 @@
-﻿using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.DataAccess.Abstractions;
+﻿using ConquiánServidor.DataAccess.Abstractions;
 using System.Data.Entity;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.DataAccess.Repositories
+namespace ConquiánServidor.ConquiánDB.Repositories
 {
     public class LobbyRepository : ILobbyRepository
     {

@@ -4,8 +4,6 @@ using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using ConquiánServidor.BusinessLogic.Game;
-using System.Data.Entity;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -13,130 +11,127 @@ namespace ConquiánServidor.BusinessLogic
     {
         private readonly ILobbyRepository lobbyRepository;
         private readonly IPlayerRepository playerRepository;
+        private readonly LobbySessionManager sessionManager;
         private static readonly RandomNumberGenerator randomGenerator = RandomNumberGenerator.Create();
 
         public LobbyLogic(ILobbyRepository lobbyRepository, IPlayerRepository playerRepository)
         {
             this.lobbyRepository = lobbyRepository;
             this.playerRepository = playerRepository;
+            this.sessionManager = LobbySessionManager.Instance;
         }
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
         {
-            LobbyDto lobbyDto = null;
-            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
-
-            if (lobby != null)
+            var session = sessionManager.GetLobbySession(roomCode);
+            if (session == null)
             {
-                lobbyDto = new LobbyDto
-                {
-                    RoomCode = lobby.roomCode,
-                    idHostPlayer = lobby.idHostPlayer,
-                    StatusLobby = lobby.StatusLobby.statusName,
-                    idGamemode = lobby.idGamemode,       
-                    GameMode = lobby.Gamemode?.gamemode1,
-                    Players = lobby.Player1.Select(p => new PlayerDto
-                    {
-                        idPlayer = p.idPlayer,
-                        nickname = p.nickname,
-                        pathPhoto = p.pathPhoto
-                    }).ToList(),
-                    ChatMessages = new System.Collections.Generic.List<MessageDto>()
-                };
+                return null;
             }
-            return lobbyDto; 
+
+            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+            if (lobby == null) return null;
+
+            var lobbyDto = new LobbyDto
+            {
+                RoomCode = lobby.roomCode,
+                idHostPlayer = lobby.idHostPlayer,
+                StatusLobby = lobby.StatusLobby.statusName,
+                idGamemode = session.IdGamemode,
+                GameMode = lobby.Gamemode?.gamemode1,
+                Players = session.Players.ToList(),
+
+                ChatMessages = new System.Collections.Generic.List<MessageDto>()
+            };
+
+            return lobbyDto;
         }
 
         public async Task<string> CreateLobbyAsync(int idHostPlayer)
         {
-            string newRoomCode = null;
-            var hostPlayer = await playerRepository.GetPlayerByIdAsync(idHostPlayer);
+            var hostPlayerEntity = await playerRepository.GetPlayerByIdAsync(idHostPlayer);
+            if (hostPlayerEntity == null) return null;
 
-            if (hostPlayer != null)
+            string newRoomCode;
+            do
             {
-                string generatedCode;
-                do
-                {
-                    generatedCode = GenerateRandomCode();
-                }
-                while (await lobbyRepository.DoesRoomCodeExistAsync(generatedCode));
-
-                newRoomCode = generatedCode; 
-
-                var newLobby = new ConquiánDB.Lobby()
-                {
-                    roomCode = newRoomCode,
-                    idHostPlayer = idHostPlayer,
-                    idStatusLobby = 1,
-                    creationDate = DateTime.UtcNow,
-                    idGamemode = null
-                };
-
-                newLobby.Player1.Add(hostPlayer);
-                lobbyRepository.AddLobby(newLobby);
-                await lobbyRepository.SaveChangesAsync();
+                newRoomCode = GenerateRandomCode();
             }
+            while (await lobbyRepository.DoesRoomCodeExistAsync(newRoomCode));
 
-            return newRoomCode; 
+            var newLobby = new ConquiánDB.Lobby()
+            {
+                roomCode = newRoomCode,
+                idHostPlayer = idHostPlayer,
+                idStatusLobby = 1,
+                creationDate = DateTime.UtcNow,
+                idGamemode = null 
+            };
+
+
+            lobbyRepository.AddLobby(newLobby);
+            await lobbyRepository.SaveChangesAsync();
+
+            var hostPlayerDto = new PlayerDto
+            {
+                idPlayer = hostPlayerEntity.idPlayer,
+                nickname = hostPlayerEntity.nickname,
+                pathPhoto = hostPlayerEntity.pathPhoto
+            };
+
+            sessionManager.CreateLobby(newRoomCode, hostPlayerDto);
+
+            return newRoomCode;
         }
 
         public async Task<PlayerDto> JoinLobbyAsync(string roomCode, int idPlayer)
         {
-            PlayerDto playerDto = null;
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
-            var playerToJoin = await playerRepository.GetPlayerByIdAsync(idPlayer);
-
-            if (lobby != null && playerToJoin != null)
+            if (lobby == null || lobby.idStatusLobby != 1)
             {
-                bool isAlreadyInLobby = lobby.Player1.Any(p => p.idPlayer == idPlayer);
-                bool isFull = lobby.Player1.Count >= 2;
-                bool isOpen = lobby.idStatusLobby == 1;
-
-                if ((!isFull && isOpen) || isAlreadyInLobby)
-                {
-                    if (!isAlreadyInLobby)
-                    {
-                        lobby.Player1.Add(playerToJoin);
-                        await lobbyRepository.SaveChangesAsync();
-                    }
-
-                    playerDto = new PlayerDto
-                    {
-                        idPlayer = playerToJoin.idPlayer,
-                        nickname = playerToJoin.nickname,
-                        pathPhoto = playerToJoin.pathPhoto
-                    };
-                }
+                return null;
             }
 
-            return playerDto; 
+            var playerToJoinEntity = await playerRepository.GetPlayerByIdAsync(idPlayer);
+            if (playerToJoinEntity == null) return null;
+
+            var playerDto = new PlayerDto
+            {
+                idPlayer = playerToJoinEntity.idPlayer,
+                nickname = playerToJoinEntity.nickname,
+                pathPhoto = playerToJoinEntity.pathPhoto
+            };
+            var result = sessionManager.AddPlayerToLobby(roomCode, playerDto);
+
+            return result;
+        }
+
+        public async Task<PlayerDto> JoinLobbyAsGuestAsync(string roomCode)
+        {
+            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+            if (lobby == null || lobby.idStatusLobby != 1)
+            {
+                return null;
+            }
+            return sessionManager.AddGuestToLobby(roomCode);
         }
 
         public async Task<bool> LeaveLobbyAsync(string roomCode, int idPlayer)
         {
-            bool wasHost = false; 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+            if (lobby == null) return false;
 
-            if (lobby != null)
+            bool wasHost = lobby.idHostPlayer == idPlayer;
+            sessionManager.RemovePlayerFromLobby(roomCode, idPlayer);
+
+            if (wasHost)
             {
-                wasHost = lobby.idHostPlayer == idPlayer;
-
-                if (wasHost)
-                {
-                    lobby.idStatusLobby = 3;
-                }
-                else
-                {
-                    var playerToRemove = lobby.Player1.FirstOrDefault(p => p.idPlayer == idPlayer);
-                    if (playerToRemove != null)
-                    {
-                        lobby.Player1.Remove(playerToRemove);
-                    }
-                }
+                lobby.idStatusLobby = 3;
                 await lobbyRepository.SaveChangesAsync();
+                sessionManager.RemoveLobby(roomCode);
             }
 
-            return wasHost; 
+            return wasHost;
         }
 
         private static string GenerateRandomCode(int length = 5)
@@ -154,6 +149,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 lobby.idGamemode = idGamemode;
                 await lobbyRepository.SaveChangesAsync();
+                sessionManager.SetGamemode(roomCode, idGamemode);
             }
             else
             {
@@ -163,33 +159,33 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task StartGameAsync(string roomCode)
         {
-            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+            var session = sessionManager.GetLobbySession(roomCode);
 
-            if (lobby == null)
+            if (session == null)
             {
                 throw new Exception("El lobby no existe.");
             }
-            if (!lobby.idGamemode.HasValue)
+            if (!session.IdGamemode.HasValue)
             {
                 throw new Exception("No se ha seleccionado un modo de juego.");
             }
-            if (lobby.Player1.Count < 2)
+            if (session.Players.Count < 2)
             {
                 throw new Exception("No hay suficientes jugadores para iniciar.");
             }
 
-            int gamemodeId = lobby.idGamemode.Value;
+            int gamemodeId = session.IdGamemode.Value;
 
-            var players = lobby.Player1.Select(p => new PlayerDto
-            {
-                idPlayer = p.idPlayer,
-                nickname = p.nickname,
-                pathPhoto = p.pathPhoto
-            }).ToList();
+            var players = session.Players.ToList();
 
             GameSessionManager.Instance.CreateGame(roomCode, gamemodeId, players);
-            lobby.idStatusLobby = 2;
-            await lobbyRepository.SaveChangesAsync();
+
+            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+            if (lobby != null)
+            {
+                lobby.idStatusLobby = 2;
+                await lobbyRepository.SaveChangesAsync();
+            }
         }
     }
 }

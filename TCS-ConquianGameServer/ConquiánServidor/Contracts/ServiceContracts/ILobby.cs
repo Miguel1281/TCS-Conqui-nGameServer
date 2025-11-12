@@ -1,9 +1,5 @@
 ﻿using ConquiánServidor.Contracts.DataContracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.Contracts.ServiceContracts
@@ -20,6 +16,9 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         [OperationContract]
         Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer);
 
+        [OperationContract]
+        Task<PlayerDto> JoinAndSubscribeAsGuestAsync(string roomCode);
+
         [OperationContract(IsOneWay = true)]
         void LeaveAndUnsubscribe(string roomCode, int idPlayer);
 
@@ -29,7 +28,7 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         [OperationContract]
         Task SelectGamemodeAsync(string roomCode, int idGamemode);
 
-        [OperationContract]
-        Task StartGameAsync(string roomCode);
+        [OperationContract(IsOneWay = true)]
+        void StartGame(string roomCode);
     }
 }

@@ -4,13 +4,12 @@ using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
-using ConquiánServidor.Utilities.Email;
-using ConquiánServidor.Utilities.Email.Templates;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using ConquiánServidor.ConquiánDB.Repositories;
 
 namespace ConquiánServidor.Services
 {
@@ -41,7 +40,8 @@ namespace ConquiánServidor.Services
                 var lobbyState = await lobbyLogic.GetLobbyStateAsync(roomCode);
                 if (lobbyState != null)
                 {
-                    lobbyState.ChatMessages = chatHistories.ContainsKey(roomCode) ? chatHistories[roomCode] : new List<MessageDto>();
+                    chatHistories.TryAdd(roomCode, new List<MessageDto>());
+                    lobbyState.ChatMessages = chatHistories[roomCode];
                 }
                 return lobbyState;
             }
@@ -79,13 +79,13 @@ namespace ConquiánServidor.Services
             {
                 if (!lobbyCallbacks.ContainsKey(roomCode))
                 {
-                    return false; 
+                    return false;
                 }
 
                 var playerDto = await lobbyLogic.JoinLobbyAsync(roomCode, idPlayer);
                 if (playerDto == null)
                 {
-                    return false; 
+                    return false;
                 }
 
                 lobbyCallbacks[roomCode][idPlayer] = callback;
@@ -99,6 +99,37 @@ namespace ConquiánServidor.Services
                 return false;
             }
         }
+
+        public async Task<PlayerDto> JoinAndSubscribeAsGuestAsync(string roomCode)
+        {
+            var callback = OperationContext.Current.GetCallbackChannel<ILobbyCallback>();
+
+            try
+            {
+                if (!lobbyCallbacks.ContainsKey(roomCode))
+                {
+                    return null;
+                }
+
+                var playerDto = await lobbyLogic.JoinLobbyAsGuestAsync(roomCode);
+                if (playerDto == null)
+                {
+                    return null;
+                }
+
+                lobbyCallbacks[roomCode][playerDto.idPlayer] = callback;
+
+                NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
+
+                return playerDto;
+            }
+            catch (Exception ex)
+            {
+                // TODO: log del error
+                return null;
+            }
+        }
+
 
         public void LeaveAndUnsubscribe(string roomCode, int idPlayer)
         {
@@ -148,25 +179,24 @@ namespace ConquiánServidor.Services
             try
             {
                 await lobbyLogic.SelectGamemodeAsync(roomCode, idGamemode);
-
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGamemodeChanged(idGamemode));
             }
             catch (Exception ex)
             {
-                // TODO: log del error
+                // TODO: log
             }
         }
 
-        public async Task StartGameAsync(string roomCode)
+        public void StartGame(string roomCode)
         {
             try
             {
-                await lobbyLogic.StartGameAsync(roomCode);
-
+                lobbyLogic.StartGameAsync(roomCode).Wait();
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGameStarting());
             }
             catch (Exception ex)
             {
+                // TODO: log
             }
         }
 
@@ -201,6 +231,5 @@ namespace ConquiánServidor.Services
                 callbacks.TryRemove(id, out _);
             }
         }
-
     }
 }

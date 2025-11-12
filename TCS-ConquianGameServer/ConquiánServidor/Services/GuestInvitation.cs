@@ -1,13 +1,13 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
 using System.Data.Entity;
 using System.ServiceModel;
 using System.Threading.Tasks;
+using ConquiánServidor.ConquiánDB.Repositories;
 
 namespace ConquiánServidor.Services
 {

@@ -76,6 +76,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BusinessLogic\AuthenticationLogic.cs" />
+    <Compile Include="BusinessLogic\Exceptions\GuestInviteUsedException.cs" />
+    <Compile Include="BusinessLogic\Exceptions\RegisteredUserAsGuestException.cs" />
     <Compile Include="BusinessLogic\FriendshipLogic.cs" />
     <Compile Include="BusinessLogic\GameSessionManager.cs" />
     <Compile Include="BusinessLogic\Game\GameLogic.cs" />
@@ -147,6 +149,8 @@
     <Compile Include="Contracts\DataContracts\MessageDto.cs" />
     <Compile Include="Contracts\DataContracts\PlayerDto.cs" />
     <Compile Include="Contracts\DataContracts\SocialDto.cs" />
+    <Compile Include="Contracts\FaultContracts\GuestInviteUsedFault.cs" />
+    <Compile Include="Contracts\FaultContracts\RegisteredUserAsGuestFault.cs" />
     <Compile Include="Contracts\FaultContracts\SessionActiveFault.cs" />
     <Compile Include="Contracts\ServiceContracts\IFriendList.cs" />
     <Compile Include="Contracts\ServiceContracts\IGuestInvitation.cs" />

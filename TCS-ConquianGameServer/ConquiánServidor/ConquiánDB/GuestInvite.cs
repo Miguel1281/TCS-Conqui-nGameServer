@@ -18,5 +18,6 @@ namespace ConquiánServidor.ConquiánDB
         public string email { get; set; }
         public string roomCode { get; set; }
         public System.DateTime creationDate { get; set; }
+        public bool wasUsed { get; set; }
     }
 }

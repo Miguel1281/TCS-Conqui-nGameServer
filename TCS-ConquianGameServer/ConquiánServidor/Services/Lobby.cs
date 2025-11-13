@@ -1,6 +1,9 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.FaultContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
@@ -9,7 +12,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ServiceModel;
 using System.Threading.Tasks;
-using ConquiánServidor.ConquiánDB.Repositories;
 
 namespace ConquiánServidor.Services
 {
@@ -30,7 +32,7 @@ namespace ConquiánServidor.Services
             dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);
             ILobbyRepository lobbyRepository = new LobbyRepository(dbContext);
-            lobbyLogic = new LobbyLogic(lobbyRepository, playerRepository);
+            lobbyLogic = new LobbyLogic(lobbyRepository, playerRepository, dbContext);
         }
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
@@ -100,7 +102,7 @@ namespace ConquiánServidor.Services
             }
         }
 
-        public async Task<PlayerDto> JoinAndSubscribeAsGuestAsync(string roomCode)
+        public async Task<PlayerDto> JoinAndSubscribeAsGuestAsync(string email, string roomCode)
         {
             var callback = OperationContext.Current.GetCallbackChannel<ILobbyCallback>();
 
@@ -111,17 +113,26 @@ namespace ConquiánServidor.Services
                     return null;
                 }
 
-                var playerDto = await lobbyLogic.JoinLobbyAsGuestAsync(roomCode);
+                var playerDto = await lobbyLogic.JoinLobbyAsGuestAsync(email, roomCode);
+
                 if (playerDto == null)
                 {
                     return null;
                 }
 
                 lobbyCallbacks[roomCode][playerDto.idPlayer] = callback;
-
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
-
                 return playerDto;
+            }
+            catch (GuestInviteUsedException ex)
+            {
+                var fault = new GuestInviteUsedFault { Message = ex.Message };
+                throw new FaultException<GuestInviteUsedFault>(fault, new FaultReason(ex.Message));
+            }
+            catch (RegisteredUserAsGuestException ex)
+            {
+                var fault = new RegisteredUserAsGuestFault { Message = ex.Message };
+                throw new FaultException<RegisteredUserAsGuestFault>(fault, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {

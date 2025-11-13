@@ -1,8 +1,13 @@
-﻿using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.FaultContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using System;
+using System.Data.Entity;
 using System.Linq;
 using System.Security.Cryptography;
+using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
@@ -13,12 +18,14 @@ namespace ConquiánServidor.BusinessLogic
         private readonly IPlayerRepository playerRepository;
         private readonly LobbySessionManager sessionManager;
         private static readonly RandomNumberGenerator randomGenerator = RandomNumberGenerator.Create();
+        private readonly ConquiánDBEntities dbContext;
 
-        public LobbyLogic(ILobbyRepository lobbyRepository, IPlayerRepository playerRepository)
+        public LobbyLogic(ILobbyRepository lobbyRepository, IPlayerRepository playerRepository, ConquiánDBEntities dbContext)
         {
             this.lobbyRepository = lobbyRepository;
             this.playerRepository = playerRepository;
             this.sessionManager = LobbySessionManager.Instance;
+            this.dbContext = dbContext;
         }
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
@@ -106,14 +113,45 @@ namespace ConquiánServidor.BusinessLogic
             return result;
         }
 
-        public async Task<PlayerDto> JoinLobbyAsGuestAsync(string roomCode)
+        public async Task<PlayerDto> JoinLobbyAsGuestAsync(string email, string roomCode)
         {
+            var invitation = await dbContext.GuestInvite
+                                 .FirstOrDefaultAsync(gi => gi.email == email && gi.roomCode == roomCode);
+
+            if (invitation == null)
+            {
+                return null; 
+            }
+
+            if (invitation.wasUsed)
+            {
+                throw new GuestInviteUsedException("Esta invitación ya ha sido utilizada.");
+            }
+
+            bool isRegisteredPlayer = await dbContext.Player.AnyAsync(p => p.email == email);
+
+            if (isRegisteredPlayer)
+            {
+                invitation.wasUsed = true;
+                await dbContext.SaveChangesAsync();
+                throw new RegisteredUserAsGuestException(
+                    "Este correo ya está registrado. Por favor, inicie sesión para unirse a la sala.");
+            }
+
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby == null || lobby.idStatusLobby != 1)
             {
-                return null;
+                return null; 
             }
-            return sessionManager.AddGuestToLobby(roomCode);
+            var playerDto = sessionManager.AddGuestToLobby(roomCode);
+
+            if (playerDto != null)
+            {
+                invitation.wasUsed = true;
+                await dbContext.SaveChangesAsync();
+            }
+
+            return playerDto;
         }
 
         public async Task<bool> LeaveLobbyAsync(string roomCode, int idPlayer)

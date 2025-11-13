@@ -41,6 +41,7 @@
           <Property Name="email" Type="nvarchar" MaxLength="45" Nullable="false" />
           <Property Name="roomCode" Type="nvarchar" MaxLength="10" Nullable="false" />
           <Property Name="creationDate" Type="datetime" Nullable="false" />
+          <Property Name="wasUsed" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="Lobby">
           <Key>
@@ -663,6 +664,7 @@
           <Property Name="email" Type="String" Nullable="false" MaxLength="45" FixedLength="false" Unicode="true" />
           <Property Name="roomCode" Type="String" Nullable="false" MaxLength="10" FixedLength="false" Unicode="true" />
           <Property Name="creationDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="wasUsed" Type="Boolean" Nullable="false" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -784,6 +786,7 @@
           <EntitySetMapping Name="GuestInvite">
             <EntityTypeMapping TypeName="ConquiánDBModel.GuestInvite">
               <MappingFragment StoreEntitySet="GuestInvite">
+                <ScalarProperty Name="wasUsed" ColumnName="wasUsed" />
                 <ScalarProperty Name="creationDate" ColumnName="creationDate" />
                 <ScalarProperty Name="roomCode" ColumnName="roomCode" />
                 <ScalarProperty Name="email" ColumnName="email" />

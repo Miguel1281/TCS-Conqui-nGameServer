@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.FaultContracts;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -17,7 +18,9 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer);
 
         [OperationContract]
-        Task<PlayerDto> JoinAndSubscribeAsGuestAsync(string roomCode);
+        [FaultContract(typeof(GuestInviteUsedFault))]
+        [FaultContract(typeof(RegisteredUserAsGuestFault))] 
+        Task<PlayerDto> JoinAndSubscribeAsGuestAsync(string email, string roomCode);
 
         [OperationContract(IsOneWay = true)]
         void LeaveAndUnsubscribe(string roomCode, int idPlayer);

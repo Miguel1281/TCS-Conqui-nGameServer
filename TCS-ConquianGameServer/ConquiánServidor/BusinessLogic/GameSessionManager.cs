@@ -1,44 +1,36 @@
 ﻿using ConquiánServidor.BusinessLogic.Game;
 using ConquiánServidor.Contracts.DataContracts;
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
 {
     public class GameSessionManager
     {
-        private readonly ConcurrentDictionary<string, ConquianGame> activeGames;
+        private static readonly GameSessionManager instance = new GameSessionManager();
 
-        private static readonly Lazy<GameSessionManager> instance =
-            new Lazy<GameSessionManager>(() => new GameSessionManager());
+        private readonly ConcurrentDictionary<string, ConquianGame> games =
+            new ConcurrentDictionary<string, ConquianGame>();
 
-        public static GameSessionManager Instance => instance.Value;
+        private GameSessionManager() { }
 
-        private GameSessionManager()
-        {
-            activeGames = new ConcurrentDictionary<string, ConquianGame>();
-        }
+        public static GameSessionManager Instance => instance;
 
-        public ConquianGame CreateGame(string roomCode, int gamemodeId, List<PlayerDto> players)
+        public void CreateGame(string roomCode, int gamemodeId, List<PlayerDto> players)
         {
             var newGame = new ConquianGame(roomCode, gamemodeId, players);
-            activeGames.TryAdd(roomCode, newGame);
-            return newGame;
+            games.TryAdd(roomCode, newGame);
         }
 
         public ConquianGame GetGame(string roomCode)
         {
-            activeGames.TryGetValue(roomCode, out ConquianGame game);
+            games.TryGetValue(roomCode, out var game);
             return game;
         }
 
-        public void EndGame(string roomCode)
+        public void RemoveGame(string roomCode)
         {
-            activeGames.TryRemove(roomCode, out _);
+            games.TryRemove(roomCode, out _);
         }
     }
 }

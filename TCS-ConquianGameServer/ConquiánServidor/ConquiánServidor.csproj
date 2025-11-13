@@ -80,6 +80,7 @@
     <Compile Include="BusinessLogic\Exceptions\RegisteredUserAsGuestException.cs" />
     <Compile Include="BusinessLogic\FriendshipLogic.cs" />
     <Compile Include="BusinessLogic\GameSessionManager.cs" />
+    <Compile Include="BusinessLogic\Game\Card.cs" />
     <Compile Include="BusinessLogic\Game\GameLogic.cs" />
     <Compile Include="BusinessLogic\InvitationManager.cs" />
     <Compile Include="BusinessLogic\LobbyLogic.cs" />
@@ -144,7 +145,9 @@
     <Compile Include="ConquiánDB\StatusType.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="Contracts\DataContracts\CardDto.cs" />
     <Compile Include="Contracts\DataContracts\FriendRequestDto.cs" />
+    <Compile Include="Contracts\DataContracts\GameStateDto.cs" />
     <Compile Include="Contracts\DataContracts\LobbyDto.cs" />
     <Compile Include="Contracts\DataContracts\MessageDto.cs" />
     <Compile Include="Contracts\DataContracts\PlayerDto.cs" />
@@ -153,6 +156,8 @@
     <Compile Include="Contracts\FaultContracts\RegisteredUserAsGuestFault.cs" />
     <Compile Include="Contracts\FaultContracts\SessionActiveFault.cs" />
     <Compile Include="Contracts\ServiceContracts\IFriendList.cs" />
+    <Compile Include="Contracts\ServiceContracts\IGameCallback.cs" />
+    <Compile Include="Contracts\ServiceContracts\IGame.cs" />
     <Compile Include="Contracts\ServiceContracts\IGuestInvitation.cs" />
     <Compile Include="Contracts\ServiceContracts\IInvitationCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\IInvitationService.cs" />
@@ -176,6 +181,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
     <Compile Include="Services\FriendList.cs" />
+    <Compile Include="Services\Game.cs" />
     <Compile Include="Services\GuestInvitation.cs" />
     <Compile Include="Services\Invitation.cs" />
     <Compile Include="Services\Lobby.cs" />

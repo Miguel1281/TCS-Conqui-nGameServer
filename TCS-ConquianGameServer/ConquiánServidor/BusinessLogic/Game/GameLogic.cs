@@ -15,6 +15,9 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private Timer gameTimer;
         private int remainingSeconds;
+        private int currentTurnSeconds; 
+        private int currentTurnPlayerId; 
+        private const int TURN_DURATION_SECONDS = 20; 
 
         private readonly ConcurrentDictionary<int, IGameCallback> playerCallbacks;
         public List<PlayerDto> Players { get; private set; }
@@ -30,7 +33,8 @@ namespace ConquiánServidor.BusinessLogic.Game
             RoomCode = roomCode;
             GamemodeId = gamemodeId;
             Players = players;
-            playerCallbacks = new ConcurrentDictionary<int, IGameCallback>(); 
+            playerCallbacks = new ConcurrentDictionary<int, IGameCallback>();
+            currentTurnPlayerId = Players.First().idPlayer;
             InitializeGame();
         }
 
@@ -111,6 +115,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public void StartGameTimer()
         {
+            currentTurnSeconds = TURN_DURATION_SECONDS; 
             remainingSeconds = GetInitialTimeInSeconds();
             gameTimer = new Timer(1000); 
             gameTimer.Elapsed += OnTimerTick;
@@ -121,26 +126,51 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             remainingSeconds--;
 
-            BroadcastTime(remainingSeconds);
+            currentTurnSeconds--;
 
             if (remainingSeconds <= 0)
             {
                 StopGame();
-
             }
+            else if (currentTurnSeconds <= 0)
+            {
+                ChangeTurn();
+            }
+
+            BroadcastTime(remainingSeconds, currentTurnSeconds, currentTurnPlayerId);
         }
-        private void BroadcastTime(int time)
+
+        private void ChangeTurn()
+        {
+
+            currentTurnSeconds = TURN_DURATION_SECONDS;
+
+            var currentPlayerIndex = Players.FindIndex(p => p.idPlayer == currentTurnPlayerId);
+            var nextPlayerIndex = (currentPlayerIndex + 1) % Players.Count;
+            currentTurnPlayerId = Players[nextPlayerIndex].idPlayer;
+        }
+        private void BroadcastTime(int gameSeconds, int turnSeconds, int currentPlayerId)
         {
             foreach (var callback in playerCallbacks.Values)
             {
                 try
                 {
-                    callback.OnTimeUpdated(time);
+                    callback.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
                 }
                 catch (Exception)
                 {
                 }
             }
+        }
+
+        public int GetCurrentTurnSeconds()
+        {
+            return currentTurnSeconds;
+        }
+
+        public int GetCurrentTurnPlayerId()
+        {
+            return currentTurnPlayerId;
         }
         public void StopGame()
         {

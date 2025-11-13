@@ -50,10 +50,12 @@ namespace ConquiánServidor.Services
             };
 
             var opponentDto = game.Players.First(p => p.idPlayer != playerId);
-
-            int currentTurnPlayerId = game.Players.First().idPlayer;
+            
+            int currentTurnPlayerId = game.GetCurrentTurnPlayerId();
             int opponentCards = (game.GamemodeId == 1) ? 6 : 8;
             int totalSeconds = game.GetInitialTimeInSeconds();
+            int turnRemainingSeconds = game.GetCurrentTurnSeconds();
+
             return new GameStateDto
             {
                 PlayerHand = playerHandDto,

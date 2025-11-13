@@ -17,5 +17,7 @@ namespace ConquiánServidor.Contracts.DataContracts
         public int OpponentCardCount { get; set; }
         [DataMember] 
         public int TotalGameSeconds { get; set; }
+        [DataMember] 
+        public int TurnRemainingSeconds { get; set; }
     }
 }

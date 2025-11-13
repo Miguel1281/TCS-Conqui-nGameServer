@@ -1,7 +1,10 @@
 ﻿using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.ServiceContracts;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
 
 namespace ConquiánServidor.BusinessLogic.Game
 {
@@ -9,6 +12,11 @@ namespace ConquiánServidor.BusinessLogic.Game
     {
         public string RoomCode { get; private set; }
         public int GamemodeId { get; private set; }
+
+        private Timer gameTimer;
+        private int remainingSeconds;
+
+        private readonly ConcurrentDictionary<int, IGameCallback> playerCallbacks;
         public List<PlayerDto> Players { get; private set; }
         private List<Card> Deck { get; set; }
         public Dictionary<int, List<Card>> PlayerHands { get; private set; }
@@ -22,7 +30,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             RoomCode = roomCode;
             GamemodeId = gamemodeId;
             Players = players;
-
+            playerCallbacks = new ConcurrentDictionary<int, IGameCallback>(); 
             InitializeGame();
         }
 
@@ -90,6 +98,58 @@ namespace ConquiánServidor.BusinessLogic.Game
             var firstDiscard = StockPile.First();
             StockPile.RemoveAt(0);
             DiscardPile.Add(firstDiscard);
+        }
+        public void RegisterPlayerCallback(int playerId, IGameCallback callback)
+        {
+            playerCallbacks[playerId] = callback;
+        }
+
+        public int GetInitialTimeInSeconds()
+        {
+            return (GamemodeId == 1) ? 600 : 1200;
+        }
+
+        public void StartGameTimer()
+        {
+            remainingSeconds = GetInitialTimeInSeconds();
+            gameTimer = new Timer(1000); 
+            gameTimer.Elapsed += OnTimerTick;
+            gameTimer.AutoReset = true;
+            gameTimer.Start();
+        }
+        private void OnTimerTick(object sender, ElapsedEventArgs e)
+        {
+            remainingSeconds--;
+
+            BroadcastTime(remainingSeconds);
+
+            if (remainingSeconds <= 0)
+            {
+                StopGame();
+
+            }
+        }
+        private void BroadcastTime(int time)
+        {
+            foreach (var callback in playerCallbacks.Values)
+            {
+                try
+                {
+                    callback.OnTimeUpdated(time);
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+        public void StopGame()
+        {
+            if (gameTimer != null)
+            {
+                gameTimer.Stop();
+                gameTimer.Elapsed -= OnTimerTick;
+                gameTimer.Dispose();
+            }
         }
     }
 }

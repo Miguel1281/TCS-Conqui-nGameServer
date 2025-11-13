@@ -12,9 +12,6 @@ namespace ConquiánServidor.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Reentrant)]
     public class Game : IGame
     {
-        private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, IGameCallback>> gameCallbacks =
-            new ConcurrentDictionary<string, ConcurrentDictionary<int, IGameCallback>>();
-
         public async Task<GameStateDto> JoinGameAsync(string roomCode, int playerId)
         {
             var callback = OperationContext.Current.GetCallbackChannel<IGameCallback>();
@@ -25,13 +22,9 @@ namespace ConquiánServidor.Services
                 return null;
             }
 
-            gameCallbacks.TryAdd(roomCode, new ConcurrentDictionary<int, IGameCallback>());
-            gameCallbacks[roomCode][playerId] = callback;
+            game.RegisterPlayerCallback(playerId, callback);
 
             var gameState = BuildGameStateForPlayer(game, playerId);
-
-            // TODO: Notificar al oponente que te has unido.
-            // Puedes implementar esto más tarde.
 
             return await Task.FromResult(gameState);
         }
@@ -60,14 +53,15 @@ namespace ConquiánServidor.Services
 
             int currentTurnPlayerId = game.Players.First().idPlayer;
             int opponentCards = (game.GamemodeId == 1) ? 6 : 8;
-
+            int totalSeconds = game.GetInitialTimeInSeconds();
             return new GameStateDto
             {
                 PlayerHand = playerHandDto,
                 TopDiscardCard = topDiscardDto,
                 Opponent = opponentDto,
                 CurrentTurnPlayerId = currentTurnPlayerId,
-                OpponentCardCount = opponentCards
+                OpponentCardCount = opponentCards,
+                TotalGameSeconds = totalSeconds
             };
         }
     }

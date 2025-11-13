@@ -217,6 +217,12 @@ namespace ConquiánServidor.BusinessLogic
             var players = session.Players.ToList();
 
             GameSessionManager.Instance.CreateGame(roomCode, gamemodeId, players);
+            var game = GameSessionManager.Instance.GetGame(roomCode);
+            
+            if (game != null)
+            {
+                game.StartGameTimer();
+            }
 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby != null)

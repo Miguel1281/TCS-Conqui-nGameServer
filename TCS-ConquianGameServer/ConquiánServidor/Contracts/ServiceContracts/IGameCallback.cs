@@ -12,5 +12,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void NotifyOpponentDiscarded(CardDto card);
+
+        [OperationContract(IsOneWay = true)]
+        void OnTimeUpdated(int remainingSeconds);
     }
 }

@@ -15,5 +15,11 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void OnTimeUpdated(int gameRemainingSeconds, int turnRemainingSeconds, int currentTurnPlayerId);
+
+        [OperationContract(IsOneWay = true)]
+        void OnOpponentHandUpdated(int newCardCount);
+
+        [OperationContract(IsOneWay = true)]
+        void NotifyOpponentMeld(CardDto[] meldCards);
     }
 }

@@ -9,5 +9,16 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         [OperationContract]
         Task<GameStateDto> JoinGameAsync(string roomCode, int playerId);
 
+        [OperationContract(IsOneWay = true)]
+        void PlayCards(string roomCode, int playerId, string[] cardIds);
+
+        [OperationContract(IsOneWay = true)]
+        void DrawFromDeck(string roomCode, int playerId);
+
+        [OperationContract]
+        Task<CardDto> DrawFromDiscardAsync(string roomCode, int playerId);
+
+        [OperationContract(IsOneWay = true)]
+        void DiscardCard(string roomCode, int playerId, string cardId);
     }
 }

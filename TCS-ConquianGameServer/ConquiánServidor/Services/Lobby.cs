@@ -25,11 +25,10 @@ namespace ConquiánServidor.Services
             new ConcurrentDictionary<string, List<MessageDto>>();
 
         private readonly LobbyLogic lobbyLogic;
-        private readonly ConquiánDBEntities dbContext;
 
         public Lobby()
         {
-            dbContext = new ConquiánDBEntities();
+            var dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);
             ILobbyRepository lobbyRepository = new LobbyRepository(dbContext);
             lobbyLogic = new LobbyLogic(lobbyRepository, playerRepository, dbContext);
@@ -47,7 +46,7 @@ namespace ConquiánServidor.Services
                 }
                 return lobbyState;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: log del error
                 return null;
@@ -66,7 +65,7 @@ namespace ConquiánServidor.Services
                 }
                 return newRoomCode;
             }
-            catch (Exception ex)
+            catch (Exception)     
             {
                 // TODO: log del error
                 return null;
@@ -95,7 +94,7 @@ namespace ConquiánServidor.Services
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: log del error
                 return false;
@@ -134,7 +133,7 @@ namespace ConquiánServidor.Services
                 var fault = new RegisteredUserAsGuestFault { Message = ex.Message };
                 throw new FaultException<RegisteredUserAsGuestFault>(fault, new FaultReason(ex.Message));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: log del error
                 return null;
@@ -168,7 +167,7 @@ namespace ConquiánServidor.Services
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: log del error
             }
@@ -192,7 +191,7 @@ namespace ConquiánServidor.Services
                 await lobbyLogic.SelectGamemodeAsync(roomCode, idGamemode);
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGamemodeChanged(idGamemode));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: log
             }
@@ -205,7 +204,7 @@ namespace ConquiánServidor.Services
                 lobbyLogic.StartGameAsync(roomCode).Wait();
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGameStarting());
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: log
             }

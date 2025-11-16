@@ -49,7 +49,7 @@ namespace ConquiánServidor.Services
 
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: log del error
                 return false;

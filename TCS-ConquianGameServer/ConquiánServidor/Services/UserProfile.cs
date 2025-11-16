@@ -29,7 +29,7 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.GetPlayerByIdAsync(idPlayer);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // TODO: Registrar el error 'ex'
                 throw new FaultException("Error al recuperar la información del jugador.");
@@ -42,7 +42,7 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.GetPlayerSocialsAsync(idPlayer);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al recuperar las redes sociales.");
             }
@@ -54,7 +54,7 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.UpdatePlayerAsync(playerDto);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al actualizar el perfil.");
             }
@@ -66,7 +66,7 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Ocurrió un error al actualizar las redes sociales.");
             }
@@ -78,7 +78,7 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.UpdateProfilePictureAsync(idPlayer, newPath);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false; 
             }

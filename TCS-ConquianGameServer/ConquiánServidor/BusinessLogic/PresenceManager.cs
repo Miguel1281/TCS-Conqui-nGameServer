@@ -1,12 +1,13 @@
-﻿using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -66,11 +67,13 @@ namespace ConquiánServidor.BusinessLogic
 
             var deadSubscribers = new List<int>();
 
+            var friendIds = friends.Select(friend => friend.idPlayer);
+
             lock (lockObj)
             {
-                foreach (var friend in friends)
+                foreach (var friendId in friendIds)
                 {
-                    if (onlineSubscribers.TryGetValue(friend.idPlayer, out IPresenceCallback callback))
+                    if (onlineSubscribers.TryGetValue(friendId, out IPresenceCallback callback))
                     {
                         try
                         {
@@ -78,7 +81,7 @@ namespace ConquiánServidor.BusinessLogic
                         }
                         catch (Exception)
                         {
-                            deadSubscribers.Add(friend.idPlayer);
+                            deadSubscribers.Add(friendId);
                         }
                     }
                 }

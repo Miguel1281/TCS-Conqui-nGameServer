@@ -191,7 +191,7 @@ namespace ConquiánServidor.BusinessLogic
             }
             else
             {
-                throw new Exception("Lobby no encontrado al seleccionar modo de juego.");
+                throw new LobbyOperationException("Lobby no encontrado al seleccionar modo de juego.");
             }
         }
 
@@ -201,15 +201,15 @@ namespace ConquiánServidor.BusinessLogic
 
             if (session == null)
             {
-                throw new Exception("El lobby no existe.");
+                throw new LobbyOperationException("El lobby no existe.");
             }
             if (!session.IdGamemode.HasValue)
             {
-                throw new Exception("No se ha seleccionado un modo de juego.");
+                throw new LobbyOperationException("No se ha seleccionado un modo de juego.");
             }
             if (session.Players.Count < 2)
             {
-                throw new Exception("No hay suficientes jugadores para iniciar.");
+                throw new LobbyOperationException("No hay suficientes jugadores para iniciar.");
             }
 
             int gamemodeId = session.IdGamemode.Value;

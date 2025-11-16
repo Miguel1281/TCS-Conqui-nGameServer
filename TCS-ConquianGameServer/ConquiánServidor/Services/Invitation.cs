@@ -10,19 +10,15 @@ namespace ConquiánServidor.Services
     public class Invitation : IInvitationService
     {
         private readonly InvitationManager manager = InvitationManager.Instance;
-
-        private IInvitationCallback currentCallback;
-
         public void Subscribe(int idPlayer)
         {
-            this.currentCallback = OperationContext.Current.GetCallbackChannel<IInvitationCallback>();
-            manager.Subscribe(idPlayer, this.currentCallback);
+            var currentCallback = OperationContext.Current.GetCallbackChannel<IInvitationCallback>();
+            manager.Subscribe(idPlayer, currentCallback);
         }
 
         public void Unsubscribe(int idPlayer)
         {
             manager.Unsubscribe(idPlayer);
-            this.currentCallback = null;
         }
 
         public Task<bool> SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)

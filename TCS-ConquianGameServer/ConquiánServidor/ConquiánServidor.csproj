@@ -84,6 +84,7 @@
     <Compile Include="BusinessLogic\Game\GameLogic.cs" />
     <Compile Include="BusinessLogic\InvitationManager.cs" />
     <Compile Include="BusinessLogic\LobbyLogic.cs" />
+    <Compile Include="BusinessLogic\LobbyOperationException.cs" />
     <Compile Include="BusinessLogic\LobbySession.cs" />
     <Compile Include="BusinessLogic\LobbySessionManager.cs" />
     <Compile Include="BusinessLogic\PresenceManager.cs" />

@@ -107,11 +107,11 @@ namespace ConquiánServidor.Services
                     ImagePath = card.ImagePath
                 }).ToList();
 
-            var topDiscardCard = game.DiscardPile.Any() ? game.DiscardPile.Last() : null;
             CardDto topDiscardDto = null;
-
-            if (topDiscardCard != null)
+            if (game.DiscardPile.Count > 0) 
             {
+                var topDiscardCard = game.DiscardPile[game.DiscardPile.Count - 1];
+
                 topDiscardDto = new CardDto
                 {
                     Id = topDiscardCard.Id,
@@ -126,7 +126,6 @@ namespace ConquiánServidor.Services
             int currentTurnPlayerId = game.GetCurrentTurnPlayerId();
             int opponentCards = game.PlayerHands[opponentDto.idPlayer].Count;
             int totalSeconds = game.GetInitialTimeInSeconds();
-            int turnRemainingSeconds = game.GetCurrentTurnSeconds();
 
             return new GameStateDto
             {

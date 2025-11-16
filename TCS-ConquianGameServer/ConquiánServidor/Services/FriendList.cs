@@ -31,7 +31,7 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetPlayerByNicknameAsync(nickname, idCurrentUser);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al buscar jugador.");
             }
@@ -43,7 +43,7 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetFriendsAsync(idPlayer);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al obtener la lista de amigos.");
             }
@@ -55,7 +55,7 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetFriendRequestsAsync(idPlayer);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al obtener las solicitudes de amistad.");
             }
@@ -67,7 +67,7 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.SendFriendRequestAsync(idSender, idReceiver);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al enviar la solicitud.");
             }
@@ -79,7 +79,7 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.UpdateFriendRequestStatusAsync(idFriendship, idStatus);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al actualizar la solicitud.");
             }
@@ -91,7 +91,7 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.DeleteFriendAsync(idPlayer, idFriend);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new FaultException("Error al eliminar amigo.");
             }

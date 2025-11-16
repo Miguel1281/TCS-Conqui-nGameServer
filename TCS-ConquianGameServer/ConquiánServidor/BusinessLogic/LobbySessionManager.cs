@@ -132,17 +132,14 @@ namespace ConquiánServidor.BusinessLogic
 
         public void RemoveLobby(string roomCode)
         {
-            if (activeLobbies.TryRemove(roomCode, out var session))
+            if (activeLobbies.TryRemove(roomCode, out var session) && session.Players.Any(p => p.idPlayer < 0))
             {
-                if (session.Players.Any(p => p.idPlayer < 0))
+                lock (session)
                 {
-                    lock (session)
+                    var guests = session.Players.Where(p => p.idPlayer < 0).ToList();
+                    foreach (var guest in guests)
                     {
-                        var guests = session.Players.Where(p => p.idPlayer < 0).ToList();
-                        foreach (var guest in guests)
-                        {
-                            availableGuestIds.Push(guest.idPlayer);
-                        }
+                        availableGuestIds.Push(guest.idPlayer);
                     }
                 }
             }

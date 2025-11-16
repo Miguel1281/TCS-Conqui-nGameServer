@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using NLog;
 using System;
@@ -37,15 +38,12 @@ namespace ConquiánServidor.BusinessLogic.Game
             GamemodeId = gamemodeId;
             Players = players;
             playerCallbacks = new ConcurrentDictionary<int, IGameCallback>();
-            currentTurnPlayerId = Players.First().idPlayer;
+            currentTurnPlayerId = Players[0].idPlayer;
 
             PlayerHands = new Dictionary<int, List<Card>>();
             PlayerMelds = new Dictionary<int, List<List<Card>>>();
-            foreach (var player in players)
-            {
-                PlayerHands[player.idPlayer] = new List<Card>();
-                PlayerMelds[player.idPlayer] = new List<List<Card>>();
-            }
+            PlayerHands = players.ToDictionary(player => player.idPlayer, player => new List<Card>());
+            PlayerMelds = players.ToDictionary(player => player.idPlayer, player => new List<List<Card>>());
             InitializeGame();
         }
 
@@ -93,7 +91,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 foreach (var player in Players)
                 {
-                    var card = Deck.First();
+                    var card = Deck[0];
                     Deck.RemoveAt(0);
                     PlayerHands[player.idPlayer].Add(card);
                 }
@@ -104,7 +102,7 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             StockPile = Deck;
             DiscardPile = new List<Card>();
-            var firstDiscard = StockPile.First();
+            var firstDiscard = StockPile[0];
             StockPile.RemoveAt(0);
             DiscardPile.Add(firstDiscard);
         }
@@ -162,8 +160,10 @@ namespace ConquiánServidor.BusinessLogic.Game
                 {
                     callback.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Logger.Error(ex, $"Falló al enviar actualización de tiempo al jugador {currentPlayerId}. Se eliminará el callback.");
+                    playerCallbacks.TryRemove(currentPlayerId, out _);
                 }
             }
         }
@@ -221,7 +221,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             }
         }
 
-        private bool IsValidMeld(List<Card> cards)
+        private static bool IsValidMeld(List<Card> cards)
         {
             if (cards == null || cards.Count < 3) return false;
 
@@ -261,7 +261,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             if (playerId != currentTurnPlayerId) return;
             if (StockPile.Count == 0) return; 
 
-            var card = StockPile.First();
+            var card = StockPile[0];
             StockPile.RemoveAt(0);
             DiscardPile.Add(card);
 
@@ -284,14 +284,17 @@ namespace ConquiánServidor.BusinessLogic.Game
             if (playerId != currentTurnPlayerId) return null;
             if (DiscardPile.Count == 0) return null;
 
-            var card = DiscardPile.Last();
-            DiscardPile.RemoveAt(DiscardPile.Count - 1);
+            int lastIndex = DiscardPile.Count - 1;
+
+            var card = DiscardPile[lastIndex];
+
+            DiscardPile.RemoveAt(lastIndex);
             PlayerHands[playerId].Add(card);
 
-            var newTopCard = DiscardPile.Any() ? DiscardPile.Last() : null;
             CardDto newTopCardDto = null;
-            if (newTopCard != null)
+            if (DiscardPile.Count > 0) 
             {
+                var newTopCard = DiscardPile[DiscardPile.Count - 1]; 
                 newTopCardDto = new CardDto
                 {
                     Id = newTopCard.Id,

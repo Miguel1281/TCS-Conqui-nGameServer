@@ -14,7 +14,7 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             Suit = suit;
             Rank = rank;
-            ImagePath = $"/Resources/Assets/{suit}/{suit.ToLower()}_{rank}s.jpg";
+            ImagePath = $"/Resources/Assets/{suit}/{suit.ToLower()}_{rank}s.png";
         }
     }
 }

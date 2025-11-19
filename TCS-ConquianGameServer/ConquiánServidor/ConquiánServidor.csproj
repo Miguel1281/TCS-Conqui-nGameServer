@@ -48,7 +48,7 @@
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="NLog, Version=6.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\packages\NLog.6.0.5\lib\net46\NLog.dll</HintPath>
+      <HintPath>..\packages\NLog.6.0.6\lib\net46\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -152,6 +152,8 @@
     <Compile Include="Contracts\DataContracts\LobbyDto.cs" />
     <Compile Include="Contracts\DataContracts\MessageDto.cs" />
     <Compile Include="Contracts\DataContracts\PlayerDto.cs" />
+    <Compile Include="Contracts\DataContracts\ServiceErrorType.cs" />
+    <Compile Include="Contracts\DataContracts\ServiceFaultDto.cs" />
     <Compile Include="Contracts\DataContracts\SocialDto.cs" />
     <Compile Include="Contracts\FaultContracts\GuestInviteUsedFault.cs" />
     <Compile Include="Contracts\FaultContracts\RegisteredUserAsGuestFault.cs" />

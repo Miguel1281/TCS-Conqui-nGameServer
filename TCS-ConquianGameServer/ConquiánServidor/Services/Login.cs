@@ -1,7 +1,6 @@
 ﻿using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
-using ConquiánServidor.Contracts.FaultContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
@@ -29,10 +28,10 @@ namespace ConquiánServidor.Services
             var player = await playerRepository.GetPlayerByEmailAsync(email);
             if (player != null && PresenceManager.Instance.IsPlayerOnline(player.idPlayer))
             {
-                SessionActiveFault faultDetail = new SessionActiveFault(
-                    "Ya cuenta con una sesión activa, por favor cierre la sesión activa para poder abrir una nueva"
-                );
-                throw new FaultException<SessionActiveFault>(faultDetail, new FaultReason(faultDetail.Message));
+                var faultData = new ServiceFaultDto(ServiceErrorType.SessionActive,
+                     "Ya cuenta con una sesión activa, por favor cierre la sesión activa para poder abrir una nueva"
+                 );
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Sesión Activa"));
             }
             return await authLogic.AuthenticatePlayerAsync(email, password);
         }

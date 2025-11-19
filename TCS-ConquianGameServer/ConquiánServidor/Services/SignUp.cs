@@ -5,6 +5,12 @@ using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
+using System;
+using System.Data.Entity.Core;
+using System.Data.Entity.Infrastructure;
+using System.Data.SqlClient;
+using System.Net.Mail;
+using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.Services
@@ -23,22 +29,98 @@ namespace ConquiánServidor.Services
 
         public async Task<bool> RegisterPlayerAsync(PlayerDto newPlayer)
         {
-            return await authLogic.RegisterPlayerAsync(newPlayer);
+            try
+            {
+                await authLogic.RegisterPlayerAsync(newPlayer);
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Validación fallida"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                var type = ex.Message.Contains("nickname") ? ServiceErrorType.DuplicateRecord : ServiceErrorType.OperationFailed;
+                var fault = new ServiceFaultDto(type, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar en la base de datos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (SqlException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "La base de datos no responde.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error SQL"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.Unknown, "Error inesperado en el registro.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error Interno"));
+            }
         }
 
         public async Task<string> SendVerificationCodeAsync(string email)
         {
-            return await authLogic.SendVerificationCodeAsync(email);
+            try
+            {
+                return await authLogic.SendVerificationCodeAsync(email);
+            }
+            catch (ArgumentException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Email inválido"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DuplicateRecord, "El correo ya está registrado.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Email duplicado"));
+            }
+            catch (SmtpException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.CommunicationError, "No se pudo enviar el correo.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error procesando la solicitud.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+            }
         }
 
         public async Task<bool> VerifyCodeAsync(string email, string code)
         {
-            return await authLogic.VerifyCodeAsync(email, code);
+            try
+            {
+                await authLogic.VerifyCodeAsync(email, code);
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Código inválido"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error verificando el código.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+            }
         }
 
         public async Task<bool> CancelRegistrationAsync(string email)
         {
-            return await authLogic.DeleteTemporaryPlayerAsync(email);
+            try
+            {
+                await authLogic.DeleteTemporaryPlayerAsync(email);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al cancelar registro.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
         }
     }
 }

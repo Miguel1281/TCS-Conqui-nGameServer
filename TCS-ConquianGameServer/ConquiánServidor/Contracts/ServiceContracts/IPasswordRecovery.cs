@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ConquiánServidor.Contracts.DataContracts;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
@@ -11,12 +12,15 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     public interface IPasswordRecovery
     {
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<bool> RequestPasswordRecoveryAsync(string email, int mode);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<bool> ValidateRecoveryTokenAsync(string email, string token);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
     }
 }

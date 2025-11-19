@@ -17,6 +17,9 @@ namespace ConquiánServidor.Contracts.DataContracts
         DatabaseError = 1,
 
         [EnumMember]
+        DuplicateRecord = 2,
+
+        [EnumMember]
         ValidationFailed = 3,
 
         [EnumMember]
@@ -24,6 +27,9 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [EnumMember]
         OperationFailed = 5,
+
+        [EnumMember]
+        CommunicationError = 6,
 
         [EnumMember]
         SessionActive = 10,

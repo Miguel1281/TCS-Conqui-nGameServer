@@ -1,11 +1,16 @@
 ﻿using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
+using System.Collections.Generic;
+using System.Data.Entity.Infrastructure;
+using System.Data.SqlClient;
+using System.Net.Mail;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -39,11 +44,6 @@ namespace ConquiánServidor.Services
             {
                 string token = await authLogic.GenerateAndStoreRecoveryTokenAsync(email);
 
-                if (string.IsNullOrEmpty(token))
-                {
-                    return false;
-                }
-
                 IEmailTemplate emailTemplate;
 
                 if (mode == (int)PasswordUpdateMode.Change)
@@ -56,12 +56,23 @@ namespace ConquiánServidor.Services
                 }
 
                 await emailService.SendEmailAsync(email, emailTemplate);
+
                 return true;
+            }
+            catch (KeyNotFoundException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Usuario no encontrado"));
+            }
+            catch (SmtpException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.CommunicationError, "Error al enviar el correo de recuperación.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error en RequestPasswordRecoveryAsync: {ex.Message}");
-                return false;
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error inesperado en la solicitud de recuperación.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
@@ -69,12 +80,18 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                return await authLogic.HandleTokenValidationAsync(email, token);
+                await authLogic.HandleTokenValidationAsync(email, token);
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Token Inválido"));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error en ValidateRecoveryTokenAsync: {ex.Message}");
-                return false;
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al validar el token.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
@@ -82,12 +99,33 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                return await authLogic.HandlePasswordResetAsync(email, token, newPassword);
+                await authLogic.HandlePasswordResetAsync(email, token, newPassword);
+                return true;
+            }
+            catch (ArgumentException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Datos Inválidos"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Usuario no encontrado"));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar la nueva contraseña.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (SqlException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "La base de datos no responde.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error SQL"));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error en ResetPasswordAsync: {ex.Message}");
-                return false;
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error inesperado al restablecer la contraseña.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
     }

@@ -61,6 +61,42 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Credenciales inválidas.
+        /// </summary>
+        public static string ErrorInvalidCredentials {
+            get {
+                return ResourceManager.GetString("ErrorInvalidCredentials", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Este nombre de usuario ya existe.
+        /// </summary>
+        public static string ErrorNicknameExists {
+            get {
+                return ResourceManager.GetString("ErrorNicknameExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Usuario no encontrado.
+        /// </summary>
+        public static string ErrorUserNotFound {
+            get {
+                return ResourceManager.GetString("ErrorUserNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a El código de verificación es incorrecto.
+        /// </summary>
+        public static string ErrorVerificationCodeIncorrect {
+            get {
+                return ResourceManager.GetString("ErrorVerificationCodeIncorrect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Error de validación de entidad (DbEntityValidationException): {0}.
         /// </summary>
         public static string GlobalDbEntityValidationError {

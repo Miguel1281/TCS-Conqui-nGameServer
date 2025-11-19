@@ -24,27 +24,24 @@ namespace ConquiánServidor.Tests
         }
 
         [Fact]
-        public async Task SendVerificationCodeAsync_ShouldReturnEmptyString_WhenEmailFormatIsInvalid()
+        public async Task SendVerificationCodeAsync_ShouldThrowArgumentException_WhenEmailFormatIsInvalid()
         {
             string invalidEmail = "correo-invalido.com";
 
-            string result = await authLogic.SendVerificationCodeAsync(invalidEmail);
+            await Assert.ThrowsAsync<ArgumentException>(() => authLogic.SendVerificationCodeAsync(invalidEmail));
 
-            Assert.Equal(string.Empty, result);
             mockPlayerRepository.Verify(r => r.GetPlayerForVerificationAsync(It.IsAny<string>()), Times.Never());
         }
 
         [Fact]
-        public async Task SendVerificationCodeAsync_ShouldReturnError_WhenEmailAlreadyExists()
+        public async Task SendVerificationCodeAsync_ShouldThrowInvalidOperationException_WhenEmailAlreadyExists()
         {
             string existingEmail = "yaexiste@dominio.com";
 
             mockPlayerRepository.Setup(r => r.GetPlayerForVerificationAsync(existingEmail))
                                 .ReturnsAsync(new Player());
 
-            string result = await authLogic.SendVerificationCodeAsync(existingEmail);
-
-            Assert.Equal("ERROR_EMAIL_EXISTS", result);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => authLogic.SendVerificationCodeAsync(existingEmail));
         }
 
         [Fact]
@@ -66,20 +63,15 @@ namespace ConquiánServidor.Tests
 
             string result = await authLogic.SendVerificationCodeAsync(newEmail);
 
-            Assert.Equal(testCode, result); 
-
-            Assert.NotEqual(string.Empty, result);
-            Assert.NotEqual("ERROR_EMAIL_EXISTS", result);
+            Assert.Equal(testCode, result);
 
             mockPlayerRepository.Verify(r => r.AddPlayer(It.IsAny<Player>()), Times.Once());
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Once());
-
             mockEmailService.Verify(s => s.SendEmailAsync(newEmail, It.IsAny<IEmailTemplate>()), Times.Once());
         }
 
-
         [Fact]
-        public async Task VerifyCodeAsync_ShouldReturnTrue_WhenCodeIsValidAndNotExpired()
+        public async Task VerifyCodeAsync_ShouldComplete_WhenCodeIsValidAndNotExpired()
         {
             string email = "test@dominio.com";
             string code = "123456";
@@ -92,15 +84,14 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            bool result = await authLogic.VerifyCodeAsync(email, code);
+            await authLogic.VerifyCodeAsync(email, code);
 
-            Assert.True(result);
         }
 
         [Theory]
         [InlineData("wrong-code", "123456")]
         [InlineData("123456", "wrong-code")]
-        public async Task VerifyCodeAsync_ShouldReturnFalse_WhenCodeIsInvalid(string playerCode, string providedCode)
+        public async Task VerifyCodeAsync_ShouldThrowArgumentException_WhenCodeIsInvalid(string playerCode, string providedCode)
         {
             string email = "test@dominio.com";
             var player = new Player
@@ -112,13 +103,11 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            bool result = await authLogic.VerifyCodeAsync(email, providedCode);
-
-            Assert.False(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => authLogic.VerifyCodeAsync(email, providedCode));
         }
 
         [Fact]
-        public async Task VerifyCodeAsync_ShouldReturnFalse_WhenCodeIsExpired()
+        public async Task VerifyCodeAsync_ShouldThrowArgumentException_WhenCodeIsExpired()
         {
             string email = "test@dominio.com";
             string code = "123456";
@@ -131,13 +120,11 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            bool result = await authLogic.VerifyCodeAsync(email, code);
-
-            Assert.False(result);
+            await Assert.ThrowsAsync<ArgumentException>(() => authLogic.VerifyCodeAsync(email, code));
         }
 
         [Fact]
-        public async Task RegisterPlayerAsync_ShouldReturnFalse_WhenValidationFails()
+        public async Task RegisterPlayerAsync_ShouldThrowArgumentException_WhenValidationFails()
         {
             var invalidDto = new PlayerDto
             {
@@ -148,15 +135,14 @@ namespace ConquiánServidor.Tests
                 password = "corta"
             };
 
-            bool result = await authLogic.RegisterPlayerAsync(invalidDto);
+            await Assert.ThrowsAsync<ArgumentException>(() => authLogic.RegisterPlayerAsync(invalidDto));
 
-            Assert.False(result);
             mockPlayerRepository.Verify(r => r.DoesNicknameExistAsync(It.IsAny<string>()), Times.Never());
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Never());
         }
 
         [Fact]
-        public async Task RegisterPlayerAsync_ShouldReturnFalse_WhenNicknameAlreadyExists()
+        public async Task RegisterPlayerAsync_ShouldThrowInvalidOperationException_WhenNicknameAlreadyExists()
         {
             var validDto = new PlayerDto
             {
@@ -169,15 +155,14 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.DoesNicknameExistAsync("NickExistente")).ReturnsAsync(true);
 
-            bool result = await authLogic.RegisterPlayerAsync(validDto);
+            await Assert.ThrowsAsync<InvalidOperationException>(() => authLogic.RegisterPlayerAsync(validDto));
 
-            Assert.False(result);
             mockPlayerRepository.Verify(r => r.DoesNicknameExistAsync("NickExistente"), Times.Once());
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Never());
         }
 
         [Fact]
-        public async Task RegisterPlayerAsync_ShouldReturnTrue_WhenDataIsValidAndNew()
+        public async Task RegisterPlayerAsync_ShouldComplete_WhenDataIsValidAndNew()
         {
             var validDto = new PlayerDto
             {
@@ -190,16 +175,15 @@ namespace ConquiánServidor.Tests
 
             mockPlayerRepository.Setup(r => r.DoesNicknameExistAsync("NickNuevo")).ReturnsAsync(false);
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync("correo@valido.com"))
-                                .ReturnsAsync(new Player());
+                                .ReturnsAsync(new Player { email = "correo@valido.com" });
 
-            bool result = await authLogic.RegisterPlayerAsync(validDto);
+            await authLogic.RegisterPlayerAsync(validDto);
 
-            Assert.True(result);
             mockPlayerRepository.Verify(r => r.SaveChangesAsync(), Times.Once());
         }
 
         [Fact]
-        public async Task DeleteTemporaryPlayerAsync_ShouldReturnTrue_WhenPlayerIsIncomplete()
+        public async Task DeleteTemporaryPlayerAsync_ShouldCallDelete_WhenPlayerIsIncomplete()
         {
             string email = "incomplete@test.com";
             var incompletePlayer = new Player
@@ -211,18 +195,14 @@ namespace ConquiánServidor.Tests
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
                                 .ReturnsAsync(incompletePlayer);
 
-            mockPlayerRepository.Setup(r => r.DeletePlayerAsync(incompletePlayer))
-                                .ReturnsAsync(true);
+            await authLogic.DeleteTemporaryPlayerAsync(email);
 
-            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
-
-            Assert.True(result);
             mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
             mockPlayerRepository.Verify(r => r.DeletePlayerAsync(incompletePlayer), Times.Once());
         }
 
         [Fact]
-        public async Task DeleteTemporaryPlayerAsync_ShouldReturnFalse_WhenPlayerIsAlreadyComplete()
+        public async Task DeleteTemporaryPlayerAsync_ShouldNotCallDelete_WhenPlayerIsAlreadyComplete()
         {
             string email = "complete@test.com";
             var completePlayer = new Player
@@ -234,49 +214,24 @@ namespace ConquiánServidor.Tests
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
                                 .ReturnsAsync(completePlayer);
 
-            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
+            await authLogic.DeleteTemporaryPlayerAsync(email);
 
-            Assert.False(result);
             mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
             mockPlayerRepository.Verify(r => r.DeletePlayerAsync(It.IsAny<Player>()), Times.Never());
         }
 
         [Fact]
-        public async Task DeleteTemporaryPlayerAsync_ShouldReturnFalse_WhenPlayerNotFound()
+        public async Task DeleteTemporaryPlayerAsync_ShouldNotCallDelete_WhenPlayerNotFound()
         {
             string email = "notfound@test.com";
 
             mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
                                 .ReturnsAsync((Player)null);
 
-            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
+            await authLogic.DeleteTemporaryPlayerAsync(email);
 
-            Assert.False(result);
             mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
             mockPlayerRepository.Verify(r => r.DeletePlayerAsync(It.IsAny<Player>()), Times.Never());
-        }
-
-        [Fact]
-        public async Task DeleteTemporaryPlayerAsync_ShouldReturnFalse_WhenRepositoryDeleteFails()
-        {
-            string email = "deletefail@test.com";
-            var incompletePlayer = new Player
-            {
-                email = email,
-                name = null
-            };
-
-            mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email))
-                                .ReturnsAsync(incompletePlayer);
-
-            mockPlayerRepository.Setup(r => r.DeletePlayerAsync(incompletePlayer))
-                                .ReturnsAsync(false);
-
-            bool result = await authLogic.DeleteTemporaryPlayerAsync(email);
-
-            Assert.False(result);
-            mockPlayerRepository.Verify(r => r.GetPlayerByEmailAsync(email), Times.Once());
-            mockPlayerRepository.Verify(r => r.DeletePlayerAsync(incompletePlayer), Times.Once());
         }
     }
 }

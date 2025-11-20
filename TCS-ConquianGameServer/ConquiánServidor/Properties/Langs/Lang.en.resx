@@ -255,9 +255,6 @@
   <data name="LogAuthLogicSignOutSuccess" xml:space="preserve">
     <value>Player {0} signed out successfully.</value>
   </data>
-  <data name="LogAuthLogicVerifyCodeFailed" xml:space="preserve">
-    <value>Code verification failed for: {0} (incorrect code or expired)</value>
-  </data>
   <data name="LogAuthLogicVerifyCodeSqlError" xml:space="preserve">
     <value>SQL error while verifying code (SqlException): {0}</value>
   </data>
@@ -266,5 +263,119 @@
   </data>
   <data name="LogAuthLogicVerifyCodeUnexpectedError" xml:space="preserve">
     <value>Unexpected error while verifying code: {0}</value>
+  </data>
+  <data name="LogGameActionFailed" xml:space="preserve">
+    <value>Failed action in game {0} by player {1}: {2}.</value>
+  </data>
+  <data name="LogGameDrawDeckSuccess" xml:space="preserve">
+    <value>Player {0} drew a card from the deck in room {1}</value>
+  </data>
+  <data name="LogGameJoinSuccess" xml:space="preserve">
+    <value>Player {0} joined the room {1}.</value>
+  </data>
+  <data name="LogGamePlayCardSuccess" xml:space="preserve">
+    <value>Player {0} played cards in room {1}.</value>
+  </data>
+  <data name="LogAuthLogicVerifyCodeFailed" xml:space="preserve">
+    <value>Code verification failed for: {0} (incorrect code or expired)</value>
+  </data>
+  <data name="ErrorGameNotFound" xml:space="preserve">
+    <value>The requested match does not exist or has ended.</value>
+  </data>
+  <data name="ErrorGameInvalidMove" xml:space="preserve">
+    <value>The attempted move is not valid.</value>
+  </data>
+  <data name="ErrorGameNotYourTurn" xml:space="preserve">
+    <value>It's not your turn to perform this action.</value>
+  </data>
+  <data name="ErrorGameAction" xml:space="preserve">
+    <value>An error occurred while processing the game action.</value>
+  </data>
+  <data name="LogGameCallbackError" xml:space="preserve">
+    <value>Error sending notification to player {0}. They will be removed from the session.</value>
+  </data>
+  <data name="LogGameBroadcastError" xml:space="preserve">
+    <value>Error broadcasting the update to all players.</value>
+  </data>
+  <data name="LogLobbyCreated" xml:space="preserve">
+    <value>Lobby {0} created by host {1}.</value>
+  </data>
+  <data name="LogLobbyJoined" xml:space="preserve">
+    <value>Player {0} joined lobby {1}</value>
+  </data>
+  <data name="LogLobbyLeft" xml:space="preserve">
+    <value>Player {0} left the lobby {1}</value>
+  </data>
+  <data name="LogLobbyGameStarted" xml:space="preserve">
+    <value>Game started in lobby {0}.</value>
+  </data>
+  <data name="LogLobbyGamemodeChanged" xml:space="preserve">
+    <value>Game mode updated in lobby {0} to {1}.</value>
+  </data>
+  <data name="ErrorLobbyNotFound" xml:space="preserve">
+    <value>The room does not exist or has already closed</value>
+  </data>
+  <data name="ErrorLobbyFull" xml:space="preserve">
+    <value>The room is full or in play.</value>
+  </data>
+  <data name="ErrorLobbyHostNotFound" xml:space="preserve">
+    <value>The host user cannot be found.</value>
+  </data>
+  <data name="ErrorLobbyNotEnoughPlayers" xml:space="preserve">
+    <value>There aren't enough players to start.</value>
+  </data>
+  <data name="ErrorLobbyNoGamemode" xml:space="preserve">
+    <value>You must select a game mode before starting.</value>
+  </data>
+  <data name="ErrorLobbyAction" xml:space="preserve">
+    <value>Error performing the operation in the lobby-</value>
+  </data>
+  <data name="ErrorInvalidInvitation" xml:space="preserve">
+    <value>Does not have an invitation.</value>
+  </data>
+  <data name="ErrorUsedInvitation" xml:space="preserve">
+    <value>This invitation has already been used.</value>
+  </data>
+  <data name="ErrorRegisteredMail" xml:space="preserve">
+    <value>This email is already registered, please log in.</value>
+  </data>
+  <data name="InternalServerError" xml:space="preserve">
+    <value>Internal server error.</value>
+  </data>
+  <data name="LogInvitationSubscribed" xml:space="preserve">
+    <value>Player {0} subscribed to invitation notifications</value>
+  </data>
+  <data name="LogInvitationUnsubscribed" xml:space="preserve">
+    <value>Player {0} unsubscribed from notifications.</value>
+  </data>
+  <data name="LogInvitationSent" xml:space="preserve">
+    <value>Invitation sent from {0} to {1} for room {2}.</value>
+  </data>
+  <data name="LogInvitationDeliveryFailed" xml:space="preserve">
+    <value>Failed to deliver invitation to player {0}</value>
+  </data>
+  <data name="ErrorPlayerOffline" xml:space="preserve">
+    <value>The player is disconnected.</value>
+  </data>
+  <data name="ErrorInvitationFailed" xml:space="preserve">
+    <value>An error occurred while trying to send the invitation</value>
+  </data>
+  <data name="LogGuestInviteSent" xml:space="preserve">
+    <value>Guest invitation sent to {0} for room {1}.</value>
+  </data>
+  <data name="ErrorGuestInviteEmailFailed" xml:space="preserve">
+    <value>The email could not be sent to {0}.</value>
+  </data>
+  <data name="ErrorPresenceAction" xml:space="preserve">
+    <value>Presence service error.</value>
+  </data>
+  <data name="LogPresenceConnected" xml:space="preserve">
+    <value>Player {0} connected to the Presence service.</value>
+  </data>
+  <data name="LogPresenceDisconnected" xml:space="preserve">
+    <value>Player {0} disconnected from the presence service.</value>
+  </data>
+  <data name="LogPresenceCallbackFailed" xml:space="preserve">
+    <value>Failed to notify a subscriber of status.</value>
   </data>
 </root>

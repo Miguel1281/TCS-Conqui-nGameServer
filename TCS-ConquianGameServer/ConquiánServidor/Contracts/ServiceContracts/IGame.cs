@@ -7,18 +7,23 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     public interface IGame
     {
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<GameStateDto> JoinGameAsync(string roomCode, int playerId);
 
-        [OperationContract(IsOneWay = true)]
-        void PlayCards(string roomCode, int playerId, string[] cardIds);
-
-        [OperationContract(IsOneWay = true)]
-        void DrawFromDeck(string roomCode, int playerId);
+        [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task PlayCardsAsync(string roomCode, int playerId, string[] cardIds);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task DrawFromDeckAsync(string roomCode, int playerId);
+
+        [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))] 
         Task<CardDto> DrawFromDiscardAsync(string roomCode, int playerId);
 
-        [OperationContract(IsOneWay = true)]
-        void DiscardCard(string roomCode, int playerId, string cardId);
+        [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task DiscardCardAsync(string roomCode, int playerId, string cardId);
     }
 }

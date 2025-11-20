@@ -1,4 +1,5 @@
-﻿using System.ServiceModel;
+﻿using ConquiánServidor.Contracts.DataContracts;
+using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.Contracts.ServiceContracts
@@ -13,6 +14,7 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         void Unsubscribe(int idPlayer);
 
         [OperationContract]
-        Task<bool> SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode);
+        [FaultContract(typeof(ServiceFaultDto))] 
+        Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode);
     }
 }

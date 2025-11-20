@@ -32,6 +32,9 @@ namespace ConquiánServidor.Contracts.DataContracts
         CommunicationError = 6,
 
         [EnumMember]
+        ServerInternalError = 7,
+
+        [EnumMember]
         SessionActive = 10,
 
         [EnumMember]

@@ -7,6 +7,7 @@ using ConquiánServidor.Contracts.FaultContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
+using ConquiánServidor.Properties.Langs; 
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -18,6 +19,8 @@ namespace ConquiánServidor.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Reentrant)]
     public class Lobby : ILobby
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<int, ILobbyCallback>> lobbyCallbacks =
             new ConcurrentDictionary<string, ConcurrentDictionary<int, ILobbyCallback>>();
 
@@ -46,10 +49,17 @@ namespace ConquiánServidor.Services
                 }
                 return lobbyState;
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                // TODO: log del error
-                return null;
+                Logger.Warn(ex, $"Error lógico en GetLobbyStateAsync: {ex.Message}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error crítico en GetLobbyStateAsync {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
             }
         }
 
@@ -65,10 +75,16 @@ namespace ConquiánServidor.Services
                 }
                 return newRoomCode;
             }
-            catch (Exception)     
+            catch (ArgumentException ex)
             {
-                // TODO: log del error
-                return null;
+                var faultData = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error creando lobby para host {idHostPlayer}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
             }
         }
 
@@ -80,24 +96,32 @@ namespace ConquiánServidor.Services
             {
                 if (!lobbyCallbacks.ContainsKey(roomCode))
                 {
-                    return false;
+                    throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
                 }
 
                 var playerDto = await lobbyLogic.JoinLobbyAsync(roomCode, idPlayer);
-                if (playerDto == null)
-                {
-                    return false;
-                }
+                if (playerDto == null) return false;
 
                 lobbyCallbacks[roomCode][idPlayer] = callback;
 
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return true;
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                // TODO: log del error
-                return false;
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (ArgumentException ex)
+            {
+                var faultData = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error en JoinAndSubscribeAsync room {roomCode} player {idPlayer}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
             }
         }
 
@@ -109,14 +133,14 @@ namespace ConquiánServidor.Services
             {
                 if (!lobbyCallbacks.ContainsKey(roomCode))
                 {
-                    return null;
+                    throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
                 }
 
                 var playerDto = await lobbyLogic.JoinLobbyAsGuestAsync(email, roomCode);
 
                 if (playerDto == null)
                 {
-                    return null;
+                    throw new InvalidOperationException(Lang.ErrorLobbyAction);
                 }
 
                 lobbyCallbacks[roomCode][playerDto.idPlayer] = callback;
@@ -133,13 +157,18 @@ namespace ConquiánServidor.Services
                 var fault = new RegisteredUserAsGuestFault { Message = ex.Message };
                 throw new FaultException<RegisteredUserAsGuestFault>(fault, new FaultReason(ex.Message));
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                // TODO: log del error
-                return null;
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error en JoinGuest room {roomCode} email {email}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
             }
         }
-
 
         public void LeaveAndUnsubscribe(string roomCode, int idPlayer)
         {
@@ -167,19 +196,26 @@ namespace ConquiánServidor.Services
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // TODO: log del error
+                Logger.Error(ex, $"Error en LeaveAndUnsubscribe room {roomCode}");
             }
         }
 
         public Task SendMessageAsync(string roomCode, MessageDto message)
         {
-            if (chatHistories.ContainsKey(roomCode) && lobbyCallbacks.ContainsKey(roomCode))
+            try
             {
-                message.Timestamp = DateTime.UtcNow;
-                chatHistories[roomCode].Add(message);
-                NotifyPlayersInLobby(roomCode, null, (cb) => cb.MessageReceived(message));
+                if (chatHistories.ContainsKey(roomCode) && lobbyCallbacks.ContainsKey(roomCode))
+                {
+                    message.Timestamp = DateTime.UtcNow;
+                    chatHistories[roomCode].Add(message);
+                    NotifyPlayersInLobby(roomCode, null, (cb) => cb.MessageReceived(message));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Error enviando mensaje de chat.");
             }
             return Task.CompletedTask;
         }
@@ -191,22 +227,36 @@ namespace ConquiánServidor.Services
                 await lobbyLogic.SelectGamemodeAsync(roomCode, idGamemode);
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGamemodeChanged(idGamemode));
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                // TODO: log
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Error seleccionando modo de juego");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
             }
         }
 
-        public void StartGame(string roomCode)
+        public async Task StartGameAsync(string roomCode)
         {
             try
             {
-                lobbyLogic.StartGameAsync(roomCode).Wait();
+                await lobbyLogic.StartGameAsync(roomCode);
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGameStarting());
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                // TODO: log
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error al iniciar juego en lobby {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
             }
         }
 

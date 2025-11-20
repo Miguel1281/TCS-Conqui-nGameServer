@@ -255,9 +255,6 @@
   <data name="LogAuthLogicSignOutSuccess" xml:space="preserve">
     <value>Jugador {0} cerró sesión exitosamente.</value>
   </data>
-  <data name="LogAuthLogicVerifyCodeFailed" xml:space="preserve">
-    <value>Verificación de código fallida para: {0} (código incorrecto o expirado)</value>
-  </data>
   <data name="LogAuthLogicVerifyCodeSqlError" xml:space="preserve">
     <value>Error de SQL al verificar el código (SqlException): {0}</value>
   </data>
@@ -266,5 +263,119 @@
   </data>
   <data name="LogAuthLogicVerifyCodeUnexpectedError" xml:space="preserve">
     <value>Error inesperado al verificar el código: {0}</value>
+  </data>
+  <data name="LogGameActionFailed" xml:space="preserve">
+    <value>Acción fallida en juego {0} por jugador {1}: {2}.</value>
+  </data>
+  <data name="LogGameDrawDeckSuccess" xml:space="preserve">
+    <value>Jugador {0} tomó carta del mazo en la sala {1}</value>
+  </data>
+  <data name="LogGameJoinSuccess" xml:space="preserve">
+    <value>Jugador {0} se unió a la sala {1}.</value>
+  </data>
+  <data name="LogGamePlayCardSuccess" xml:space="preserve">
+    <value>Jugador {0} jugó cartas en la sala {1}.</value>
+  </data>
+  <data name="LogAuthLogicVerifyCodeFailed" xml:space="preserve">
+    <value>Verificación de código fallida para: {0} (código incorrecto o expirado)</value>
+  </data>
+  <data name="ErrorGameNotFound" xml:space="preserve">
+    <value>La partida solicitada no existe o ha finalizado.</value>
+  </data>
+  <data name="ErrorGameInvalidMove" xml:space="preserve">
+    <value>El movimiento intentado no es válido.</value>
+  </data>
+  <data name="ErrorGameNotYourTurn" xml:space="preserve">
+    <value>No es tu turno para realizar esta acción.</value>
+  </data>
+  <data name="ErrorGameAction" xml:space="preserve">
+    <value>Ocurrió un error al procesar la acción del juego.</value>
+  </data>
+  <data name="LogGameCallbackError" xml:space="preserve">
+    <value>Error al enviar notificación al jugador {0}. Se eliminará de la sesión.</value>
+  </data>
+  <data name="LogGameBroadcastError" xml:space="preserve">
+    <value>Error al transmitir la actualización a todos los jugadores.</value>
+  </data>
+  <data name="LogLobbyCreated" xml:space="preserve">
+    <value>Lobby {0} creado por el anfitrión {1}</value>
+  </data>
+  <data name="LogLobbyJoined" xml:space="preserve">
+    <value>Jugador {0} se unió al lobby {1}.</value>
+  </data>
+  <data name="LogLobbyLeft" xml:space="preserve">
+    <value>Jugador {0} salió del lobby {1}</value>
+  </data>
+  <data name="LogLobbyGameStarted" xml:space="preserve">
+    <value>Juego iniciado en lobby {0}</value>
+  </data>
+  <data name="LogLobbyGamemodeChanged" xml:space="preserve">
+    <value>Modo de juego actualizado en lobby {0} a {1}</value>
+  </data>
+  <data name="ErrorLobbyNotFound" xml:space="preserve">
+    <value>La sala no existe o ya ha cerrado.</value>
+  </data>
+  <data name="ErrorLobbyFull" xml:space="preserve">
+    <value>La sala está llena o en juego.</value>
+  </data>
+  <data name="ErrorLobbyHostNotFound" xml:space="preserve">
+    <value>El usuario anfitrión no se encuentra.</value>
+  </data>
+  <data name="ErrorLobbyNotEnoughPlayers" xml:space="preserve">
+    <value>No hay suficientes jugadores para iniciar.</value>
+  </data>
+  <data name="ErrorLobbyNoGamemode" xml:space="preserve">
+    <value>Debes seleccionar un modo de juego antes de iniciar.</value>
+  </data>
+  <data name="ErrorLobbyAction" xml:space="preserve">
+    <value>Error al realizar la operación en el lobby</value>
+  </data>
+  <data name="ErrorInvalidInvitation" xml:space="preserve">
+    <value>No cuenta con una invitación.</value>
+  </data>
+  <data name="ErrorUsedInvitation" xml:space="preserve">
+    <value>Esta invitación ya ha sido utilizada.</value>
+  </data>
+  <data name="ErrorRegisteredMail" xml:space="preserve">
+    <value>Este correo ya está registrado, por favor inicie sesión</value>
+  </data>
+  <data name="InternalServerError" xml:space="preserve">
+    <value>Error interno del servidor.</value>
+  </data>
+  <data name="LogInvitationSubscribed" xml:space="preserve">
+    <value>Jugador {0} se suscribió a notificaciones de invitación.</value>
+  </data>
+  <data name="LogInvitationUnsubscribed" xml:space="preserve">
+    <value>Jugador {0} se desuscribió de notificaciones.</value>
+  </data>
+  <data name="LogInvitationSent" xml:space="preserve">
+    <value>Invitación enviada de {0} a {1} para sala {2}.</value>
+  </data>
+  <data name="LogInvitationDeliveryFailed" xml:space="preserve">
+    <value>Fallo al entregar invitación al jugador {0}.</value>
+  </data>
+  <data name="ErrorPlayerOffline" xml:space="preserve">
+    <value>El jugador se encuentra desconectado.</value>
+  </data>
+  <data name="ErrorInvitationFailed" xml:space="preserve">
+    <value>Ocurrió un error al intentar enviar la invitación.</value>
+  </data>
+  <data name="LogGuestInviteSent" xml:space="preserve">
+    <value>Invitación de huésped enviada a {0} para la sala {1}.</value>
+  </data>
+  <data name="ErrorGuestInviteEmailFailed" xml:space="preserve">
+    <value>No se pudo enviar el correo electrónico a {0}.</value>
+  </data>
+  <data name="ErrorPresenceAction" xml:space="preserve">
+    <value>Error en el servicio Presence.</value>
+  </data>
+  <data name="LogPresenceConnected" xml:space="preserve">
+    <value>Jugador {0} conectado al servicio Presence</value>
+  </data>
+  <data name="LogPresenceDisconnected" xml:space="preserve">
+    <value>Jugador {0} desconectado del servicio de presencia.</value>
+  </data>
+  <data name="LogPresenceCallbackFailed" xml:space="preserve">
+    <value>Fallo al notificar estado a un suscriptor.</value>
   </data>
 </root>

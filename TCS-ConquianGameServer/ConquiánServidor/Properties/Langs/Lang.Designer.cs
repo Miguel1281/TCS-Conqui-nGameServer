@@ -61,6 +61,51 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Ocurrió un error al procesar la acción del juego..
+        /// </summary>
+        public static string ErrorGameAction {
+            get {
+                return ResourceManager.GetString("ErrorGameAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a El movimiento intentado no es válido..
+        /// </summary>
+        public static string ErrorGameInvalidMove {
+            get {
+                return ResourceManager.GetString("ErrorGameInvalidMove", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a La partida solicitada no existe o ha finalizado..
+        /// </summary>
+        public static string ErrorGameNotFound {
+            get {
+                return ResourceManager.GetString("ErrorGameNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a No es tu turno para realizar esta acción..
+        /// </summary>
+        public static string ErrorGameNotYourTurn {
+            get {
+                return ResourceManager.GetString("ErrorGameNotYourTurn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a No se pudo enviar el correo electrónico a {0}..
+        /// </summary>
+        public static string ErrorGuestInviteEmailFailed {
+            get {
+                return ResourceManager.GetString("ErrorGuestInviteEmailFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Credenciales inválidas.
         /// </summary>
         public static string ErrorInvalidCredentials {
@@ -70,11 +115,119 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a No cuenta con una invitación..
+        /// </summary>
+        public static string ErrorInvalidInvitation {
+            get {
+                return ResourceManager.GetString("ErrorInvalidInvitation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Ocurrió un error al intentar enviar la invitación..
+        /// </summary>
+        public static string ErrorInvitationFailed {
+            get {
+                return ResourceManager.GetString("ErrorInvitationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Error al realizar la operación en el lobby.
+        /// </summary>
+        public static string ErrorLobbyAction {
+            get {
+                return ResourceManager.GetString("ErrorLobbyAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a La sala está llena o en juego..
+        /// </summary>
+        public static string ErrorLobbyFull {
+            get {
+                return ResourceManager.GetString("ErrorLobbyFull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a El usuario anfitrión no se encuentra..
+        /// </summary>
+        public static string ErrorLobbyHostNotFound {
+            get {
+                return ResourceManager.GetString("ErrorLobbyHostNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Debes seleccionar un modo de juego antes de iniciar..
+        /// </summary>
+        public static string ErrorLobbyNoGamemode {
+            get {
+                return ResourceManager.GetString("ErrorLobbyNoGamemode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a No hay suficientes jugadores para iniciar..
+        /// </summary>
+        public static string ErrorLobbyNotEnoughPlayers {
+            get {
+                return ResourceManager.GetString("ErrorLobbyNotEnoughPlayers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a La sala no existe o ya ha cerrado..
+        /// </summary>
+        public static string ErrorLobbyNotFound {
+            get {
+                return ResourceManager.GetString("ErrorLobbyNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Este nombre de usuario ya existe.
         /// </summary>
         public static string ErrorNicknameExists {
             get {
                 return ResourceManager.GetString("ErrorNicknameExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a El jugador se encuentra desconectado..
+        /// </summary>
+        public static string ErrorPlayerOffline {
+            get {
+                return ResourceManager.GetString("ErrorPlayerOffline", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Error en el servicio Presence..
+        /// </summary>
+        public static string ErrorPresenceAction {
+            get {
+                return ResourceManager.GetString("ErrorPresenceAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Este correo ya está registrado, por favor inicie sesión.
+        /// </summary>
+        public static string ErrorRegisteredMail {
+            get {
+                return ResourceManager.GetString("ErrorRegisteredMail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Esta invitación ya ha sido utilizada..
+        /// </summary>
+        public static string ErrorUsedInvitation {
+            get {
+                return ResourceManager.GetString("ErrorUsedInvitation", resourceCulture);
             }
         }
         
@@ -138,6 +291,15 @@ namespace ConquiánServidor.Properties.Langs {
         public static string GuestEmailSubject {
             get {
                 return ResourceManager.GetString("GuestEmailSubject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Error interno del servidor..
+        /// </summary>
+        public static string InternalServerError {
+            get {
+                return ResourceManager.GetString("InternalServerError", resourceCulture);
             }
         }
         
@@ -507,6 +669,177 @@ namespace ConquiánServidor.Properties.Langs {
         public static string LogAuthLogicVerifyCodeUnexpectedError {
             get {
                 return ResourceManager.GetString("LogAuthLogicVerifyCodeUnexpectedError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Acción fallida en juego {0} por jugador {1}: {2}..
+        /// </summary>
+        public static string LogGameActionFailed {
+            get {
+                return ResourceManager.GetString("LogGameActionFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Error al transmitir la actualización a todos los jugadores..
+        /// </summary>
+        public static string LogGameBroadcastError {
+            get {
+                return ResourceManager.GetString("LogGameBroadcastError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Error al enviar notificación al jugador {0}. Se eliminará de la sesión..
+        /// </summary>
+        public static string LogGameCallbackError {
+            get {
+                return ResourceManager.GetString("LogGameCallbackError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} tomó carta del mazo en la sala {1}.
+        /// </summary>
+        public static string LogGameDrawDeckSuccess {
+            get {
+                return ResourceManager.GetString("LogGameDrawDeckSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} se unió a la sala {1}..
+        /// </summary>
+        public static string LogGameJoinSuccess {
+            get {
+                return ResourceManager.GetString("LogGameJoinSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} jugó cartas en la sala {1}..
+        /// </summary>
+        public static string LogGamePlayCardSuccess {
+            get {
+                return ResourceManager.GetString("LogGamePlayCardSuccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Invitación de huésped enviada a {0} para la sala {1}..
+        /// </summary>
+        public static string LogGuestInviteSent {
+            get {
+                return ResourceManager.GetString("LogGuestInviteSent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Fallo al entregar invitación al jugador {0}..
+        /// </summary>
+        public static string LogInvitationDeliveryFailed {
+            get {
+                return ResourceManager.GetString("LogInvitationDeliveryFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Invitación enviada de {0} a {1} para sala {2}..
+        /// </summary>
+        public static string LogInvitationSent {
+            get {
+                return ResourceManager.GetString("LogInvitationSent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} se suscribió a notificaciones de invitación..
+        /// </summary>
+        public static string LogInvitationSubscribed {
+            get {
+                return ResourceManager.GetString("LogInvitationSubscribed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} se desuscribió de notificaciones..
+        /// </summary>
+        public static string LogInvitationUnsubscribed {
+            get {
+                return ResourceManager.GetString("LogInvitationUnsubscribed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Lobby {0} creado por el anfitrión {1}.
+        /// </summary>
+        public static string LogLobbyCreated {
+            get {
+                return ResourceManager.GetString("LogLobbyCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Modo de juego actualizado en lobby {0} a {1}.
+        /// </summary>
+        public static string LogLobbyGamemodeChanged {
+            get {
+                return ResourceManager.GetString("LogLobbyGamemodeChanged", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Juego iniciado en lobby {0}.
+        /// </summary>
+        public static string LogLobbyGameStarted {
+            get {
+                return ResourceManager.GetString("LogLobbyGameStarted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} se unió al lobby {1}..
+        /// </summary>
+        public static string LogLobbyJoined {
+            get {
+                return ResourceManager.GetString("LogLobbyJoined", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} salió del lobby {1}.
+        /// </summary>
+        public static string LogLobbyLeft {
+            get {
+                return ResourceManager.GetString("LogLobbyLeft", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Fallo al notificar estado a un suscriptor..
+        /// </summary>
+        public static string LogPresenceCallbackFailed {
+            get {
+                return ResourceManager.GetString("LogPresenceCallbackFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} conectado al servicio Presence.
+        /// </summary>
+        public static string LogPresenceConnected {
+            get {
+                return ResourceManager.GetString("LogPresenceConnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a Jugador {0} desconectado del servicio de presencia..
+        /// </summary>
+        public static string LogPresenceDisconnected {
+            get {
+                return ResourceManager.GetString("LogPresenceDisconnected", resourceCulture);
             }
         }
     }

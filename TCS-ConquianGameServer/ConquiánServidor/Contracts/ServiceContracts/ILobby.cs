@@ -9,17 +9,21 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     public interface ILobby
     {
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<LobbyDto> GetLobbyStateAsync(string roomCode);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<string> CreateLobbyAsync(int idHostPlayer);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<bool> JoinAndSubscribeAsync(string roomCode, int idPlayer);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         [FaultContract(typeof(GuestInviteUsedFault))]
-        [FaultContract(typeof(RegisteredUserAsGuestFault))] 
+        [FaultContract(typeof(RegisteredUserAsGuestFault))]
         Task<PlayerDto> JoinAndSubscribeAsGuestAsync(string email, string roomCode);
 
         [OperationContract(IsOneWay = true)]
@@ -29,9 +33,11 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         Task SendMessageAsync(string roomCode, MessageDto message);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task SelectGamemodeAsync(string roomCode, int idGamemode);
 
-        [OperationContract(IsOneWay = true)]
-        void StartGame(string roomCode);
+        [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task StartGameAsync(string roomCode);
     }
 }

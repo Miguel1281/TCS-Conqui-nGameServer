@@ -1,6 +1,8 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using System.Collections.Concurrent;
+using ConquiánServidor.Properties.Langs;
+using System;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -9,21 +11,51 @@ namespace ConquiánServidor.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Reentrant)]
     public class Invitation : IInvitationService
     {
+        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly InvitationManager manager = InvitationManager.Instance;
+
         public void Subscribe(int idPlayer)
         {
-            var currentCallback = OperationContext.Current.GetCallbackChannel<IInvitationCallback>();
-            manager.Subscribe(idPlayer, currentCallback);
+            try
+            {
+                var currentCallback = OperationContext.Current.GetCallbackChannel<IInvitationCallback>();
+                manager.Subscribe(idPlayer, currentCallback);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error en Subscribe para jugador {idPlayer}");
+            }
         }
 
         public void Unsubscribe(int idPlayer)
         {
-            manager.Unsubscribe(idPlayer);
+            try
+            {
+                manager.Unsubscribe(idPlayer);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error en Unsubscribe para jugador {idPlayer}");
+            }
         }
 
-        public Task<bool> SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
+        public async Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
         {
-            return manager.SendInvitationAsync(idSender, senderNickname, idReceiver, roomCode);
+            try
+            {
+                await manager.SendInvitationAsync(idSender, senderNickname, idReceiver, roomCode);
+            }
+            catch (InvalidOperationException ex)
+            {
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error crítico enviando invitación de {idSender} a {idReceiver}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorInvitationFailed);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Server Error"));
+            }
         }
     }
 }

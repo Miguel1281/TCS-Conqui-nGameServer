@@ -1,4 +1,6 @@
 ﻿using ConquiánServidor.Contracts.ServiceContracts;
+using ConquiánServidor.Properties.Langs; // Importante
+using NLog;
 using System;
 using System.Collections.Concurrent;
 using System.ServiceModel;
@@ -8,6 +10,7 @@ namespace ConquiánServidor.BusinessLogic
 {
     public class InvitationManager
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private static readonly Lazy<InvitationManager> instance =
             new Lazy<InvitationManager>(() => new InvitationManager());
 
@@ -20,35 +23,42 @@ namespace ConquiánServidor.BusinessLogic
 
         public void Subscribe(int idPlayer, IInvitationCallback callback)
         {
-            onlinePlayers.TryAdd(idPlayer, callback);
+            onlinePlayers.AddOrUpdate(idPlayer, callback, (key, oldValue) => callback);
+            Logger.Info(string.Format(Lang.LogInvitationSubscribed, idPlayer));
         }
 
         public void Unsubscribe(int idPlayer)
         {
-            onlinePlayers.TryRemove(idPlayer, out _);
+            if (onlinePlayers.TryRemove(idPlayer, out _))
+            {
+                Logger.Info(string.Format(Lang.LogInvitationUnsubscribed, idPlayer));
+            }
         }
 
-        public Task<bool> SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
+        public async Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
         {
             if (onlinePlayers.TryGetValue(idReceiver, out IInvitationCallback receiverCallback))
             {
                 try
                 {
                     receiverCallback.OnInvitationReceived(senderNickname, roomCode);
-                    return Task.FromResult(true);
+
+                    Logger.Info(string.Format(Lang.LogInvitationSent, senderNickname, idReceiver, roomCode));
                 }
-                catch (CommunicationException)
+                catch (Exception ex)
                 {
+                    Logger.Warn(ex, string.Format(Lang.LogInvitationDeliveryFailed, idReceiver));
                     onlinePlayers.TryRemove(idReceiver, out _);
-                    return Task.FromResult(false);
-                }
-                catch (Exception)
-                {
-                    onlinePlayers.TryRemove(idReceiver, out _);
-                    return Task.FromResult(false);
+                    throw new InvalidOperationException(Lang.ErrorPlayerOffline);
                 }
             }
-            return Task.FromResult(false); 
+            else
+            {
+                Logger.Warn(string.Format(Lang.LogInvitationDeliveryFailed, idReceiver) + " (No encontrado en diccionario)");
+                throw new InvalidOperationException(Lang.ErrorPlayerOffline);
+            }
+
+            await Task.CompletedTask;
         }
     }
 }

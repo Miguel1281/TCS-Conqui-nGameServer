@@ -1,4 +1,5 @@
-﻿using System.ServiceModel;
+﻿using ConquiánServidor.Contracts.DataContracts;
+using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.Contracts.ServiceContracts
@@ -7,6 +8,7 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     public interface IGuestInvitation
     {
         [OperationContract]
-        Task<bool> SendGuestInviteAsync(string roomCode, string email);
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task SendGuestInviteAsync(string roomCode, string email);
     }
 }

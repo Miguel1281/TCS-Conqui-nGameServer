@@ -1,6 +1,7 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -67,24 +68,24 @@ namespace ConquiánServidor.BusinessLogic
             return playerDto; 
         }
 
-        public async Task<bool> SendFriendRequestAsync(int idPlayer, int idFriend)
+        public async Task SendFriendRequestAsync(int idPlayer, int idFriend)
         {
-            bool success = false; 
             var existingFriendship = await friendshipRepository.GetExistingRelationshipAsync(idPlayer, idFriend);
 
-            if (existingFriendship == null)
+            if (existingFriendship != null)
             {
-                var newRequest = new Friendship
-                {
-                    idOrigen = idPlayer,
-                    idDestino = idFriend,
-                    idStatus = 3
-                };
-                friendshipRepository.AddFriendship(newRequest);
-                await friendshipRepository.SaveChangesAsync();
-                success = true;
+                throw new InvalidOperationException("Ya existe una solicitud pendiente o una amistad con este jugador.");
             }
-            return success; 
+
+            var newRequest = new Friendship
+            {
+                idOrigen = idPlayer,
+                idDestino = idFriend,
+                idStatus = 3
+            };
+
+            friendshipRepository.AddFriendship(newRequest);
+            await friendshipRepository.SaveChangesAsync();
         }
 
         public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int newStatus)
@@ -108,18 +109,17 @@ namespace ConquiánServidor.BusinessLogic
             return success; 
         }
 
-        public async Task<bool> DeleteFriendAsync(int idPlayer, int idFriend)
+        public async Task DeleteFriendAsync(int idPlayer, int idFriend)
         {
-            bool success = false; 
             var friendship = await friendshipRepository.GetAcceptedFriendshipAsync(idPlayer, idFriend);
 
-            if (friendship != null)
+            if (friendship == null)
             {
-                friendshipRepository.RemoveFriendship(friendship);
-                await friendshipRepository.SaveChangesAsync();
-                success = true;
+                throw new KeyNotFoundException("No se encontró la relación de amistad para eliminar.");
             }
-            return success; 
+
+            friendshipRepository.RemoveFriendship(friendship);
+            await friendshipRepository.SaveChangesAsync();
         }
     }
 }

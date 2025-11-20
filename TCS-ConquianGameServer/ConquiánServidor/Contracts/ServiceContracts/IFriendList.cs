@@ -10,21 +10,27 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     public interface IFriendList
     {
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idCurrentUser);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<List<PlayerDto>> GetFriendsAsync(int idPlayer);
 
         [OperationContract]
-        Task<bool> SendFriendRequestAsync(int idSender, int idReceiver);
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task SendFriendRequestAsync(int idSender, int idReceiver);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<List<FriendRequestDto>> GetFriendRequestsAsync(int idPlayer);
 
         [OperationContract]
-        Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int idStatus);
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task UpdateFriendRequestStatusAsync(int idFriendship, int idStatus);
 
         [OperationContract]
-        Task<bool> DeleteFriendAsync(int idPlayer, int idFriend);
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task DeleteFriendAsync(int idPlayer, int idFriend);
     }
 }

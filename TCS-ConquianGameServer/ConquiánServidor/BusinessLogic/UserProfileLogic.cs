@@ -2,9 +2,9 @@
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
@@ -22,28 +22,35 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<PlayerDto> GetPlayerByIdAsync(int idPlayer)
         {
-            PlayerDto playerDto = new PlayerDto(); 
             var dbPlayer = await playerRepository.GetPlayerByIdAsync(idPlayer);
 
-            if (dbPlayer != null)
+            if (dbPlayer == null)
             {
-                playerDto = new PlayerDto
-                {
-                    idPlayer = dbPlayer.idPlayer,
-                    name = dbPlayer.name,
-                    lastName = dbPlayer.lastName,
-                    nickname = dbPlayer.nickname,
-                    email = dbPlayer.email,
-                    level = dbPlayer.level,
-                    pathPhoto = dbPlayer.pathPhoto,
-                };
+                throw new KeyNotFoundException("El jugador solicitado no existe.");
             }
-            return playerDto; 
+
+            return new PlayerDto
+            {
+                idPlayer = dbPlayer.idPlayer,
+                name = dbPlayer.name,
+                lastName = dbPlayer.lastName,
+                nickname = dbPlayer.nickname,
+                email = dbPlayer.email,
+                level = dbPlayer.level,
+                pathPhoto = dbPlayer.pathPhoto,
+            };
         }
 
         public async Task<List<SocialDto>> GetPlayerSocialsAsync(int idPlayer)
         {
+            var playerExists = await playerRepository.GetPlayerByIdAsync(idPlayer);
+            if (playerExists == null)
+            {
+                throw new KeyNotFoundException("El jugador no existe.");
+            }
+
             var dbSocials = await socialRepository.GetSocialsByPlayerIdAsync(idPlayer);
+
             return dbSocials.Select(dbSocial => new SocialDto
             {
                 IdSocial = dbSocial.idSocial,
@@ -52,71 +59,67 @@ namespace ConquiánServidor.BusinessLogic
             }).ToList();
         }
 
-        public async Task<bool> UpdatePlayerAsync(PlayerDto playerDto)
+        public async Task UpdatePlayerAsync(PlayerDto playerDto)
         {
-            bool success = false; 
-            if (playerDto != null)
+            if (playerDto == null) throw new ArgumentNullException(nameof(playerDto));
+
+            var playerToUpdate = await playerRepository.GetPlayerByIdAsync(playerDto.idPlayer);
+
+            if (playerToUpdate == null)
             {
-                var playerToUpdate = await playerRepository.GetPlayerByIdAsync(playerDto.idPlayer);
-                if (playerToUpdate != null)
-                {
-                    playerToUpdate.name = playerDto.name;
-                    playerToUpdate.lastName = playerDto.lastName;
-                    playerToUpdate.nickname = playerDto.nickname;
-                    playerToUpdate.pathPhoto = playerDto.pathPhoto;
-
-                    if (!string.IsNullOrEmpty(playerDto.password))
-                    {
-                        playerToUpdate.password = PasswordHasher.hashPassword(playerDto.password);
-                    }
-
-                    await playerRepository.SaveChangesAsync();
-                    success = true;
-                }
+                throw new KeyNotFoundException("No se encontró el perfil del jugador a actualizar.");
             }
-            return success; 
+
+            playerToUpdate.name = playerDto.name;
+            playerToUpdate.lastName = playerDto.lastName;
+            playerToUpdate.nickname = playerDto.nickname;
+            playerToUpdate.pathPhoto = playerDto.pathPhoto;
+
+            if (!string.IsNullOrEmpty(playerDto.password))
+            {
+                playerToUpdate.password = PasswordHasher.hashPassword(playerDto.password);
+            }
+
+            await playerRepository.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socialDtos)
+        public async Task UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socialDtos)
         {
-            bool success = false; 
-            if (socialDtos != null)
+            if (socialDtos == null) throw new ArgumentNullException(nameof(socialDtos));
+
+            var playerExists = await socialRepository.DoesPlayerExistAsync(idPlayer);
+            if (!playerExists)
             {
-                var playerExists = await socialRepository.DoesPlayerExistAsync(idPlayer);
-                if (playerExists)
-                {
-                    var existingSocials = await socialRepository.GetSocialsByPlayerIdAsync(idPlayer);
-                    socialRepository.RemoveSocialsRange(existingSocials);
-
-                    foreach (var socialDto in socialDtos)
-                    {
-                        socialRepository.AddSocial(new ConquiánDB.Social
-                        {
-                            idPlayer = idPlayer,
-                            idSocialType = socialDto.IdSocialType,
-                            userLink = socialDto.UserLink
-                        });
-                    }
-
-                    await socialRepository.SaveChangesAsync();
-                    success = true;
-                }
+                throw new KeyNotFoundException("El jugador no existe para actualizar redes sociales.");
             }
-            return success; 
+
+            var existingSocials = await socialRepository.GetSocialsByPlayerIdAsync(idPlayer);
+            socialRepository.RemoveSocialsRange(existingSocials);
+
+            foreach (var socialDto in socialDtos)
+            {
+                socialRepository.AddSocial(new ConquiánDB.Social
+                {
+                    idPlayer = idPlayer,
+                    idSocialType = socialDto.IdSocialType,
+                    userLink = socialDto.UserLink
+                });
+            }
+
+            await socialRepository.SaveChangesAsync();
         }
 
-        public async Task<bool> UpdateProfilePictureAsync(int idPlayer, string newPath)
+        public async Task UpdateProfilePictureAsync(int idPlayer, string newPath)
         {
-            bool success = false; 
             var playerToUpdate = await playerRepository.GetPlayerByIdAsync(idPlayer);
 
-            if (playerToUpdate != null)
+            if (playerToUpdate == null)
             {
-                playerToUpdate.pathPhoto = newPath;
-                await playerRepository.SaveChangesAsync();
-                success = true;
+                throw new KeyNotFoundException("Jugador no encontrado.");
             }
-            return success; 
+
+            playerToUpdate.pathPhoto = newPath;
+            await playerRepository.SaveChangesAsync();
         }
     }
 }

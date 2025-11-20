@@ -12,18 +12,23 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     public interface IUserProfile
     {
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<PlayerDto> GetPlayerByIdAsync(int idPlayer);
 
         [OperationContract]
-        Task<bool> UpdatePlayerAsync(PlayerDto playerDto);
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task UpdatePlayerAsync(PlayerDto playerDto);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task<List<SocialDto>> GetPlayerSocialsAsync(int idPlayer);
 
         [OperationContract]
-        Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socials);
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socials);
 
         [OperationContract]
-        Task<bool> UpdateProfilePictureAsync(int idPlayer, string newPath);
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task UpdateProfilePictureAsync(int idPlayer, string newPath);
     }
 }

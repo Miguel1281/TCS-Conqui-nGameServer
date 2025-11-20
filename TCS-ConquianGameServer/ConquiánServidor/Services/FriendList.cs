@@ -1,13 +1,16 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
-using ConquiánServidor.ConquiánDB;
+using System;
 using System.Collections.Generic;
+using System.Data.Entity.Core;
+using System.Data.Entity.Infrastructure;
+using System.Data.SqlClient;
 using System.ServiceModel;
 using System.Threading.Tasks;
-using System;
 
 namespace ConquiánServidor.Services
 {
@@ -31,9 +34,20 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetPlayerByNicknameAsync(nickname, idCurrentUser);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                throw new FaultException("Error al buscar jugador.");
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+            }
+            catch (ArgumentException ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Búsqueda inválida"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al buscar jugador.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
@@ -43,9 +57,20 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetFriendsAsync(idPlayer);
             }
-            catch (Exception)
+            catch (EntityException)
             {
-                throw new FaultException("Error al obtener la lista de amigos.");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "No se pudo conectar con la base de datos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error Conexión BD"));
+            }
+            catch (SqlException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error interno de la base de datos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error SQL"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al obtener la lista de amigos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
@@ -55,45 +80,104 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetFriendRequestsAsync(idPlayer);
             }
-            catch (Exception)
+            catch (EntityException)
             {
-                throw new FaultException("Error al obtener las solicitudes de amistad.");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "No se pudo recuperar las solicitudes.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error Conexión BD"));
+            }
+            catch (SqlException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error de base de datos al leer solicitudes.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error SQL"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al obtener las solicitudes de amistad.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
-        public async Task<bool> SendFriendRequestAsync(int idSender, int idReceiver)
+        public async Task SendFriendRequestAsync(int idSender, int idReceiver)
         {
             try
             {
-                return await friendshipLogic.SendFriendRequestAsync(idSender, idReceiver);
+                await friendshipLogic.SendFriendRequestAsync(idSender, idReceiver);
             }
-            catch (Exception)
+            catch (InvalidOperationException ex)
             {
-                throw new FaultException("Error al enviar la solicitud.");
+                var fault = new ServiceFaultDto(ServiceErrorType.DuplicateRecord, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Solicitud existente"));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar la solicitud.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (EntityException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "No hay conexión con la base de datos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error Conexión BD"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al enviar la solicitud.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
-        public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int idStatus)
+        public async Task UpdateFriendRequestStatusAsync(int idFriendship, int idStatus)
         {
             try
             {
-                return await friendshipLogic.UpdateFriendRequestStatusAsync(idFriendship, idStatus);
+                await friendshipLogic.UpdateFriendRequestStatusAsync(idFriendship, idStatus);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                throw new FaultException("Error al actualizar la solicitud.");
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Solicitud no encontrada"));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al actualizar el estado de la solicitud.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (EntityException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "No hay conexión con la base de datos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error Conexión BD"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al actualizar la solicitud.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
-        public async Task<bool> DeleteFriendAsync(int idPlayer, int idFriend)
+        public async Task DeleteFriendAsync(int idPlayer, int idFriend)
         {
             try
             {
-                return await friendshipLogic.DeleteFriendAsync(idPlayer, idFriend);
+                await friendshipLogic.DeleteFriendAsync(idPlayer, idFriend);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                throw new FaultException("Error al eliminar amigo.");
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Amistad no encontrada"));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al eliminar al amigo.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (EntityException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "No hay conexión con la base de datos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error Conexión BD"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al eliminar amigo.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
     }

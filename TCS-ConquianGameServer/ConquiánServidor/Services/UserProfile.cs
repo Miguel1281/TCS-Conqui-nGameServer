@@ -1,13 +1,15 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
-using ConquiánServidor.ConquiánDB;
+using System;
 using System.Collections.Generic;
+using System.Data.Entity.Infrastructure;
+using System.Data.SqlClient;
 using System.ServiceModel;
 using System.Threading.Tasks;
-using System;
 
 namespace ConquiánServidor.Services
 {
@@ -29,10 +31,15 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.GetPlayerByIdAsync(idPlayer);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                // TODO: Registrar el error 'ex'
-                throw new FaultException("Error al recuperar la información del jugador.");
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al recuperar la información del jugador.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
@@ -42,45 +49,89 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.GetPlayerSocialsAsync(idPlayer);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                throw new FaultException("Error al recuperar las redes sociales.");
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al recuperar las redes sociales.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
-        public async Task<bool> UpdatePlayerAsync(PlayerDto playerDto)
+        public async Task UpdatePlayerAsync(PlayerDto playerDto)
         {
             try
             {
-                return await profileLogic.UpdatePlayerAsync(playerDto);
+                await profileLogic.UpdatePlayerAsync(playerDto);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                throw new FaultException("Error al actualizar el perfil.");
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar los cambios en la base de datos.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (SqlException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "La base de datos no responde.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error SQL"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error inesperado al actualizar el perfil.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
-        public async Task<bool> UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socials)
+        public async Task UpdatePlayerSocialsAsync(int idPlayer, List<SocialDto> socials)
         {
             try
             {
-                return await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
+                await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                throw new FaultException("Ocurrió un error al actualizar las redes sociales.");
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al actualizar redes sociales.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Ocurrió un error inesperado.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
 
-        public async Task<bool> UpdateProfilePictureAsync(int idPlayer, string newPath)
+        public async Task UpdateProfilePictureAsync(int idPlayer, string newPath)
         {
             try
             {
-                return await profileLogic.UpdateProfilePictureAsync(idPlayer, newPath);
+                await profileLogic.UpdateProfilePictureAsync(idPlayer, newPath);
             }
-            catch (Exception)
+            catch (KeyNotFoundException ex)
             {
-                return false; 
+                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+            }
+            catch (DbUpdateException)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar la foto.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+            }
+            catch (Exception ex)
+            {
+                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al actualizar la foto.");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
         }
     }

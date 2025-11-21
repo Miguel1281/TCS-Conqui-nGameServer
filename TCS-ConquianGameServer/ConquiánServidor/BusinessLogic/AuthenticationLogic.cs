@@ -7,11 +7,7 @@ using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity.Infrastructure;
-using System.Data.Entity.Validation;
-using System.Data.SqlClient;
 using System.Linq;
-using System.Net.Mail;
 using System.Threading.Tasks;
 using NLog;
 using ConquiánServidor.Properties.Langs;
@@ -32,13 +28,13 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)
         {
-            Logger.Info(string.Format(Lang.LogAuthLogicAuthAttempt, playerEmail));
+            Logger.Info("Authentication attempt started.");
 
             var playerFromDb = await playerRepository.GetPlayerByEmailAsync(playerEmail);
 
             if (playerFromDb == null || !PasswordHasher.verifyPassword(playerPassword, playerFromDb.password))
             {
-                Logger.Warn(string.Format(Lang.LogAuthLogicAuthFailed, playerEmail));
+                Logger.Warn("Authentication failed: Invalid credentials.");
                 throw new UnauthorizedAccessException(Lang.ErrorInvalidCredentials);
             }
 
@@ -46,7 +42,7 @@ namespace ConquiánServidor.BusinessLogic
             await playerRepository.SaveChangesAsync();
             await PresenceManager.Instance.NotifyStatusChange(playerFromDb.idPlayer, 1);
 
-            Logger.Info(string.Format(Lang.LogAuthLogicAuthSuccess, playerEmail, playerFromDb.idPlayer));
+            Logger.Info($"Authentication successful for Player ID: {playerFromDb.idPlayer}");
 
             return new PlayerDto
             {
@@ -58,14 +54,14 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task SignOutPlayerAsync(int idPlayer)
         {
-            Logger.Info(string.Format(Lang.LogAuthLogicSignOutAttempt, idPlayer)); 
+            Logger.Info($"Sign out attempt for Player ID: {idPlayer}");
             var playerFromDb = await playerRepository.GetPlayerByIdAsync(idPlayer);
             if (playerFromDb != null)
             {
                 playerFromDb.IdStatus = 2;
                 await playerRepository.SaveChangesAsync();
                 await PresenceManager.Instance.NotifyStatusChange(idPlayer, 2);
-                Logger.Info(string.Format(Lang.LogAuthLogicSignOutSuccess, idPlayer)); 
+                Logger.Info($"Sign out successful for Player ID: {idPlayer}");
             }
         }
 
@@ -84,14 +80,14 @@ namespace ConquiánServidor.BusinessLogic
             if (errors.Any())
             {
                 string errorMsg = string.Join("; ", errors);
-                Logger.Warn(string.Format(Lang.LogAuthLogicRegisterValidationFailed, finalPlayerData.nickname, errorMsg));
+                Logger.Warn($"Registration validation failed. Errors: {errorMsg}");
                 throw new ArgumentException(errorMsg);
             }
 
             bool nicknameExists = await playerRepository.DoesNicknameExistAsync(finalPlayerData.nickname);
             if (nicknameExists)
             {
-                Logger.Warn(string.Format(Lang.LogAuthLogicRegisterNicknameExists, finalPlayerData.email, finalPlayerData.nickname));
+                Logger.Warn("Registration failed: Nickname already exists.");
                 throw new InvalidOperationException(Lang.ErrorNicknameExists);
             }
 
@@ -108,10 +104,12 @@ namespace ConquiánServidor.BusinessLogic
             playerToUpdate.pathPhoto = finalPlayerData.pathPhoto;
             playerToUpdate.verificationCode = null;
             playerToUpdate.codeExpiryDate = null;
+            playerToUpdate.level = "1";
+            playerToUpdate.currentPoints = "0";
 
             await playerRepository.SaveChangesAsync();
 
-            Logger.Info(string.Format(Lang.LogAuthLogicRegisterSuccess, finalPlayerData.nickname, finalPlayerData.email));
+            Logger.Info($"Registration successful for Player ID: {playerToUpdate.idPlayer}");
         }
 
         public async Task<string> GenerateAndStoreRecoveryTokenAsync(string email)
@@ -120,7 +118,7 @@ namespace ConquiánServidor.BusinessLogic
 
             if (player == null || string.IsNullOrEmpty(player.password))
             {
-                Logger.Warn(string.Format(Lang.LogAuthLogicGenTokenNotFound, email));
+                Logger.Warn("Recovery token requested for non-existent user.");
                 throw new KeyNotFoundException(Lang.ErrorUserNotFound);
             }
 
@@ -130,23 +128,23 @@ namespace ConquiánServidor.BusinessLogic
 
             await playerRepository.SaveChangesAsync();
 
-            Logger.Info(string.Format(Lang.LogAuthLogicGenTokenSuccess, email));
+            Logger.Info($"Recovery token generated for Player ID: {player.idPlayer}");
             return recoveryCode;
         }
 
-        public async Task<string> SendVerificationCodeAsync(string email)
+     public async Task<string> SendVerificationCodeAsync(string email)
         {
             string emailError = SignUpServerValidator.ValidateEmail(email);
             if (!string.IsNullOrEmpty(emailError))
             {
-                Logger.Warn(string.Format(Lang.LogAuthLogicSendCodeInvalidEmail, email));
+                Logger.Warn("Verification code request with invalid email format.");
                 throw new ArgumentException(emailError);
             }
 
             var existingPlayer = await playerRepository.GetPlayerForVerificationAsync(email);
             if (existingPlayer != null)
             {
-                Logger.Warn(string.Format(Lang.LogAuthLogicSendCodeEmailExists, email));
+                Logger.Warn($"Verification attempted for existing account. Player ID: {existingPlayer.idPlayer}");
                 throw new InvalidOperationException("ERROR_EMAIL_EXISTS");
             }
 
@@ -168,7 +166,7 @@ namespace ConquiánServidor.BusinessLogic
             var emailTemplate = new VerificationEmailTemplate(verificationCode);
             await emailService.SendEmailAsync(email, emailTemplate);
 
-            Logger.Info(string.Format(Lang.LogAuthLogicSendCodeSuccess, email));
+            Logger.Info($"Verification code sent. Player ID (if available): {playerToVerify.idPlayer}");
             return verificationCode;
         }
 
@@ -182,11 +180,11 @@ namespace ConquiánServidor.BusinessLogic
 
             if (!isValid)
             {
-                Logger.Warn(string.Format(Lang.LogAuthLogicVerifyCodeFailed, email));
+                Logger.Warn("Verification code check failed.");
                 throw new ArgumentException(Lang.ErrorVerificationCodeIncorrect);
             }
 
-            Logger.Info(string.Format(Lang.LogAuthLogicVerifyCodeSuccess, email));
+            Logger.Info($"Verification code verified for Player ID: {player.idPlayer}");
         }
 
         public async Task HandlePasswordRecoveryRequestAsync(string email)
@@ -196,7 +194,7 @@ namespace ConquiánServidor.BusinessLogic
             var emailTemplate = new RecoveryEmailTemplate(recoveryCode);
             await emailService.SendEmailAsync(email, emailTemplate);
 
-            Logger.Info(string.Format(Lang.LogAuthLogicPassRecoverySuccess, email));
+            Logger.Info("Recovery email sent.");
         }
 
         public async Task HandleTokenValidationAsync(string email, string token)
@@ -209,7 +207,7 @@ namespace ConquiánServidor.BusinessLogic
             string passwordError = SignUpServerValidator.ValidatePassword(newPassword);
             if (!string.IsNullOrEmpty(passwordError))
             {
-                Logger.Warn(string.Format(Lang.LogAuthLogicPassResetInvalidPassword, email));
+                Logger.Warn("Password reset failed: Invalid password format.");
                 throw new ArgumentException(passwordError);
             }
 
@@ -227,7 +225,7 @@ namespace ConquiánServidor.BusinessLogic
 
             await playerRepository.SaveChangesAsync();
 
-            Logger.Info(string.Format(Lang.LogAuthLogicPassResetSuccess, email));
+            Logger.Info($"Password reset successful for Player ID: {player.idPlayer}");
         }
 
         public async Task DeleteTemporaryPlayerAsync(string email)
@@ -237,11 +235,11 @@ namespace ConquiánServidor.BusinessLogic
             if (player != null && string.IsNullOrEmpty(player.name))
             {
                 await playerRepository.DeletePlayerAsync(player);
-                Logger.Info(string.Format(Lang.LogAuthLogicDeleteTempSuccess, email));
+                Logger.Info($"Temporary player deleted. Player ID: {player.idPlayer}");
             }
             else
             {
-                Logger.Info(string.Format(Lang.LogAuthLogicDeleteTempNotFound, email));
+                Logger.Info("Temporary player deletion: User not found or invalid.");
             }
         }
     }

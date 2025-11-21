@@ -101,7 +101,9 @@ namespace ConquiánServidor.Tests
                 codeExpiryDate = DateTime.UtcNow.AddMinutes(5)
             };
 
-            mockPlayerRepository.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            mockPlayerRepository
+                .Setup(r => r.GetPlayerByEmailAsync(email))
+                .ReturnsAsync(player);
 
             await Assert.ThrowsAsync<ArgumentException>(() => authLogic.VerifyCodeAsync(email, providedCode));
         }

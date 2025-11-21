@@ -53,19 +53,19 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idPlayer)
         {
-            PlayerDto playerDto = new PlayerDto(); 
             var player = await playerRepository.GetPlayerByNicknameAsync(nickname);
 
-            if (player != null && player.idPlayer != idPlayer)
+            if (player == null || player.idPlayer == idPlayer)
             {
-                playerDto = new PlayerDto
-                {
-                    idPlayer = player.idPlayer,
-                    nickname = player.nickname,
-                    pathPhoto = player.pathPhoto
-                };
+                throw new KeyNotFoundException();
             }
-            return playerDto; 
+
+            return new PlayerDto
+            {
+                idPlayer = player.idPlayer,
+                nickname = player.nickname,
+                pathPhoto = player.pathPhoto
+            };
         }
 
         public async Task SendFriendRequestAsync(int idPlayer, int idFriend)

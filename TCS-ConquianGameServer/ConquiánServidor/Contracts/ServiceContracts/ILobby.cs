@@ -39,5 +39,9 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
         Task StartGameAsync(string roomCode);
+
+        [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task KickPlayerAsync(string roomCode, int idRequestingPlayer, int idPlayerToKick);
     }
 }

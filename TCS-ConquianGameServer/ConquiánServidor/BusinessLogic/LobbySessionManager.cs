@@ -48,15 +48,28 @@ namespace ConquiánServidor.BusinessLogic
         public PlayerDto AddPlayerToLobby(string roomCode, PlayerDto player)
         {
             var session = GetLobbySession(roomCode);
-            if (session == null) return null;
+            if (session == null)
+            {
+                return null;
+            }
 
             lock (session)
             {
-                if (session.Players.Count >= 2) return null;
+                if (session.KickedPlayers.Contains(player.idPlayer))
+                {
+                    throw new InvalidOperationException("Banned");
+                }
+
+                if (session.Players.Count >= 2)
+                {
+                    return null;
+                }
+
                 if (session.Players.Any(p => p.idPlayer == player.idPlayer))
                 {
                     return player;
                 }
+
                 session.Players.Add(player);
                 return player;
             }
@@ -141,6 +154,18 @@ namespace ConquiánServidor.BusinessLogic
                     {
                         availableGuestIds.Push(guest.idPlayer);
                     }
+                }
+            }
+        }
+
+        public void BanPlayer(string roomCode, int idPlayer)
+        {
+            var session = GetLobbySession(roomCode);
+            if (session != null)
+            {
+                lock (session)
+                {
+                    session.KickedPlayers.Add(idPlayer);
                 }
             }
         }

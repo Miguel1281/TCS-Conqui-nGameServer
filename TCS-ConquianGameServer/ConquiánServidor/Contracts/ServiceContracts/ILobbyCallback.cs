@@ -1,10 +1,5 @@
 ﻿using ConquiánServidor.Contracts.DataContracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ConquiánServidor.Contracts.ServiceContracts
 {
@@ -28,5 +23,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void NotifyGameStarting();
+
+        [OperationContract(IsOneWay = true)]
+        void YouWereKicked();
     }
 }

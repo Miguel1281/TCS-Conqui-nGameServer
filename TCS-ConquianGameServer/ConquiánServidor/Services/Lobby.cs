@@ -291,5 +291,46 @@ namespace ConquiánServidor.Services
                 callbacks.TryRemove(id, out _);
             }
         }
+
+        public async Task KickPlayerAsync(string roomCode, int idRequestingPlayer, int idPlayerToKick)
+        {
+            try
+            {
+                await lobbyLogic.KickPlayerAsync(roomCode, idRequestingPlayer, idPlayerToKick);
+
+                if (lobbyCallbacks.TryGetValue(roomCode, out var roomCallbacks))
+                {
+                    if (roomCallbacks.TryRemove(idPlayerToKick, out var kickedClientCallback))
+                    {
+                        try
+                        {
+                            kickedClientCallback.YouWereKicked();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warn(ex, "Could not notify kicked player (connection might be lost).");
+                        }
+                    }
+                }
+
+                NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerLeft(idPlayerToKick));
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error kicking player {idPlayerToKick} from room {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
+            }
+        }
     }
 }

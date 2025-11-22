@@ -137,14 +137,26 @@ namespace ConquiánServidor.BusinessLogic
                 pathPhoto = playerToJoinEntity.pathPhoto
             };
 
-            var result = sessionManager.AddPlayerToLobby(roomCode, playerDto);
-
-            if (result != null)
+            try
             {
-                Logger.Info($"Player joined lobby successfully. Room Code: {roomCode}, Player ID: {idPlayer}");
-            }
+                var result = sessionManager.AddPlayerToLobby(roomCode, playerDto);
 
-            return result;
+                if (result != null)
+                {
+                    Logger.Info($"Player joined lobby successfully. Room Code: {roomCode}, Player ID: {idPlayer}");
+                }
+                else
+                {
+                    Logger.Warn($"Join lobby failed: Lobby session logic returned null (likely full). Room: {roomCode}");
+                }
+
+                return result;
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "Banned")
+            {
+                Logger.Warn($"Join lobby failed: Player {idPlayer} is banned from room {roomCode}.");
+                throw new InvalidOperationException(Lang.ErrorYouAreKicked);
+            }
         }
 
         public async Task<PlayerDto> JoinLobbyAsGuestAsync(string email, string roomCode)
@@ -294,6 +306,37 @@ namespace ConquiánServidor.BusinessLogic
                 lobby.idStatusLobby = 2; 
                 await lobbyRepository.SaveChangesAsync();
             }
+        }
+
+        public async Task KickPlayerAsync(string roomCode, int idRequestingPlayer, int idPlayerToKick)
+        {
+            Logger.Info($"Kick attempt. Room: {roomCode}, Host: {idRequestingPlayer}, Target: {idPlayerToKick}");
+
+            var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+            if (lobby == null)
+            {
+                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+            }
+
+            if (lobby.idHostPlayer != idRequestingPlayer)
+            {
+                Logger.Warn($"Kick failed: Player {idRequestingPlayer} is not the host of room {roomCode}.");
+                throw new UnauthorizedAccessException(Lang.ErrorNotLobbyHost);
+            }
+
+            if (idRequestingPlayer == idPlayerToKick)
+            {
+                throw new InvalidOperationException("Cannot kick yourself.");
+            }
+
+            if (idPlayerToKick > 0)
+            {
+                sessionManager.BanPlayer(roomCode, idPlayerToKick);
+            }
+
+            sessionManager.RemovePlayerFromLobby(roomCode, idPlayerToKick);
+
+            Logger.Info($"Player {idPlayerToKick} kicked and banned from room {roomCode} by host.");
         }
     }
 }

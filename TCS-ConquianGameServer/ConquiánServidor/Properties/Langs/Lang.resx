@@ -378,4 +378,10 @@
   <data name="LogPresenceCallbackFailed" xml:space="preserve">
     <value>Fallo al notificar estado a un suscriptor.</value>
   </data>
+  <data name="ErrorNotLobbyHost" xml:space="preserve">
+    <value>No puedes expulsar debido a que no eres el host</value>
+  </data>
+  <data name="ErrorYouAreKicked" xml:space="preserve">
+    <value>No puedes unirte a este lobby porque fuiste expulsado.</value>
+  </data>
 </root>

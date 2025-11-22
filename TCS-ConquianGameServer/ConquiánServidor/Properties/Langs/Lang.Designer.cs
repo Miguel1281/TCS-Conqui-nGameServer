@@ -196,6 +196,15 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a No puedes expulsar debido a que no eres el host.
+        /// </summary>
+        public static string ErrorNotLobbyHost {
+            get {
+                return ResourceManager.GetString("ErrorNotLobbyHost", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a El jugador se encuentra desconectado..
         /// </summary>
         public static string ErrorPlayerOffline {
@@ -246,6 +255,15 @@ namespace ConquiánServidor.Properties.Langs {
         public static string ErrorVerificationCodeIncorrect {
             get {
                 return ResourceManager.GetString("ErrorVerificationCodeIncorrect", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Busca una cadena traducida similar a No puedes unirte a este lobby porque fuiste expulsado..
+        /// </summary>
+        public static string ErrorYouAreKicked {
+            get {
+                return ResourceManager.GetString("ErrorYouAreKicked", resourceCulture);
             }
         }
         

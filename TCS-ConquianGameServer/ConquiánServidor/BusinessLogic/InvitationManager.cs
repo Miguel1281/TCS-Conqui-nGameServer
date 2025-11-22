@@ -1,9 +1,8 @@
 ﻿using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.Properties.Langs; // Importante
+using ConquiánServidor.Properties.Langs;
 using NLog;
 using System;
 using System.Collections.Concurrent;
-using System.ServiceModel;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
@@ -24,37 +23,39 @@ namespace ConquiánServidor.BusinessLogic
         public void Subscribe(int idPlayer, IInvitationCallback callback)
         {
             onlinePlayers.AddOrUpdate(idPlayer, callback, (key, oldValue) => callback);
-            Logger.Info(string.Format(Lang.LogInvitationSubscribed, idPlayer));
+            Logger.Info($"Player ID {idPlayer} subscribed to invitation service.");
         }
 
         public void Unsubscribe(int idPlayer)
         {
             if (onlinePlayers.TryRemove(idPlayer, out _))
             {
-                Logger.Info(string.Format(Lang.LogInvitationUnsubscribed, idPlayer));
+                Logger.Info($"Player ID {idPlayer} unsubscribed from invitation service.");
             }
         }
 
         public async Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
         {
+            Logger.Info($"Invitation attempt: Sender ID {idSender} -> Receiver ID {idReceiver} for Room Code: {roomCode}");
+
             if (onlinePlayers.TryGetValue(idReceiver, out IInvitationCallback receiverCallback))
             {
                 try
                 {
                     receiverCallback.OnInvitationReceived(senderNickname, roomCode);
 
-                    Logger.Info(string.Format(Lang.LogInvitationSent, senderNickname, idReceiver, roomCode));
+                    Logger.Info($"Invitation successfully delivered to Receiver ID: {idReceiver}");
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn(ex, string.Format(Lang.LogInvitationDeliveryFailed, idReceiver));
+                    Logger.Warn(ex, $"Invitation delivery failed for Receiver ID: {idReceiver}. Removing from active list.");
                     onlinePlayers.TryRemove(idReceiver, out _);
                     throw new InvalidOperationException(Lang.ErrorPlayerOffline);
                 }
             }
             else
             {
-                Logger.Warn(string.Format(Lang.LogInvitationDeliveryFailed, idReceiver) + " (No encontrado en diccionario)");
+                Logger.Warn($"Invitation failed: Receiver ID {idReceiver} is not online/subscribed.");
                 throw new InvalidOperationException(Lang.ErrorPlayerOffline);
             }
 

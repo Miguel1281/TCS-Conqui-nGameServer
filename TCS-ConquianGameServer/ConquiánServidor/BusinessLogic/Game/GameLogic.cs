@@ -1,5 +1,4 @@
-﻿using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.Properties.Langs; 
 using NLog;
@@ -47,7 +46,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             PlayerMelds = players.ToDictionary(player => player.idPlayer, player => new List<List<Card>>());
             InitializeGame();
 
-            Logger.Info($"Juego iniciado para la sala {RoomCode}.");
+            Logger.Info($"Game initialized for Room Code: {RoomCode}. Gamemode: {GamemodeId}");
         }
 
         private void InitializeGame()
@@ -113,6 +112,7 @@ namespace ConquiánServidor.BusinessLogic.Game
         public void RegisterPlayerCallback(int playerId, IGameCallback callback)
         {
             playerCallbacks[playerId] = callback;
+            Logger.Info($"Player ID {playerId} registered callback for Room Code: {RoomCode}");
         }
 
         public int GetInitialTimeInSeconds()
@@ -128,6 +128,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             gameTimer.Elapsed += OnTimerTick;
             gameTimer.AutoReset = true;
             gameTimer.Start();
+            Logger.Info($"Game timer started for Room Code: {RoomCode}");
         }
 
         private void OnTimerTick(object sender, ElapsedEventArgs e)
@@ -137,10 +138,12 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             if (remainingSeconds <= 0)
             {
+                Logger.Info($"Game timeout reached for Room Code: {RoomCode}. Stopping game.");
                 StopGame();
             }
             else if (currentTurnSeconds <= 0)
             {
+                Logger.Info($"Turn timeout for Player ID: {currentTurnPlayerId} in Room Code: {RoomCode}. Changing turn.");
                 ChangeTurn();
             }
 
@@ -157,16 +160,16 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void BroadcastTime(int gameSeconds, int turnSeconds, int currentPlayerId)
         {
-            foreach (var callback in playerCallbacks.Values)
+            foreach (var kvp in playerCallbacks)
             {
                 try
                 {
-                    callback.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
+                    kvp.Value.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, $"Falló al enviar actualización de tiempo al jugador {currentPlayerId}. Se eliminará el callback.");
-                    playerCallbacks.TryRemove(currentPlayerId, out _);
+                    Logger.Error(ex, $"Failed to broadcast time update to Player ID {kvp.Key} in Room Code: {RoomCode}. Removing callback.");
+                    playerCallbacks.TryRemove(kvp.Key, out _);
                 }
             }
         }
@@ -188,6 +191,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 gameTimer.Stop();
                 gameTimer.Elapsed -= OnTimerTick;
                 gameTimer.Dispose();
+                Logger.Info($"Game stopped for Room Code: {RoomCode}");
             }
         }
 
@@ -195,15 +199,13 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                string msg = "Intento de jugar fuera de turno";
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, msg));
+                Logger.Warn($"Game action failed: Player ID {playerId} attempted move out of turn in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
             }
 
             if (cardIds == null || cardIds.Count < 3)
             {
-                string msg = "Intento jugar menos de 3 cartas";
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, msg));
+                Logger.Warn($"Game action failed: Player ID {playerId} attempted to play fewer than 3 cards in Room {RoomCode}");
                 throw new ArgumentException(Lang.ErrorGameInvalidMove);
             }
 
@@ -213,8 +215,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
                 if (cardsToPlay.Count != cardIds.Count)
                 {
-                    string msg = "Jugador intentó jugar cartas que no tiene en la mano";
-                    Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, msg));
+                    Logger.Warn($"Game action failed: Player ID {playerId} attempted to play cards they do not possess in Room {RoomCode}");
                     throw new InvalidOperationException(Lang.ErrorGameInvalidMove);
                 }
 
@@ -237,25 +238,27 @@ namespace ConquiánServidor.BusinessLogic.Game
                         callback.OnOpponentHandUpdated(hand.Count);
                     });
 
-                    Logger.Info(string.Format(Lang.LogGamePlayCardSuccess, playerId, RoomCode));
+                    Logger.Info($"Player ID {playerId} successfully melded cards in Room {RoomCode}");
                 }
                 else
                 {
-                    string msg = "Juego inválido (reglas de tercia/corrida no cumplidas)";
-                    Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, msg));
+                    Logger.Warn($"Game action failed: Invalid meld (set/run rules not met) by Player ID {playerId} in Room {RoomCode}");
                     throw new InvalidOperationException(Lang.ErrorGameInvalidMove);
                 }
             }
             else
             {
-                Logger.Error($"Mano no encontrada para el jugador {playerId} en sala {RoomCode}");
+                Logger.Error($"Hand not found for Player ID {playerId} in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameAction);
             }
         }
 
         private static bool IsValidMeld(List<Card> cards)
         {
-            if (cards == null || cards.Count < 3) return false;
+            if (cards == null || cards.Count < 3)
+            {
+                return false;
+            }
 
             cards = cards.OrderBy(c => c.Rank).ToList();
 
@@ -267,7 +270,10 @@ namespace ConquiánServidor.BusinessLogic.Game
             }
 
             bool isCorrida = cards.All(c => c.Suit == cards[0].Suit);
-            if (!isCorrida) return false;
+            if (!isCorrida)
+            {
+                return false;
+            }
 
             for (int i = 0; i < cards.Count - 1; i++)
             {
@@ -292,14 +298,14 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, "DrawFromDeck fuera de turno"));
+                Logger.Warn($"DrawFromDeck failed: Player ID {playerId} attempted action out of turn in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
             }
 
             if (StockPile.Count == 0)
             {
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, "Mazo vacío"));
-                throw new InvalidOperationException(Lang.ErrorGameAction); 
+                Logger.Warn($"DrawFromDeck failed: Stock pile is empty in Room {RoomCode}");
+                throw new InvalidOperationException(Lang.ErrorGameAction);
             }
 
             var card = StockPile[0];
@@ -319,20 +325,20 @@ namespace ConquiánServidor.BusinessLogic.Game
                 callback.NotifyOpponentDiscarded(cardDto);
             });
 
-            Logger.Info(string.Format(Lang.LogGameDrawDeckSuccess, playerId, RoomCode));
+            Logger.Info($"Player ID {playerId} drew from deck in Room {RoomCode}");
         }
 
         public CardDto DrawFromDiscard(int playerId)
         {
             if (playerId != currentTurnPlayerId)
             {
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, "DrawFromDiscard fuera de turno"));
+                Logger.Warn($"DrawFromDiscard failed: Player ID {playerId} attempted action out of turn in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
             }
 
             if (DiscardPile.Count == 0)
             {
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, "Pila de descarte vacía"));
+                Logger.Warn($"DrawFromDiscard failed: Discard pile is empty in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameInvalidMove);
             }
 
@@ -365,7 +371,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 callback.OnOpponentHandUpdated(PlayerHands[playerId].Count);
             });
 
-            Logger.Info($"Jugador {playerId} tomó carta del descarte en sala {RoomCode}");
+            Logger.Info($"Player ID {playerId} drew from discard pile in Room {RoomCode}");
 
             return new CardDto
             {
@@ -380,14 +386,14 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, "DiscardCard fuera de turno"));
+                Logger.Warn($"DiscardCard failed: Player ID {playerId} attempted action out of turn in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
             }
 
             var card = PlayerHands[playerId].FirstOrDefault(c => c.Id == cardId);
             if (card == null)
             {
-                Logger.Warn(string.Format(Lang.LogGameActionFailed, RoomCode, playerId, "Carta a descartar no encontrada en mano"));
+                Logger.Warn($"DiscardCard failed: Card ID {cardId} not found in Player ID {playerId}'s hand in Room {RoomCode}");
                 throw new ArgumentException(Lang.ErrorGameInvalidMove);
             }
 
@@ -408,7 +414,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 callback.OnOpponentHandUpdated(PlayerHands[playerId].Count);
             });
 
-            Logger.Info($"Jugador {playerId} descartó carta en sala {RoomCode}");
+            Logger.Info($"Player ID {playerId} discarded a card in Room {RoomCode}");
 
             ChangeTurn();
         }
@@ -425,7 +431,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, string.Format(Lang.LogGameCallbackError, opponentId));
+                    Logger.Error(ex, $"Failed to notify opponent ID {opponentId} in Room {RoomCode}. Removing callback.");
                     playerCallbacks.TryRemove(opponentId, out _);
                 }
             }
@@ -433,15 +439,15 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void Broadcast(Action<IGameCallback> action)
         {
-            foreach (var callback in playerCallbacks.Values)
+            foreach (var kvp in playerCallbacks)
             {
                 try
                 {
-                    action(callback);
+                    action(kvp.Value);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, Lang.LogGameBroadcastError);
+                    Logger.Error(ex, $"Broadcast failed for Player ID {kvp.Key} in Room {RoomCode}.");
                 }
             }
         }

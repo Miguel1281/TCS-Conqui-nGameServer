@@ -82,6 +82,8 @@
     <Compile Include="BusinessLogic\GameSessionManager.cs" />
     <Compile Include="BusinessLogic\Game\Card.cs" />
     <Compile Include="BusinessLogic\Game\GameLogic.cs" />
+    <Compile Include="BusinessLogic\GuestInvitationManager.cs" />
+    <Compile Include="BusinessLogic\GuestInviteData.cs" />
     <Compile Include="BusinessLogic\InvitationManager.cs" />
     <Compile Include="BusinessLogic\LobbyLogic.cs" />
     <Compile Include="BusinessLogic\LobbyOperationException.cs" />
@@ -116,9 +118,6 @@
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
     <Compile Include="ConquiánDB\Gamemode.cs">
-      <DependentUpon>ConquiánModelDB.tt</DependentUpon>
-    </Compile>
-    <Compile Include="ConquiánDB\GuestInvite.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
     <Compile Include="ConquiánDB\Lobby.cs">

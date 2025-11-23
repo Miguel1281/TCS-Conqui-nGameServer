@@ -147,15 +147,15 @@ namespace ConquiánServidor.Services
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return playerDto;
             }
-            catch (GuestInviteUsedException ex)
+
+            catch (FaultException<ServiceFaultDto> ex)
             {
-                var fault = new GuestInviteUsedFault { Message = ex.Message };
-                throw new FaultException<GuestInviteUsedFault>(fault, new FaultReason(ex.Message));
+                throw ex;
             }
-            catch (RegisteredUserAsGuestException ex)
+            catch (ArgumentException ex)
             {
-                var fault = new RegisteredUserAsGuestFault { Message = ex.Message };
-                throw new FaultException<RegisteredUserAsGuestFault>(fault, new FaultReason(ex.Message));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (InvalidOperationException ex)
             {
@@ -164,7 +164,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en JoinGuest room {roomCode} email {email}");
+                Logger.Error(ex, $"Error crítico en JoinAndSubscribeAsGuestAsync room {roomCode} email {email}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorLobbyAction);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
             }

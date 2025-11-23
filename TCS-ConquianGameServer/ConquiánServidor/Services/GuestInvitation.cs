@@ -1,12 +1,13 @@
-﻿using ConquiánServidor.ConquiánDB;
+﻿using ConquiánServidor.BusinessLogic; 
+using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.Properties.Langs; 
+using ConquiánServidor.Properties.Langs;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
-using NLog; 
+using NLog;
 using System;
 using System.ServiceModel;
 using System.Threading.Tasks;
@@ -38,15 +39,7 @@ namespace ConquiánServidor.Services
                     throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
                 }
 
-                var guestInvite = new ConquiánDB.GuestInvite
-                {
-                    email = email,
-                    roomCode = roomCode,
-                    creationDate = DateTime.UtcNow,
-                    wasUsed = false
-                };
-                dbContext.GuestInvite.Add(guestInvite);
-                await dbContext.SaveChangesAsync();
+                GuestInvitationManager.Instance.AddInvitation(email, roomCode);
 
                 try
                 {
@@ -55,11 +48,7 @@ namespace ConquiánServidor.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn(ex, $"Fallo envío de correo invitado a {email}. Revirtiendo BD.");
-
-                    dbContext.GuestInvite.Remove(guestInvite);
-                    await dbContext.SaveChangesAsync();
-
+                    Logger.Warn(ex, $"Fallo envío de correo invitado a {email}. Revirtiendo cambios en memoria.");
                     throw new InvalidOperationException(string.Format(Lang.ErrorGuestInviteEmailFailed, email));
                 }
 

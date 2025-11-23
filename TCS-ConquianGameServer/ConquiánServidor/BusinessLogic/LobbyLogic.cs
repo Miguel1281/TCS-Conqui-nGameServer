@@ -9,7 +9,9 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Security.Cryptography;
+using System.ServiceModel;
 using System.Threading.Tasks;
+using static ConquiánServidor.BusinessLogic.GuestInvitationManager;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -163,27 +165,25 @@ namespace ConquiánServidor.BusinessLogic
         {
             Logger.Info($"Guest join attempt for Room Code: {roomCode}");
 
-            var invitation = await dbContext.GuestInvite
-                                      .FirstOrDefaultAsync(gi => gi.email == email && gi.roomCode == roomCode);
+            var inviteResult = GuestInvitationManager.Instance.ValidateInvitation(email, roomCode);
 
-            if (invitation == null)
+            if (inviteResult == InviteResult.Used)
             {
-                Logger.Warn($"Guest join failed: Invitation not found/matched for Room Code {roomCode}.");
-                throw new ArgumentException(Lang.ErrorInvalidInvitation);
+                Logger.Warn($"Guest join failed: Invitation already used. Room Code {roomCode}.");
+                var faultUsed = new ServiceFaultDto(ServiceErrorType.GuestInviteUsed, Lang.ErrorUsedInvitation);
+                throw new FaultException<ServiceFaultDto>(faultUsed, new FaultReason(Lang.ErrorUsedInvitation));
             }
 
-            if (invitation.wasUsed)
+            if (inviteResult != InviteResult.Valid)
             {
-                Logger.Warn($"Guest join failed: Invitation already used for Room Code {roomCode}.");
-                throw new GuestInviteUsedException(Lang.ErrorUsedInvitation);
+                Logger.Warn($"Guest join failed: Invitation not found or expired. Room Code {roomCode}.");
+                throw new ArgumentException(Lang.ErrorInvalidInvitation);
             }
 
             bool isRegisteredPlayer = await dbContext.Player.AnyAsync(p => p.email == email);
 
             if (isRegisteredPlayer)
             {
-                invitation.wasUsed = true;
-                await dbContext.SaveChangesAsync();
                 Logger.Warn($"Guest join failed: User is already registered. Room Code {roomCode}.");
                 throw new RegisteredUserAsGuestException(Lang.ErrorRegisteredMail);
             }
@@ -204,8 +204,6 @@ namespace ConquiánServidor.BusinessLogic
 
             if (playerDto != null)
             {
-                invitation.wasUsed = true;
-                await dbContext.SaveChangesAsync();
                 Logger.Info($"Guest joined lobby successfully. Room Code: {roomCode}, Guest Temp ID: {playerDto.idPlayer}");
             }
 

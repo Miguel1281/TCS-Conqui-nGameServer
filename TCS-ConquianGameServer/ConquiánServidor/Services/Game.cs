@@ -25,6 +25,7 @@ namespace ConquiánServidor.Services
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
                 }
 
+                game.OnGameFinished += HandleGameFinished;
                 var callback = OperationContext.Current.GetCallbackChannel<IGameCallback>();
                 game.RegisterPlayerCallback(playerId, callback);
 
@@ -77,6 +78,28 @@ namespace ConquiánServidor.Services
                 Logger.Error(ex, $"Error en PlayCards para jugador {playerId} en sala {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error procesando jugada"));
+            }
+        }
+
+        private void HandleGameFinished(GameResultDto result)
+        {
+            if (!result.IsDraw && result.WinnerId > 0 && result.PointsWon > 0)
+            {
+                try
+                {
+                    using (var context = new ConquiánDB.ConquiánDBEntities())
+                    {
+                        var repository = new DataAccess.Repositories.PlayerRepository(context);
+
+                        var task = repository.UpdatePlayerPointsAsync(result.WinnerId, result.PointsWon);
+                        task.Wait();
+                    }
+                    Logger.Info($"Points updated for winner {result.WinnerId}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Error updating points in DB");
+                }
             }
         }
 

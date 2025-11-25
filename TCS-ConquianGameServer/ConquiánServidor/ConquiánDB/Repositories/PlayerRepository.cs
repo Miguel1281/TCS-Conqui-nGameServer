@@ -62,5 +62,26 @@ namespace ConquiánServidor.DataAccess.Repositories
             int result = await context.SaveChangesAsync();
             return result > 0;
         }
+
+        public async Task UpdatePlayerPointsAsync(int playerId, int pointsToAdd)
+        {
+            var player = await context.Player.FindAsync(playerId);
+            if (player != null)
+            {
+                int currentPoints = 0;
+                if (!string.IsNullOrEmpty(player.currentPoints))
+                {
+                    int.TryParse(player.currentPoints, out currentPoints);
+                }
+
+                currentPoints += pointsToAdd;
+
+                player.currentPoints = currentPoints.ToString();
+
+                await context.SaveChangesAsync();
+            }
+        }
     }
+
+
 }

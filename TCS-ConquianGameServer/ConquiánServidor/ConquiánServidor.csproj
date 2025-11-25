@@ -147,6 +147,7 @@
     </Compile>
     <Compile Include="Contracts\DataContracts\CardDto.cs" />
     <Compile Include="Contracts\DataContracts\FriendRequestDto.cs" />
+    <Compile Include="Contracts\DataContracts\GameResultDto.cs" />
     <Compile Include="Contracts\DataContracts\GameStateDto.cs" />
     <Compile Include="Contracts\DataContracts\LobbyDto.cs" />
     <Compile Include="Contracts\DataContracts\MessageDto.cs" />

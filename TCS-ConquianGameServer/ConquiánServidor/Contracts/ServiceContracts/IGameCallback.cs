@@ -24,5 +24,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void OnOpponentLeft();
+
+        [OperationContract(IsOneWay = true)]
+        void NotifyGameEnded(GameResultDto result);
     }
 }

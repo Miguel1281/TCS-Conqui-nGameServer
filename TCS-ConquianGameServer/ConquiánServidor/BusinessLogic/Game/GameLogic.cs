@@ -31,6 +31,8 @@ namespace ConquiánServidor.BusinessLogic.Game
         public List<Card> DiscardPile { get; private set; }
         public Dictionary<int, List<List<Card>>> PlayerMelds { get; private set; }
 
+        public event Action<GameResultDto> OnGameFinished;
+
         private static readonly Random Rng = new Random();
 
         public ConquianGame(string roomCode, int gamemodeId, List<PlayerDto> players)
@@ -143,6 +145,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 Logger.Info($"Game timeout reached for Room Code: {RoomCode}. Stopping game.");
                 StopGame();
+                DetermineWinnerByPoints(); 
             }
 
             BroadcastTime(remainingSeconds, 0, currentTurnPlayerId);
@@ -277,6 +280,17 @@ namespace ConquiánServidor.BusinessLogic.Game
                     }
 
                     Logger.Info($"Player ID {playerId} successfully melded cards in Room {RoomCode}");
+
+                    bool gameEnded = CheckWinCondition(playerId);
+
+                    if (!gameEnded)
+                    {
+                        if (usingDiscardCard)
+                        {
+                            BroadcastDiscardUpdate();
+                            mustDiscardToFinishTurn = true;
+                        }
+                    }
                 }
                 else
                 {
@@ -287,6 +301,28 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 throw new InvalidOperationException(Lang.ErrorGameAction);
             }
+        }
+
+        private bool CheckWinCondition(int playerId)
+        {
+            int meldsCount = PlayerMelds[playerId].Count;
+            bool hasWon = false;
+
+            if (GamemodeId == 1 && meldsCount >= 2)
+            {
+                hasWon = true;
+            }
+            else if (GamemodeId != 1 && meldsCount >= 3)
+            {
+                hasWon = true;
+            }
+
+            if (hasWon)
+            {
+                FinishGame(playerId, false);
+                return true;
+            }
+            return false;
         }
 
         private void BroadcastDiscardUpdate()
@@ -365,6 +401,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             if (StockPile.Count == 0)
             {
                 throw new InvalidOperationException("Mazo vacío.");
+                DetermineWinnerByPoints(); 
             }
 
             var card = StockPile[0];
@@ -450,6 +487,53 @@ namespace ConquiánServidor.BusinessLogic.Game
             return true;
         }
 
+        private void DetermineWinnerByPoints()
+        {
+            var playerIds = Players.Select(p => p.idPlayer).ToList();
+            int p1 = playerIds[0];
+            int p2 = playerIds[1];
+
+            int meldsP1 = PlayerMelds[p1].Count;
+            int meldsP2 = PlayerMelds[p2].Count;
+
+            if (meldsP1 > meldsP2)
+            {
+                FinishGame(p1, false);
+            }
+            else if (meldsP2 > meldsP1)
+            {
+                FinishGame(p2, false);
+            }
+            else
+            {
+                FinishGame(-1, true);
+            }
+        }
+
+        private void FinishGame(int winnerId, bool isDraw)
+        {
+            StopGame();
+
+            int loserId = -1;
+            if (!isDraw)
+            {
+                loserId = Players.FirstOrDefault(p => p.idPlayer != winnerId)?.idPlayer ?? -1;
+            }
+
+            var result = new GameResultDto
+            {
+                WinnerId = winnerId,
+                LoserId = loserId,
+                IsDraw = isDraw,
+                PointsWon = isDraw ? 0 : 25 
+            };
+
+            OnGameFinished?.Invoke(result);
+
+            Broadcast((callback) => callback.NotifyGameEnded(result));
+
+            Logger.Info($"Game {RoomCode} ended. Winner: {winnerId}. Draw: {isDraw}");
+        }
         private void NotifyOpponent(int actingPlayerId, Action<IGameCallback> action)
         {
             int opponentId = playerCallbacks.Keys.FirstOrDefault(id => id != actingPlayerId);

@@ -21,5 +21,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void NotifyOpponentMeld(CardDto[] meldCards);
+
+        [OperationContract(IsOneWay = true)]
+        void OnOpponentLeft();
     }
 }

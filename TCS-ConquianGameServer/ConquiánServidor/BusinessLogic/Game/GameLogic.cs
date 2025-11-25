@@ -1,6 +1,6 @@
 ﻿using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.Properties.Langs; 
+using ConquiánServidor.Properties.Langs;
 using NLog;
 using System;
 using System.Collections.Concurrent;
@@ -15,12 +15,13 @@ namespace ConquiánServidor.BusinessLogic.Game
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         public string RoomCode { get; private set; }
         public int GamemodeId { get; private set; }
-
         private Timer gameTimer;
         private int remainingSeconds;
-        private int currentTurnSeconds;
         private int currentTurnPlayerId;
-        private const int TURN_DURATION_SECONDS = 20;
+        private bool mustDiscardToFinishTurn;
+        private int? playerReviewingDiscardId; 
+        private bool hasHostPassedInitialDiscard; 
+        private bool isCardDrawnFromDeck; 
 
         private readonly ConcurrentDictionary<int, IGameCallback> playerCallbacks;
         public List<PlayerDto> Players { get; private set; }
@@ -39,6 +40,10 @@ namespace ConquiánServidor.BusinessLogic.Game
             Players = players;
             playerCallbacks = new ConcurrentDictionary<int, IGameCallback>();
             currentTurnPlayerId = Players[0].idPlayer;
+            playerReviewingDiscardId = currentTurnPlayerId;
+            hasHostPassedInitialDiscard = false;
+            isCardDrawnFromDeck = false;
+            mustDiscardToFinishTurn = false; 
 
             PlayerHands = new Dictionary<int, List<Card>>();
             PlayerMelds = new Dictionary<int, List<List<Card>>>();
@@ -122,7 +127,6 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public void StartGameTimer()
         {
-            currentTurnSeconds = TURN_DURATION_SECONDS;
             remainingSeconds = GetInitialTimeInSeconds();
             gameTimer = new Timer(1000);
             gameTimer.Elapsed += OnTimerTick;
@@ -134,28 +138,24 @@ namespace ConquiánServidor.BusinessLogic.Game
         private void OnTimerTick(object sender, ElapsedEventArgs e)
         {
             remainingSeconds--;
-            currentTurnSeconds--;
 
             if (remainingSeconds <= 0)
             {
                 Logger.Info($"Game timeout reached for Room Code: {RoomCode}. Stopping game.");
                 StopGame();
             }
-            else if (currentTurnSeconds <= 0)
-            {
-                Logger.Info($"Turn timeout for Player ID: {currentTurnPlayerId} in Room Code: {RoomCode}. Changing turn.");
-                ChangeTurn();
-            }
 
-            BroadcastTime(remainingSeconds, currentTurnSeconds, currentTurnPlayerId);
+            BroadcastTime(remainingSeconds, 0, currentTurnPlayerId);
         }
 
         private void ChangeTurn()
         {
-            currentTurnSeconds = TURN_DURATION_SECONDS;
+            mustDiscardToFinishTurn = false; 
             var currentPlayerIndex = Players.FindIndex(p => p.idPlayer == currentTurnPlayerId);
             var nextPlayerIndex = (currentPlayerIndex + 1) % Players.Count;
             currentTurnPlayerId = Players[nextPlayerIndex].idPlayer;
+            playerReviewingDiscardId = currentTurnPlayerId;
+            isCardDrawnFromDeck = false;
         }
 
         private void BroadcastTime(int gameSeconds, int turnSeconds, int currentPlayerId)
@@ -172,11 +172,6 @@ namespace ConquiánServidor.BusinessLogic.Game
                     playerCallbacks.TryRemove(kvp.Key, out _);
                 }
             }
-        }
-
-        public int GetCurrentTurnSeconds()
-        {
-            return currentTurnSeconds;
         }
 
         public int GetCurrentTurnPlayerId()
@@ -199,32 +194,69 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                Logger.Warn($"Game action failed: Player ID {playerId} attempted move out of turn in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
             }
 
-            if (cardIds == null || cardIds.Count < 3)
+            if (mustDiscardToFinishTurn)
             {
-                Logger.Warn($"Game action failed: Player ID {playerId} attempted to play fewer than 3 cards in Room {RoomCode}");
+                throw new InvalidOperationException("Ya bajaste juego. Debes pagar una carta para terminar.");
+            }
+
+            if (cardIds == null || cardIds.Count < 2) 
+            {
                 throw new ArgumentException(Lang.ErrorGameInvalidMove);
             }
 
             if (PlayerHands.TryGetValue(playerId, out List<Card> hand))
             {
-                var cardsToPlay = hand.Where(card => cardIds.Contains(card.Id)).ToList();
+                bool usingDiscardCard = false;
+                Card discardCard = null;
 
-                if (cardsToPlay.Count != cardIds.Count)
+                if (DiscardPile.Count > 0)
                 {
-                    Logger.Warn($"Game action failed: Player ID {playerId} attempted to play cards they do not possess in Room {RoomCode}");
-                    throw new InvalidOperationException(Lang.ErrorGameInvalidMove);
+                    discardCard = DiscardPile.Last();
+                    if (cardIds.Contains(discardCard.Id))
+                    {
+                        if (playerId != playerReviewingDiscardId && !isCardDrawnFromDeck)
+                        {
+                            throw new InvalidOperationException("No puedes tomar esta carta ahora.");
+                        }
+                        usingDiscardCard = true;
+                    }
                 }
 
-                if (IsValidMeld(cardsToPlay))
-                {
-                    hand.RemoveAll(card => cardIds.Contains(card.Id));
-                    PlayerMelds[playerId].Add(cardsToPlay);
+                var handCardIds = cardIds.Where(id => !usingDiscardCard || id != discardCard.Id).ToList();
+                var cardsToPlay = hand.Where(card => handCardIds.Contains(card.Id)).ToList();
 
-                    var cardDtos = cardsToPlay.Select(c => new CardDto
+                if (cardsToPlay.Count != handCardIds.Count)
+                {
+                    throw new InvalidOperationException(Lang.ErrorGameInvalidMove); 
+                }
+
+                var fullMeld = new List<Card>(cardsToPlay);
+                if (usingDiscardCard)
+                {
+                    fullMeld.Add(discardCard);
+                }
+
+                if (fullMeld.Count < 3)
+                {
+                    throw new ArgumentException("Un juego debe tener al menos 3 cartas.");
+                }
+
+                if (IsValidMeld(fullMeld))
+                {
+                    hand.RemoveAll(card => handCardIds.Contains(card.Id));
+
+                    if (usingDiscardCard)
+                    {
+                        DiscardPile.RemoveAt(DiscardPile.Count - 1);
+                        playerReviewingDiscardId = null;
+                    }
+
+                    PlayerMelds[playerId].Add(fullMeld);
+
+                    var cardDtos = fullMeld.Select(c => new CardDto
                     {
                         Id = c.Id,
                         Suit = c.Suit,
@@ -238,79 +270,109 @@ namespace ConquiánServidor.BusinessLogic.Game
                         callback.OnOpponentHandUpdated(hand.Count);
                     });
 
+                    if (usingDiscardCard)
+                    {
+                        BroadcastDiscardUpdate();
+                        mustDiscardToFinishTurn = true;
+                    }
+
                     Logger.Info($"Player ID {playerId} successfully melded cards in Room {RoomCode}");
                 }
                 else
                 {
-                    Logger.Warn($"Game action failed: Invalid meld (set/run rules not met) by Player ID {playerId} in Room {RoomCode}");
-                    throw new InvalidOperationException(Lang.ErrorGameInvalidMove);
+                    throw new InvalidOperationException("Jugada invalida");
                 }
             }
             else
             {
-                Logger.Error($"Hand not found for Player ID {playerId} in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameAction);
             }
         }
 
-        private static bool IsValidMeld(List<Card> cards)
+        private void BroadcastDiscardUpdate()
         {
-            if (cards == null || cards.Count < 3)
+            CardDto topCardDto = null;
+            if (DiscardPile.Count > 0)
             {
-                return false;
+                var c = DiscardPile.Last();
+                topCardDto = new CardDto { Id = c.Id, Suit = c.Suit, Rank = c.Rank, ImagePath = c.ImagePath };
             }
 
-            cards = cards.OrderBy(c => c.Rank).ToList();
-
-            bool isTercia = cards.All(c => c.Rank == cards[0].Rank);
-            bool distinctSuits = cards.Select(c => c.Suit).Distinct().Count() == cards.Count;
-            if (isTercia && distinctSuits)
+            Broadcast((callback) =>
             {
-                return true;
+                callback.NotifyOpponentDiscarded(topCardDto);
+            });
+        }
+
+        public void PassTurn(int playerId)
+        {
+            if (playerId != currentTurnPlayerId)
+            {
+                return;
             }
 
-            bool isCorrida = cards.All(c => c.Suit == cards[0].Suit);
-            if (!isCorrida)
+            if (mustDiscardToFinishTurn)
             {
-                return false;
+                throw new InvalidOperationException("No puedes pasar. Debes pagar una carta para terminar.");
             }
 
-            for (int i = 0; i < cards.Count - 1; i++)
+            if (!hasHostPassedInitialDiscard && playerId == Players[0].idPlayer && playerReviewingDiscardId == playerId)
             {
-                int currentRank = cards[i].Rank;
-                int nextRank = cards[i + 1].Rank;
+                hasHostPassedInitialDiscard = true;
+                ChangeTurn(); 
+                playerReviewingDiscardId = currentTurnPlayerId; 
+                Logger.Info($"Host passed initial discard. Now Rival (ID {currentTurnPlayerId}) reviews it.");
+                return;
+            }
 
-                if (currentRank == 7 && nextRank == 10)
+            if (playerReviewingDiscardId == playerId && !isCardDrawnFromDeck)
+            {
+                if (hasHostPassedInitialDiscard)
                 {
-                    continue;
+                    playerReviewingDiscardId = null; 
+                    return;
                 }
 
-                if (nextRank != currentRank + 1)
-                {
-                    return false;
-                }
+                playerReviewingDiscardId = null;
+                return;
             }
 
-            return true;
+            if (isCardDrawnFromDeck)
+            {
+                Logger.Info($"Player {playerId} passed on drawn card. Turn ends.");
+                ChangeTurn();
+                return;
+            }
         }
 
         public void DrawFromDeck(int playerId)
         {
             if (playerId != currentTurnPlayerId)
             {
-                Logger.Warn($"DrawFromDeck failed: Player ID {playerId} attempted action out of turn in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
+            }
+
+            if (mustDiscardToFinishTurn)
+            {
+                throw new InvalidOperationException("No puedes robar. Debes pagar una carta para terminar.");
+            }
+
+            if (playerReviewingDiscardId != null)
+            {
+                throw new InvalidOperationException("Debes decidir sobre la carta del descarte primero (Tomar o Pasar).");
             }
 
             if (StockPile.Count == 0)
             {
-                Logger.Warn($"DrawFromDeck failed: Stock pile is empty in Room {RoomCode}");
-                throw new InvalidOperationException(Lang.ErrorGameAction);
+                throw new InvalidOperationException("Mazo vacío.");
             }
 
             var card = StockPile[0];
             StockPile.RemoveAt(0);
-            DiscardPile.Add(card);
+            DiscardPile.Add(card); 
+
+            isCardDrawnFromDeck = true; 
+            playerReviewingDiscardId = playerId; 
 
             var cardDto = new CardDto
             {
@@ -328,72 +390,16 @@ namespace ConquiánServidor.BusinessLogic.Game
             Logger.Info($"Player ID {playerId} drew from deck in Room {RoomCode}");
         }
 
-        public CardDto DrawFromDiscard(int playerId)
-        {
-            if (playerId != currentTurnPlayerId)
-            {
-                Logger.Warn($"DrawFromDiscard failed: Player ID {playerId} attempted action out of turn in Room {RoomCode}");
-                throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
-            }
-
-            if (DiscardPile.Count == 0)
-            {
-                Logger.Warn($"DrawFromDiscard failed: Discard pile is empty in Room {RoomCode}");
-                throw new InvalidOperationException(Lang.ErrorGameInvalidMove);
-            }
-
-            int lastIndex = DiscardPile.Count - 1;
-            var card = DiscardPile[lastIndex];
-
-            DiscardPile.RemoveAt(lastIndex);
-            PlayerHands[playerId].Add(card);
-
-            CardDto newTopCardDto = null;
-            if (DiscardPile.Count > 0)
-            {
-                var newTopCard = DiscardPile[DiscardPile.Count - 1];
-                newTopCardDto = new CardDto
-                {
-                    Id = newTopCard.Id,
-                    Suit = newTopCard.Suit,
-                    Rank = newTopCard.Rank,
-                    ImagePath = newTopCard.ImagePath
-                };
-            }
-
-            Broadcast((callback) =>
-            {
-                callback.NotifyOpponentDiscarded(newTopCardDto);
-            });
-
-            NotifyOpponent(playerId, (callback) =>
-            {
-                callback.OnOpponentHandUpdated(PlayerHands[playerId].Count);
-            });
-
-            Logger.Info($"Player ID {playerId} drew from discard pile in Room {RoomCode}");
-
-            return new CardDto
-            {
-                Id = card.Id,
-                Suit = card.Suit,
-                Rank = card.Rank,
-                ImagePath = card.ImagePath
-            };
-        }
-
         public void DiscardCard(int playerId, string cardId)
         {
             if (playerId != currentTurnPlayerId)
             {
-                Logger.Warn($"DiscardCard failed: Player ID {playerId} attempted action out of turn in Room {RoomCode}");
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
             }
 
             var card = PlayerHands[playerId].FirstOrDefault(c => c.Id == cardId);
             if (card == null)
             {
-                Logger.Warn($"DiscardCard failed: Card ID {cardId} not found in Player ID {playerId}'s hand in Room {RoomCode}");
                 throw new ArgumentException(Lang.ErrorGameInvalidMove);
             }
 
@@ -417,6 +423,31 @@ namespace ConquiánServidor.BusinessLogic.Game
             Logger.Info($"Player ID {playerId} discarded a card in Room {RoomCode}");
 
             ChangeTurn();
+        }
+
+        private static bool IsValidMeld(List<Card> cards)
+        {
+            if (cards == null || cards.Count < 3) return false;
+
+            cards = cards.OrderBy(c => c.Rank).ToList();
+
+            bool isTercia = cards.All(c => c.Rank == cards[0].Rank);
+            bool distinctSuits = cards.Select(c => c.Suit).Distinct().Count() == cards.Count;
+            if (isTercia && distinctSuits) return true;
+
+            bool isCorrida = cards.All(c => c.Suit == cards[0].Suit);
+            if (!isCorrida) return false;
+
+            for (int i = 0; i < cards.Count - 1; i++)
+            {
+                int currentRank = cards[i].Rank;
+                int nextRank = cards[i + 1].Rank;
+
+                if (currentRank == 7 && nextRank == 10) continue; 
+                if (nextRank != currentRank + 1) return false;
+            }
+
+            return true;
         }
 
         private void NotifyOpponent(int actingPlayerId, Action<IGameCallback> action)
@@ -448,6 +479,22 @@ namespace ConquiánServidor.BusinessLogic.Game
                 catch (Exception ex)
                 {
                     Logger.Error(ex, $"Broadcast failed for Player ID {kvp.Key} in Room {RoomCode}.");
+                }
+            }
+        }
+        public void NotifyGameEndedByAbandonment(int leavingPlayerId)
+        {
+            int opponentId = playerCallbacks.Keys.FirstOrDefault(id => id != leavingPlayerId);
+
+            if (opponentId != 0 && playerCallbacks.TryGetValue(opponentId, out IGameCallback callback))
+            {
+                try
+                {
+                    callback.OnOpponentLeft();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, $"Error notifying room exit {RoomCode}");
                 }
             }
         }

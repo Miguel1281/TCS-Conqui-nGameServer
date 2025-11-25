@@ -19,11 +19,13 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         Task DrawFromDeckAsync(string roomCode, int playerId);
 
         [OperationContract]
-        [FaultContract(typeof(ServiceFaultDto))] 
-        Task<CardDto> DrawFromDiscardAsync(string roomCode, int playerId);
-
-        [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
         Task DiscardCardAsync(string roomCode, int playerId, string cardId);
+
+        [OperationContract(IsOneWay = true)] 
+        void LeaveGame(string roomCode, int playerId);
+
+        [OperationContract]
+        Task PassTurnAsync(string roomCode, int playerId);
     }
 }

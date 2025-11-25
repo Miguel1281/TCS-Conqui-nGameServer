@@ -107,7 +107,7 @@ namespace ConquiánServidor.Services
             }
         }
 
-        public async Task<CardDto> DrawFromDiscardAsync(string roomCode, int playerId)
+        public async Task PassTurnAsync(string roomCode, int playerId)
         {
             try
             {
@@ -117,8 +117,9 @@ namespace ConquiánServidor.Services
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
                 }
 
-                CardDto card = game.DrawFromDiscard(playerId);
-                return await Task.FromResult(card);
+                game.PassTurn(playerId);
+
+                await Task.CompletedTask;
             }
             catch (InvalidOperationException ex)
             {
@@ -127,9 +128,9 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en DrawFromDiscardAsync para jugador {playerId} en sala {roomCode}");
+                Logger.Error(ex, $"Error en PassTurnAsync para jugador {playerId} en sala {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error tomando carta del descarte"));
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error pasando turno"));
             }
         }
 
@@ -205,6 +206,25 @@ namespace ConquiánServidor.Services
                 OpponentCardCount = opponentCards,
                 TotalGameSeconds = totalSeconds
             };
+        }
+
+        public void LeaveGame(string roomCode, int playerId)
+        {
+            try
+            {
+                var game = GameSessionManager.Instance.GetGame(roomCode);
+                if (game != null)
+                {
+                    game.NotifyGameEndedByAbandonment(playerId);
+
+                    GameSessionManager.Instance.RemoveGame(roomCode);
+                    Logger.Info($"Partida {roomCode} terminada por abandono del jugador {playerId}.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error en LeaveGame para la sala {roomCode}");
+            }
         }
     }
 }

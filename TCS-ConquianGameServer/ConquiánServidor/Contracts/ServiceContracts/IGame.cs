@@ -27,5 +27,9 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract]
         Task PassTurnAsync(string roomCode, int playerId);
+
+        [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task SwapDrawnCardAsync(string roomCode, int playerId, string cardIdToDiscard);
     }
 }

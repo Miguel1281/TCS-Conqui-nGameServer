@@ -250,5 +250,37 @@ namespace ConquiánServidor.Services
                 Logger.Error(ex, $"Error en LeaveGame para la sala {roomCode}");
             }
         }
+
+        public async Task SwapDrawnCardAsync(string roomCode, int playerId, string cardIdToDiscard)
+        {
+            try
+            {
+                var game = GameSessionManager.Instance.GetGame(roomCode);
+                if (game == null)
+                {
+                    throw new InvalidOperationException(Lang.ErrorGameNotFound);
+                }
+
+                game.SwapDrawnCard(playerId, cardIdToDiscard);
+
+                await Task.CompletedTask;
+            }
+            catch (InvalidOperationException ex)
+            {
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (ArgumentException ex)
+            {
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error en SwapDrawnCardAsync para jugador {playerId} en sala {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error cambiando carta"));
+            }
+        }
     }
 }

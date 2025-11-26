@@ -584,5 +584,63 @@ namespace ConquiánServidor.BusinessLogic.Game
                 }
             }
         }
+
+        public void SwapDrawnCard(int playerId, string cardIdToDiscard)
+        {
+            if (playerId != currentTurnPlayerId)
+            {
+                throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
+            }
+
+            if (!isCardDrawnFromDeck)
+            {
+                throw new InvalidOperationException("Solo puedes cambiar la carta si acaba de salir del mazo.");
+            }
+
+            if (playerReviewingDiscardId != playerId)
+            {
+                throw new InvalidOperationException("No tienes permiso para tomar esta carta.");
+            }
+
+            if (mustDiscardToFinishTurn)
+            {
+                throw new InvalidOperationException("Ya bajaste juego. Solo debes pagar una carta.");
+            }
+
+            if (PlayerHands.TryGetValue(playerId, out List<Card> hand))
+            {
+                var cardToDiscard = hand.FirstOrDefault(c => c.Id == cardIdToDiscard);
+                if (cardToDiscard == null)
+                {
+                    throw new ArgumentException(Lang.ErrorGameInvalidMove);
+                }
+
+                if (DiscardPile.Count == 0) throw new InvalidOperationException("Error crítico: Descarte vacío.");
+                var cardToTake = DiscardPile.Last();
+
+                hand.Add(cardToTake);             
+                DiscardPile.Remove(cardToTake); 
+
+                hand.Remove(cardToDiscard);       
+                DiscardPile.Add(cardToDiscard);
+
+                var cardDto = new CardDto
+                {
+                    Id = cardToDiscard.Id,
+                    Suit = cardToDiscard.Suit,
+                    Rank = cardToDiscard.Rank,
+                    ImagePath = cardToDiscard.ImagePath
+                };
+
+                NotifyOpponent(playerId, (callback) =>
+                {
+                    callback.NotifyOpponentDiscarded(cardDto);
+                    callback.OnOpponentHandUpdated(hand.Count);
+                });
+
+                Logger.Info($"Player ID {playerId} swapped drawn card {cardToTake.Id} for {cardToDiscard.Id} in Room {RoomCode}");
+                ChangeTurn();
+            }
+        }
     }
 }

@@ -63,7 +63,7 @@
           <Property Name="email" Type="varchar" MaxLength="45" />
           <Property Name="password" Type="varchar" MaxLength="64" />
           <Property Name="level" Type="varchar" MaxLength="2" />
-          <Property Name="currentPoints" Type="varchar" MaxLength="4" />
+          <Property Name="currentPoints" Type="int" Nullable="false" />
           <Property Name="pathPhoto" Type="varchar" MaxLength="255" />
           <Property Name="verificationCode" Type="varchar" MaxLength="6" />
           <Property Name="codeExpiryDate" Type="datetime" />
@@ -392,7 +392,7 @@
           <Property Name="email" Type="String" MaxLength="45" FixedLength="false" Unicode="false" />
           <Property Name="password" Type="String" MaxLength="64" FixedLength="false" Unicode="false" />
           <Property Name="level" Type="String" MaxLength="2" FixedLength="false" Unicode="false" />
-          <Property Name="currentPoints" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
+          <Property Name="currentPoints" Type="Int32" Nullable="false" />
           <Property Name="pathPhoto" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
           <Property Name="verificationCode" Type="String" MaxLength="6" FixedLength="false" Unicode="false" />
           <Property Name="codeExpiryDate" Type="DateTime" Precision="3" />

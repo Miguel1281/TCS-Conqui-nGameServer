@@ -568,6 +568,8 @@ namespace ConquiánServidor.BusinessLogic.Game
         }
         public void NotifyGameEndedByAbandonment(int leavingPlayerId)
         {
+            StopGame();
+
             int opponentId = playerCallbacks.Keys.FirstOrDefault(id => id != leavingPlayerId);
 
             if (opponentId != 0 && playerCallbacks.TryGetValue(opponentId, out IGameCallback callback))

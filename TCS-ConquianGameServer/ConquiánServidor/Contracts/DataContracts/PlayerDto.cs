@@ -32,7 +32,7 @@ namespace ConquiánServidor.Contracts.DataContracts
         public string level { get; set; }
 
         [DataMember]
-        public string currentPoints { get; set; }
+        public int currentPoints { get; set; }
 
         [DataMember]
         public string pathPhoto { get; set; }

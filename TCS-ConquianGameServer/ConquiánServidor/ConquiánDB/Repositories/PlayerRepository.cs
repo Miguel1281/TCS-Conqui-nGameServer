@@ -68,15 +68,9 @@ namespace ConquiánServidor.DataAccess.Repositories
             var player = await context.Player.FindAsync(playerId);
             if (player != null)
             {
-                int currentPoints = 0;
-                if (!string.IsNullOrEmpty(player.currentPoints))
-                {
-                    int.TryParse(player.currentPoints, out currentPoints);
-                }
-
-                currentPoints += pointsToAdd;
-
-                player.currentPoints = currentPoints.ToString();
+                player.currentPoints += pointsToAdd;
+                int newLevel = (player.currentPoints / 100) + 1;
+                player.level = newLevel.ToString();
 
                 await context.SaveChangesAsync();
             }

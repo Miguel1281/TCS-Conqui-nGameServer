@@ -25,6 +25,7 @@ namespace ConquiánServidor.Services
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
                 }
 
+                game.OnGameFinished -= HandleGameFinished;
                 game.OnGameFinished += HandleGameFinished;
                 var callback = OperationContext.Current.GetCallbackChannel<IGameCallback>();
                 game.RegisterPlayerCallback(playerId, callback);

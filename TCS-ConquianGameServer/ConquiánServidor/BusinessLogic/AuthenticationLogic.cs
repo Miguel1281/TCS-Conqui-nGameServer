@@ -105,7 +105,7 @@ namespace ConquiánServidor.BusinessLogic
             playerToUpdate.verificationCode = null;
             playerToUpdate.codeExpiryDate = null;
             playerToUpdate.level = "1";
-            playerToUpdate.currentPoints = "0";
+            playerToUpdate.currentPoints = 0;
 
             await playerRepository.SaveChangesAsync();
 

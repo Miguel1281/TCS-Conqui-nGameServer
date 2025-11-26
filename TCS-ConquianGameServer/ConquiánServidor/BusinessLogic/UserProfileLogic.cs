@@ -44,6 +44,7 @@ namespace ConquiánServidor.BusinessLogic
                 email = dbPlayer.email,
                 level = dbPlayer.level,
                 pathPhoto = dbPlayer.pathPhoto,
+                currentPoints = dbPlayer.currentPoints,
             };
         }
 

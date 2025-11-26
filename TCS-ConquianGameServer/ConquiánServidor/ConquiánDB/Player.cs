@@ -32,7 +32,7 @@ namespace ConquiánServidor.ConquiánDB
         public string email { get; set; }
         public string password { get; set; }
         public string level { get; set; }
-        public string currentPoints { get; set; }
+        public int currentPoints { get; set; }
         public string pathPhoto { get; set; }
         public string verificationCode { get; set; }
         public Nullable<System.DateTime> codeExpiryDate { get; set; }

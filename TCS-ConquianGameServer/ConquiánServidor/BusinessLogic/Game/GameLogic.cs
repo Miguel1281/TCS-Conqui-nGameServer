@@ -388,6 +388,11 @@ namespace ConquiánServidor.BusinessLogic.Game
                 throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
             }
 
+            if (isCardDrawnFromDeck)
+            {
+                throw new InvalidOperationException("Ya has tomado una carta del mazo en este turno.");
+            }
+
             if (mustDiscardToFinishTurn)
             {
                 throw new InvalidOperationException("No puedes robar. Debes pagar una carta para terminar.");

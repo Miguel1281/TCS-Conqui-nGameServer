@@ -213,9 +213,6 @@
     <None Include="ConquiánDB\ConquiánModelDB.edmx.diagram">
       <DependentUpon>ConquiánModelDB.edmx</DependentUpon>
     </None>
-    <None Include="Credentials.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

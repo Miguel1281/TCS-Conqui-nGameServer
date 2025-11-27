@@ -16,10 +16,22 @@ namespace ConquiánServidor.ConquiánDB
     public partial class ConquiánDBEntities : DbContext
     {
         public ConquiánDBEntities()
-            : base("name=ConquiánDBEntities")
+            : base(GetConnectionString())
         {
         }
-    
+
+        private static string GetConnectionString()
+        {
+            string envConnection = Environment.GetEnvironmentVariable("CONQUIAN_DB_CONNECTION");
+
+            if (string.IsNullOrEmpty(envConnection))
+            {
+                throw new InvalidOperationException("CRITICAL ERROR: The environment variable ‘CONQUIAN_DB_CONNECTION’ is not set. For security reasons, the application will not start.");
+            }
+
+            return envConnection;
+        }
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             throw new UnintentionalCodeFirstException();

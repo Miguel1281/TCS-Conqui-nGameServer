@@ -26,8 +26,8 @@ namespace ConquiánServidor.Utilities.Email
 
             try
             {
-                string fromMail = ConfigurationManager.AppSettings["EmailUser"];
-                string fromPassword = ConfigurationManager.AppSettings["EmailPassword"];
+                string fromMail = Environment.GetEnvironmentVariable("CONQUIAN_EMAIL_USER");
+                string fromPassword = Environment.GetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD");
 
                 if (string.IsNullOrEmpty(fromMail) || string.IsNullOrEmpty(fromPassword))
                 {

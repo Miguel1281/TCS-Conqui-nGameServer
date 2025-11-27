@@ -136,10 +136,10 @@
     <value>Error al guardar en BD (DbUpdateException): {0}</value>
   </data>
   <data name="GlobalSmtpError" xml:space="preserve">
-    <value>Error al enviar correo (SmtpException): {0}</value>
+    <value>Error al enviar el correo, vuelve a intentarlo más tarde</value>
   </data>
   <data name="GlobalSqlError" xml:space="preserve">
-    <value>Error de SQL (SqlException): {0}</value>
+    <value>Error al conectar con la base de datos</value>
   </data>
   <data name="GuestEmailSubject" xml:space="preserve">
     <value>¡Estás invitado a una partida de Conquián!</value>
@@ -383,5 +383,8 @@
   </data>
   <data name="ErrorYouAreKicked" xml:space="preserve">
     <value>No puedes unirte a este lobby porque fuiste expulsado.</value>
+  </data>
+  <data name="ErrorSessionActive" xml:space="preserve">
+    <value>Ya cuenta con una sesión activa, por favor cierre la sesión activa para poder abrir una nueva</value>
   </data>
 </root>

@@ -173,7 +173,7 @@
     <Compile Include="Contracts\ServiceContracts\ISignUp.cs" />
     <Compile Include="Contracts\ServiceContracts\IUserProfile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Properties\Langs\Lang.Designer.cs">
+    <Compile Include="Properties\Langs\Lang1.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Lang.resx</DependentUpon>
@@ -200,6 +200,8 @@
     <Compile Include="Utilities\Email\Templates\GuestInviteEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\RecoveryEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
+    <Compile Include="Utilities\Messages\IMessageResolver.cs" />
+    <Compile Include="Utilities\Messages\ResourceMessageResolver.cs" />
     <Compile Include="Utilities\PasswordHasher.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -240,7 +242,7 @@
     <EmbeddedResource Include="Properties\Langs\Lang.en.resx" />
     <EmbeddedResource Include="Properties\Langs\Lang.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>Lang.Designer.cs</LastGenOutput>
+      <LastGenOutput>Lang1.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

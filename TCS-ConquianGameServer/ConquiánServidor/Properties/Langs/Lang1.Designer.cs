@@ -232,6 +232,15 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
+        ///   Busca una cadena traducida similar a Ya cuenta con una sesión activa, por favor cierre la sesión activa para poder abrir una nueva.
+        /// </summary>
+        public static string ErrorSessionActive {
+            get {
+                return ResourceManager.GetString("ErrorSessionActive", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Busca una cadena traducida similar a Esta invitación ya ha sido utilizada..
         /// </summary>
         public static string ErrorUsedInvitation {
@@ -286,7 +295,7 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
-        ///   Busca una cadena traducida similar a Error al enviar correo (SmtpException): {0}.
+        ///   Busca una cadena traducida similar a Error al enviar el correo, vuelve a intentarlo más tarde.
         /// </summary>
         public static string GlobalSmtpError {
             get {
@@ -295,7 +304,7 @@ namespace ConquiánServidor.Properties.Langs {
         }
         
         /// <summary>
-        ///   Busca una cadena traducida similar a Error de SQL (SqlException): {0}.
+        ///   Busca una cadena traducida similar a Error al conectar con la base de datos.
         /// </summary>
         public static string GlobalSqlError {
             get {

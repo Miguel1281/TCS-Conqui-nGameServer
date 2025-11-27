@@ -136,10 +136,10 @@
     <value>Error saving to DB (DbUpdateException): {0}</value>
   </data>
   <data name="GlobalSmtpError" xml:space="preserve">
-    <value>Error sending email (SmtpException): {0}</value>
+    <value>Error sending email, please try again later</value>
   </data>
   <data name="GlobalSqlError" xml:space="preserve">
-    <value>SQL error (SqlException): {0}</value>
+    <value>Error connecting to the database</value>
   </data>
   <data name="GuestEmailSubject" xml:space="preserve">
     <value>You are invited to a game of Conquián!</value>
@@ -383,5 +383,8 @@
   </data>
   <data name="ErrorYouAreKicked" xml:space="preserve">
     <value>You cannot join this lobby because you were kicked out.</value>
+  </data>
+  <data name="ErrorSessionActive" xml:space="preserve">
+    <value>You already have an active session. Please log out of the active session in order to open a new one.</value>
   </data>
 </root>

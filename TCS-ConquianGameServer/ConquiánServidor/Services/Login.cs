@@ -5,6 +5,7 @@ using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
+using ConquiánServidor.Utilities.Messages;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -14,13 +15,15 @@ namespace ConquiánServidor.Services
     {
         private readonly AuthenticationLogic authLogic;
         private readonly IPlayerRepository playerRepository;
+        private readonly IMessageResolver messageResolver;
 
         public Login()
         {
             var dbContext = new ConquiánDBEntities();
             this.playerRepository = new PlayerRepository(dbContext);
             IEmailService emailService = new EmailService();
-            authLogic = new AuthenticationLogic(this.playerRepository, emailService);
+            this.messageResolver = new ResourceMessageResolver();
+            this.authLogic = new AuthenticationLogic(this.playerRepository, emailService, this.messageResolver);
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string email, string password)
@@ -28,10 +31,14 @@ namespace ConquiánServidor.Services
             var player = await playerRepository.GetPlayerByEmailAsync(email);
             if (player != null && PresenceManager.Instance.IsPlayerOnline(player.idPlayer))
             {
-                var faultData = new ServiceFaultDto(ServiceErrorType.SessionActive,
-                     "Ya cuenta con una sesión activa, por favor cierre la sesión activa para poder abrir una nueva"
+                string errorMsg = messageResolver.GetMessage(ServiceErrorType.SessionActive);
+
+                var faultData = new ServiceFaultDto(
+                    ServiceErrorType.SessionActive,
+                    errorMsg
                  );
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Sesión Activa"));
+
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(errorMsg));
             }
             return await authLogic.AuthenticatePlayerAsync(email, password);
         }

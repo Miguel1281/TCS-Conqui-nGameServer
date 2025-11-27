@@ -2,15 +2,16 @@
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.Properties.Langs;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
+using ConquiánServidor.Utilities.Messages;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using NLog;
-using ConquiánServidor.Properties.Langs;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -20,10 +21,13 @@ namespace ConquiánServidor.BusinessLogic
 
         private readonly IPlayerRepository playerRepository;
         private readonly IEmailService emailService;
-        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService)
+        private readonly IMessageResolver messageResolver;
+
+        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService, IMessageResolver messageResolver)
         {
             this.playerRepository = playerRepository;
             this.emailService = emailService;
+            this.messageResolver = messageResolver;
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)
@@ -34,8 +38,8 @@ namespace ConquiánServidor.BusinessLogic
 
             if (playerFromDb == null || !PasswordHasher.verifyPassword(playerPassword, playerFromDb.password))
             {
-                Logger.Warn("Authentication failed: Invalid credentials.");
-                throw new UnauthorizedAccessException(Lang.ErrorInvalidCredentials);
+                string errorMessage = messageResolver.GetMessage(ServiceErrorType.InvalidPassword);
+                throw new UnauthorizedAccessException(errorMessage);
             }
 
             playerFromDb.IdStatus = 1;

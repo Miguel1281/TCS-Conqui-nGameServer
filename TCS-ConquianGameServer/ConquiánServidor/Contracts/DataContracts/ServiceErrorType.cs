@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.Serialization;
+
 
 namespace ConquiánServidor.Contracts.DataContracts
 {
@@ -33,6 +29,12 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [EnumMember]
         ServerInternalError = 7,
+
+        [EnumMember]
+        UserNotFound = 8,   
+
+        [EnumMember]
+        InvalidPassword = 9, 
 
         [EnumMember]
         SessionActive = 10,

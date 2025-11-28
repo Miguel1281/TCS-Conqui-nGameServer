@@ -16,7 +16,7 @@ namespace ConquiánServidor.ConquiánDB
     public partial class ConquiánDBEntities : DbContext
     {
         public ConquiánDBEntities()
-                   : base(GetConnectionString())
+            : base(GetConnectionString())
         {
         }
 
@@ -31,6 +31,7 @@ namespace ConquiánServidor.ConquiánDB
 
             return envConnection;
         }
+
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

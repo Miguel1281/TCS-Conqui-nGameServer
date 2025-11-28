@@ -1,4 +1,4 @@
-﻿// La generación de código T4 está habilitada para el modelo 'C:\Users\PC\Documents\.uv\5 semestre\TCS\Proyecto\TCS-Conqui-nGameServer\TCS-ConquianGameServer\ConquiánServidor\ConquiánDB\ConquiánModelDB.edmx'. 
+﻿// La generación de código T4 está habilitada para el modelo 'C:\Users\braya\Documentos\1uv\5 semestre\Construcion\Proyecto LocalHost\TCS-Conqui-nGameServer\TCS-ConquianGameServer\ConquiánServidor\ConquiánDB\ConquiánModelDB.edmx'. 
 // Para habilitar la generación de código heredada, cambie el valor de la propiedad del diseñador 'Estrategia de generación de código'
 // por 'ObjectContext heredado'. Esta propiedad está disponible en la ventana Propiedades cuando se abre
 // el modelo en el diseñador.

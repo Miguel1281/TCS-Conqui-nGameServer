@@ -26,7 +26,7 @@ namespace ConquiánServidor.ConquiánDB.Repositories
         public async Task<Lobby> GetLobbyByRoomCodeAsync(string roomCode)
         {
             return await context.Lobby
-                .Include(l => l.Player1)
+                .Include(l => l.Player)
                 .Include(l => l.StatusLobby)
                 .Include(l => l.Gamemode)
                 .FirstOrDefaultAsync(l => l.roomCode == roomCode);

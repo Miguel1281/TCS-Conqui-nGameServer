@@ -3,7 +3,6 @@ using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities.Email;
-using ConquiánServidor.Utilities.Messages;
 using Moq;
 using System;
 using System.Threading.Tasks;
@@ -16,14 +15,12 @@ namespace ConquiánServidor.Tests
         private readonly Mock<IPlayerRepository> mockPlayerRepository;
         private readonly AuthenticationLogic authLogic;
         private readonly Mock<IEmailService> mockEmailService;
-        private readonly Mock<IMessageResolver> mockMessageResolver;
 
         public AuthenticationLogicTests()
         {
             mockPlayerRepository = new Mock<IPlayerRepository>();
             mockEmailService = new Mock<IEmailService>();
-            mockMessageResolver = new Mock<IMessageResolver>();
-            authLogic = new AuthenticationLogic(mockPlayerRepository.Object, mockEmailService.Object, mockMessageResolver.Object);
+            authLogic = new AuthenticationLogic(mockPlayerRepository.Object, mockEmailService.Object);
         }
 
         [Fact]

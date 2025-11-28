@@ -1,54 +1,68 @@
 ﻿using System.Runtime.Serialization;
 
-
 namespace ConquiánServidor.Contracts.DataContracts
 {
     [DataContract(Name = "ServiceErrorType")]
     public enum ServiceErrorType
     {
-        [EnumMember]
+        [EnumMember] 
         Unknown = 0,
 
-        [EnumMember]
+        [EnumMember] 
         DatabaseError = 1,
 
-        [EnumMember]
+        [EnumMember] 
         DuplicateRecord = 2,
 
-        [EnumMember]
+        [EnumMember] 
         ValidationFailed = 3,
 
-        [EnumMember]
+        [EnumMember] 
         NotFound = 4,
 
-        [EnumMember]
+        [EnumMember] 
         OperationFailed = 5,
 
-        [EnumMember]
+        [EnumMember] 
         CommunicationError = 6,
 
-        [EnumMember]
+        [EnumMember] 
         ServerInternalError = 7,
 
-        [EnumMember]
-        UserNotFound = 8,   
+        [EnumMember] 
+        UserNotFound = 8,
 
-        [EnumMember]
-        InvalidPassword = 9, 
+        [EnumMember] 
+        InvalidPassword = 9,
 
-        [EnumMember]
+        [EnumMember] 
         SessionActive = 10,
 
-        [EnumMember]
+        [EnumMember] 
         GuestInviteUsed = 11,
 
-        [EnumMember]
+        [EnumMember] 
         RegisteredUserAsGuest = 12,
 
-        [EnumMember]
+        [EnumMember] 
         LobbyFull = 13,
 
-        [EnumMember]
-        GameInProgress = 14
+        [EnumMember] 
+        GameInProgress = 14,
+
+        [EnumMember] 
+        InvalidEmailFormat = 15,
+
+        [EnumMember] 
+        InvalidPasswordFormat = 16,
+
+        [EnumMember] 
+        InvalidNameFormat = 17,
+
+        [EnumMember] 
+        InvalidVerificationCode = 18,
+
+        [EnumMember] 
+        VerificationCodeExpired = 19
     }
 }

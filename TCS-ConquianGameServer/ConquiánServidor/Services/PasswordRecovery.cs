@@ -6,7 +6,6 @@ using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
-using ConquiánServidor.Utilities.Messages;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity.Infrastructure;
@@ -35,8 +34,7 @@ namespace ConquiánServidor.Services
             var dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);
             IEmailService emailServiceInstance = new EmailService();
-            IMessageResolver messageResolver = new ResourceMessageResolver();
-            this.authLogic = new AuthenticationLogic(playerRepository, emailServiceInstance, messageResolver); 
+            this.authLogic = new AuthenticationLogic(playerRepository, emailServiceInstance); 
             this.emailService = emailServiceInstance;
         }
 

@@ -50,7 +50,9 @@
     <Reference Include="NLog, Version=6.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>..\packages\NLog.6.0.6\lib\net46\NLog.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
+    <Reference Include="System">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2\System.dll</HintPath>
+    </Reference>
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
     </Reference>
@@ -76,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BusinessLogic\AuthenticationLogic.cs" />
+    <Compile Include="BusinessLogic\Exceptions\BusinessLogicException.cs" />
     <Compile Include="BusinessLogic\Exceptions\GuestInviteUsedException.cs" />
     <Compile Include="BusinessLogic\Exceptions\RegisteredUserAsGuestException.cs" />
     <Compile Include="BusinessLogic\FriendshipLogic.cs" />
@@ -155,9 +158,12 @@
     <Compile Include="Contracts\DataContracts\ServiceErrorType.cs" />
     <Compile Include="Contracts\DataContracts\ServiceFaultDto.cs" />
     <Compile Include="Contracts\DataContracts\SocialDto.cs" />
+    <Compile Include="Contracts\Enums\FriendshipStatus.cs" />
+    <Compile Include="Contracts\Enums\LobbyStatus.cs" />
     <Compile Include="Contracts\FaultContracts\GuestInviteUsedFault.cs" />
     <Compile Include="Contracts\FaultContracts\RegisteredUserAsGuestFault.cs" />
     <Compile Include="Contracts\FaultContracts\SessionActiveFault.cs" />
+    <Compile Include="Contracts\Enums\PlayerStatus.cs" />
     <Compile Include="Contracts\ServiceContracts\IFriendList.cs" />
     <Compile Include="Contracts\ServiceContracts\IGameCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\IGame.cs" />
@@ -200,8 +206,6 @@
     <Compile Include="Utilities\Email\Templates\GuestInviteEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\RecoveryEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
-    <Compile Include="Utilities\Messages\IMessageResolver.cs" />
-    <Compile Include="Utilities\Messages\ResourceMessageResolver.cs" />
     <Compile Include="Utilities\PasswordHasher.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,5 +1,8 @@
-﻿using ConquiánServidor.ConquiánDB;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts;
 using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.DataAccess.Abstractions;
 using NLog;
 using System;
@@ -37,7 +40,7 @@ namespace ConquiánServidor.BusinessLogic
                     idPlayer = p.idPlayer,
                     nickname = p.nickname,
                     pathPhoto = p.pathPhoto,
-                    idStatus = isOnline ? 1 : 2,
+                    idStatus = isOnline ? (int)PlayerStatus.Online : (int)PlayerStatus.Offline,
                     level = p.level
                 });
             }
@@ -70,7 +73,7 @@ namespace ConquiánServidor.BusinessLogic
             if (player == null || player.idPlayer == idPlayer)
             {
                 Logger.Warn($"Player search failed: Nickname not found or matches requester ID: {idPlayer}");
-                throw new KeyNotFoundException();
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             Logger.Info($"Player search successful. Found Player ID: {player.idPlayer}");
@@ -92,14 +95,14 @@ namespace ConquiánServidor.BusinessLogic
             if (existingFriendship != null)
             {
                 Logger.Warn($"Friend request failed: Relationship already exists between Player ID {idPlayer} and Target ID {idFriend}");
-                throw new InvalidOperationException("Ya existe una solicitud pendiente o una amistad con este jugador.");
+                throw new BusinessLogicException(ServiceErrorType.DuplicateRecord);
             }
 
             var newRequest = new Friendship
             {
                 idOrigen = idPlayer,
                 idDestino = idFriend,
-                idStatus = 3
+                idStatus = (int)FriendshipStatus.Pending
             };
 
             friendshipRepository.AddFriendship(newRequest);
@@ -108,33 +111,29 @@ namespace ConquiánServidor.BusinessLogic
             Logger.Info($"Friend request sent successfully: Player ID {idPlayer} -> Target ID {idFriend}");
         }
 
-        public async Task<bool> UpdateFriendRequestStatusAsync(int idFriendship, int newStatus)
+        public async Task UpdateFriendRequestStatusAsync(int idFriendship, int newStatus)
         {
             Logger.Info($"Updating friend request status. Friendship ID: {idFriendship}, New Status: {newStatus}");
 
-            bool success = false;
             var request = await friendshipRepository.GetPendingRequestByIdAsync(idFriendship);
 
-            if (request != null)
+            if (request == null)
             {
-                if (newStatus == 1)
-                {
-                    request.idStatus = 1;
-                }
-                else
-                {
-                    friendshipRepository.RemoveFriendship(request);
-                }
-                await friendshipRepository.SaveChangesAsync();
-                success = true;
-                Logger.Info($"Friend request status updated successfully for Friendship ID: {idFriendship}");
+                Logger.Warn($"Update friend request failed: Friendship ID {idFriendship} not found.");
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
+            }
+
+            if (newStatus == (int)FriendshipStatus.Accepted)
+            {
+                request.idStatus = (int)FriendshipStatus.Accepted;
             }
             else
             {
-                Logger.Warn($"Update friend request failed: Friendship ID {idFriendship} not found.");
+                friendshipRepository.RemoveFriendship(request);
             }
 
-            return success;
+            await friendshipRepository.SaveChangesAsync();
+            Logger.Info($"Friend request status updated successfully for Friendship ID: {idFriendship}");
         }
 
         public async Task DeleteFriendAsync(int idPlayer, int idFriend)
@@ -146,7 +145,7 @@ namespace ConquiánServidor.BusinessLogic
             if (friendship == null)
             {
                 Logger.Warn($"Friend deletion failed: Friendship not found between Player ID {idPlayer} and Friend ID {idFriend}");
-                throw new KeyNotFoundException("No se encontró la relación de amistad para eliminar.");
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
 
             friendshipRepository.RemoveFriendship(friendship);

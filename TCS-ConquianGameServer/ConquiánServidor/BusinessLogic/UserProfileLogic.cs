@@ -1,8 +1,9 @@
-﻿using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
 using NLog;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -30,7 +31,7 @@ namespace ConquiánServidor.BusinessLogic
             if (dbPlayer == null)
             {
                 Logger.Warn($"Profile lookup failed: Player ID {idPlayer} not found.");
-                throw new KeyNotFoundException("El jugador solicitado no existe.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             Logger.Info($"Profile retrieved successfully for Player ID: {idPlayer}");
@@ -56,7 +57,7 @@ namespace ConquiánServidor.BusinessLogic
             if (playerExists == null)
             {
                 Logger.Warn($"Socials lookup failed: Player ID {idPlayer} not found.");
-                throw new KeyNotFoundException("El jugador no existe.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             var dbSocials = await socialRepository.GetSocialsByPlayerIdAsync(idPlayer);
@@ -75,7 +76,7 @@ namespace ConquiánServidor.BusinessLogic
         {
             if (playerDto == null)
             {
-                throw new ArgumentNullException(nameof(playerDto));
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed);
             }
 
             Logger.Info($"Profile update attempt for Player ID: {playerDto.idPlayer}");
@@ -85,7 +86,7 @@ namespace ConquiánServidor.BusinessLogic
             if (playerToUpdate == null)
             {
                 Logger.Warn($"Profile update failed: Player ID {playerDto.idPlayer} not found.");
-                throw new KeyNotFoundException("No se encontró el perfil del jugador a actualizar.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             playerToUpdate.name = playerDto.name;
@@ -108,7 +109,7 @@ namespace ConquiánServidor.BusinessLogic
         {
             if (socialDtos == null)
             {
-                throw new ArgumentNullException(nameof(socialDtos));
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed);
             }
 
             Logger.Info($"Socials update attempt for Player ID: {idPlayer}");
@@ -117,7 +118,7 @@ namespace ConquiánServidor.BusinessLogic
             if (!playerExists)
             {
                 Logger.Warn($"Socials update failed: Player ID {idPlayer} not found.");
-                throw new KeyNotFoundException("El jugador no existe para actualizar redes sociales.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             var existingSocials = await socialRepository.GetSocialsByPlayerIdAsync(idPlayer);
@@ -147,7 +148,7 @@ namespace ConquiánServidor.BusinessLogic
             if (playerToUpdate == null)
             {
                 Logger.Warn($"Profile picture update failed: Player ID {idPlayer} not found.");
-                throw new KeyNotFoundException("Jugador no encontrado.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             playerToUpdate.pathPhoto = newPath;

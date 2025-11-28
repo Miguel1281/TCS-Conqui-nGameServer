@@ -1,13 +1,14 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
-using ConquiánServidor.Utilities.Messages;
+using NLog;
 using System;
-using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Core;
 using System.Data.SqlClient;
 using System.Net.Mail;
 using System.ServiceModel;
@@ -17,6 +18,7 @@ namespace ConquiánServidor.Services
 {
     public class SignUp : ISignUp
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly AuthenticationLogic authLogic;
 
         public SignUp()
@@ -24,8 +26,7 @@ namespace ConquiánServidor.Services
             var dbContext = new ConquiánDBEntities();
             IPlayerRepository playerRepository = new PlayerRepository(dbContext);
             IEmailService emailService = new EmailService();
-            IMessageResolver messageResolver = new ResourceMessageResolver();
-            authLogic = new AuthenticationLogic(playerRepository, emailService, messageResolver);
+            authLogic = new AuthenticationLogic(playerRepository, emailService);
         }
 
         public async Task<bool> RegisterPlayerAsync(PlayerDto newPlayer)
@@ -35,31 +36,14 @@ namespace ConquiánServidor.Services
                 await authLogic.RegisterPlayerAsync(newPlayer);
                 return true;
             }
-            catch (ArgumentException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Validación fallida"));
-            }
-            catch (InvalidOperationException ex)
-            {
-                var type = ex.Message.Contains("nickname") ? ServiceErrorType.DuplicateRecord : ServiceErrorType.OperationFailed;
-                var fault = new ServiceFaultDto(type, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
-            }
-            catch (DbUpdateException)
-            {
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar en la base de datos.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
-            }
-            catch (SqlException)
-            {
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "La base de datos no responde.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error SQL"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Validation Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.Unknown, "Error inesperado en el registro.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error Interno"));
+                return HandleException(ex, "RegisterPlayerAsync");
             }
         }
 
@@ -69,25 +53,21 @@ namespace ConquiánServidor.Services
             {
                 return await authLogic.SendVerificationCodeAsync(email);
             }
-            catch (ArgumentException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Email inválido"));
-            }
-            catch (InvalidOperationException ex)
-            {
-                var fault = new ServiceFaultDto(ServiceErrorType.DuplicateRecord, "El correo ya está registrado.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Email duplicado"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Validation Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (SmtpException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.CommunicationError, "No se pudo enviar el correo.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                Logger.Error(ex, "SMTP Error sending verification code.");
+                var fault = new ServiceFaultDto(ServiceErrorType.CommunicationError, "Email Service Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Email Error"));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error procesando la solicitud.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                HandleException(ex, "SendVerificationCodeAsync");
+                return null;
             }
         }
 
@@ -98,15 +78,14 @@ namespace ConquiánServidor.Services
                 await authLogic.VerifyCodeAsync(email, code);
                 return true;
             }
-            catch (ArgumentException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Código inválido"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Verification Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error verificando el código.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                return HandleException(ex, "VerifyCodeAsync");
             }
         }
 
@@ -119,9 +98,29 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al cancelar registro.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+                return HandleException(ex, "CancelRegistrationAsync");
             }
+        }
+
+        private bool HandleException(Exception ex, string context)
+        {
+            if (ex is SqlException || ex is EntityException)
+            {
+                Logger.Error(ex, $"Database error in {context}");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Database Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
+            }
+
+            if (ex is TimeoutException)
+            {
+                Logger.Error(ex, $"Timeout in {context}");
+                var fault = new ServiceFaultDto(ServiceErrorType.CommunicationError, "Operation Timed Out");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Timeout"));
+            }
+
+            Logger.Fatal(ex, $"Unexpected error in {context}");
+            var genericFault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Unexpected Error");
+            throw new FaultException<ServiceFaultDto>(genericFault, new FaultReason("Internal Server Error"));
         }
     }
 }

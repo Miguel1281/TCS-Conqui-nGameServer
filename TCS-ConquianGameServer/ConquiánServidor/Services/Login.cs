@@ -1,11 +1,15 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
-using ConquiánServidor.Utilities.Messages;
+using NLog;
+using System;
+using System.Data.Entity.Core;
+using System.Data.SqlClient;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -13,39 +17,68 @@ namespace ConquiánServidor.Services
 {
     public class Login : ILogin
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private readonly AuthenticationLogic authLogic;
         private readonly IPlayerRepository playerRepository;
-        private readonly IMessageResolver messageResolver;
 
         public Login()
         {
             var dbContext = new ConquiánDBEntities();
             this.playerRepository = new PlayerRepository(dbContext);
             IEmailService emailService = new EmailService();
-            this.messageResolver = new ResourceMessageResolver();
-            this.authLogic = new AuthenticationLogic(this.playerRepository, emailService, this.messageResolver);
+            this.authLogic = new AuthenticationLogic(playerRepository, emailService);
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string email, string password)
         {
-            var player = await playerRepository.GetPlayerByEmailAsync(email);
-            if (player != null && PresenceManager.Instance.IsPlayerOnline(player.idPlayer))
+            try
             {
-                string errorMsg = messageResolver.GetMessage(ServiceErrorType.SessionActive);
-
-                var faultData = new ServiceFaultDto(
-                    ServiceErrorType.SessionActive,
-                    errorMsg
-                 );
-
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(errorMsg));
+                return await authLogic.AuthenticatePlayerAsync(email, password);
             }
-            return await authLogic.AuthenticatePlayerAsync(email, password);
-        }
+            catch (BusinessLogicException ex)
+            {
+                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
+            }
+            catch (SqlException ex)
+            {
+                Logger.Error(ex, "SQL Error in Login");
+                var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Database Error");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+            }
+            catch (EntityException ex)
+            {
+                Logger.Error(ex, "Entity Framework Error in Login");
+                var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Data Access Error");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+            }
+            catch (TimeoutException ex)
+            {
+                Logger.Error(ex, "Timeout in Login");
+                var faultData = new ServiceFaultDto(ServiceErrorType.CommunicationError, "Timeout");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Request Timeout"));
+            }
+            catch (Exception ex)
+            {
+                Logger.Fatal(ex, "Unexpected error in Login service");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+            }
+        }    
 
         public async Task SignOutPlayerAsync(int idPlayer)
         {
-            await authLogic.SignOutPlayerAsync(idPlayer);
+            try
+            {
+                await authLogic.SignOutPlayerAsync(idPlayer);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"SignOut failed for Player ID {idPlayer}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error closing session");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Logout Error"));
+            }
         }
     }
 }

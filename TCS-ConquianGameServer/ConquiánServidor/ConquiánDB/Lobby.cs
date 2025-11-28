@@ -14,12 +14,6 @@ namespace ConquiánServidor.ConquiánDB
     
     public partial class Lobby
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public Lobby()
-        {
-            this.Player1 = new HashSet<Player>();
-        }
-    
         public int idLobby { get; set; }
         public string roomCode { get; set; }
         public int idHostPlayer { get; set; }
@@ -29,8 +23,6 @@ namespace ConquiánServidor.ConquiánDB
     
         public virtual Player Player { get; set; }
         public virtual StatusLobby StatusLobby { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Player> Player1 { get; set; }
         public virtual Gamemode Gamemode { get; set; }
     }
 }

@@ -1,11 +1,14 @@
 ﻿using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
+using NLog;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity.Core;
 using System.Data.Entity.Infrastructure;
 using System.Data.SqlClient;
 using System.ServiceModel;
@@ -15,6 +18,7 @@ namespace ConquiánServidor.Services
 {
     public class UserProfile : IUserProfile
     {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly UserProfileLogic profileLogic;
 
         public UserProfile()
@@ -31,15 +35,22 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.GetPlayerByIdAsync(idPlayer);
             }
-            catch (KeyNotFoundException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
+            }
+            catch (Exception ex) when (ex is SqlException || ex is EntityException)
+            {
+                Logger.Error(ex, "Database error getting player profile");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Database Unavailable");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al recuperar la información del jugador.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                Logger.Error(ex, "Unexpected error getting player profile");
+                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Internal Error"));
             }
         }
 
@@ -49,15 +60,22 @@ namespace ConquiánServidor.Services
             {
                 return await profileLogic.GetPlayerSocialsAsync(idPlayer);
             }
-            catch (KeyNotFoundException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
+            }
+            catch (Exception ex) when (ex is SqlException || ex is EntityException)
+            {
+                Logger.Error(ex, "Database error getting player socials");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Database Unavailable");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al recuperar las redes sociales.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                Logger.Error(ex, "Unexpected error getting player socials");
+                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Internal Error"));
             }
         }
 
@@ -67,25 +85,28 @@ namespace ConquiánServidor.Services
             {
                 await profileLogic.UpdatePlayerAsync(playerDto);
             }
-            catch (KeyNotFoundException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar los cambios en la base de datos.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+                Logger.Error(ex, "Database error updating player profile");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error saving changes");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
             }
-            catch (SqlException)
+            catch (SqlException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "La base de datos no responde.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error SQL"));
+                Logger.Error(ex, "SQL error updating player profile");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Database Unavailable");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("SQL Error"));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error inesperado al actualizar el perfil.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                Logger.Error(ex, "Unexpected error updating player profile");
+                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Internal Error"));
             }
         }
 
@@ -95,20 +116,28 @@ namespace ConquiánServidor.Services
             {
                 await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
             }
-            catch (KeyNotFoundException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al actualizar redes sociales.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+                Logger.Error(ex, "Database error updating player socials");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error saving changes");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
+            }
+            catch (Exception ex) when (ex is SqlException || ex is EntityException)
+            {
+                Logger.Error(ex, "Database connectivity error in UpdatePlayerSocials");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Database Unavailable");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Ocurrió un error inesperado.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                Logger.Error(ex, "Unexpected error updating player socials");
+                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Internal Error"));
             }
         }
 
@@ -118,20 +147,28 @@ namespace ConquiánServidor.Services
             {
                 await profileLogic.UpdateProfilePictureAsync(idPlayer, newPath);
             }
-            catch (KeyNotFoundException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Jugador no encontrado"));
+                var fault = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error al guardar la foto.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Error BD"));
+                Logger.Error(ex, "Database error updating profile picture");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error saving changes");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
+            }
+            catch (Exception ex) when (ex is SqlException || ex is EntityException)
+            {
+                Logger.Error(ex, "Database connectivity error in UpdateProfilePicture");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Database Unavailable");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Error"));
             }
             catch (Exception ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.OperationFailed, "Error al actualizar la foto.");
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+                Logger.Error(ex, "Unexpected error updating profile picture");
+                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Internal Error"));
             }
         }
     }

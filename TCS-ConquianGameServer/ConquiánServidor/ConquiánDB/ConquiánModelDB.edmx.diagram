@@ -8,7 +8,7 @@
         <EntityTypeShape EntityType="ConquiánDBModel.Friendship" Width="1.5" PointX="7.5" PointY="4.5" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Game" Width="1.5" PointX="10.5" PointY="4.25" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Gamemode" Width="1.5" PointX="8.25" PointY="7.875" IsExpanded="true" />
-        <EntityTypeShape EntityType="ConquiánDBModel.Lobby" Width="1.5" PointX="3" PointY="4.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="ConquiánDBModel.Lobby" Width="1.5" PointX="2.875" PointY="3.875" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Player" Width="1.5" PointX="5.25" PointY="3.5" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.Social" Width="1.5" PointX="7.5" PointY="1.625" IsExpanded="true" />
         <EntityTypeShape EntityType="ConquiánDBModel.SocialType" Width="1.5" PointX="5.25" PointY="0.875" IsExpanded="true" />
@@ -23,7 +23,6 @@
         <AssociationConnector Association="ConquiánDBModel.FK_Lobby_Status" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Social_Player" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Social_SocialType" ManuallyRouted="false" />
-        <AssociationConnector Association="ConquiánDBModel.LobbyPlayer" ManuallyRouted="false" />
         <EntityTypeShape EntityType="ConquiánDBModel.StatusType" Width="1.5" PointX="3" PointY="8" />
         <AssociationConnector Association="ConquiánDBModel.FK_Player_StatusType" />
         <AssociationConnector Association="ConquiánDBModel.FK_Lobby_Gamemode" />

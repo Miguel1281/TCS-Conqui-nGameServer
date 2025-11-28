@@ -1,16 +1,14 @@
-﻿using ConquiánServidor.BusinessLogic.Validation;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Validation;
 using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.Contracts;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.Properties.Langs;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
-using ConquiánServidor.Utilities.Messages;
 using NLog;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
@@ -19,15 +17,17 @@ namespace ConquiánServidor.BusinessLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
+        private const int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
+        private const string INITIAL_PLAYER_LEVEL = "1";
+        private const int INITIAL_PLAYER_POINTS = 0;
+
         private readonly IPlayerRepository playerRepository;
         private readonly IEmailService emailService;
-        private readonly IMessageResolver messageResolver;
 
-        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService, IMessageResolver messageResolver)
+        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService)
         {
             this.playerRepository = playerRepository;
             this.emailService = emailService;
-            this.messageResolver = messageResolver;
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)
@@ -38,11 +38,18 @@ namespace ConquiánServidor.BusinessLogic
 
             if (playerFromDb == null || !PasswordHasher.verifyPassword(playerPassword, playerFromDb.password))
             {
-                string errorMessage = messageResolver.GetMessage(ServiceErrorType.InvalidPassword);
-                throw new UnauthorizedAccessException(errorMessage);
+                Logger.Warn("Authentication failed: Invalid credentials.");
+                throw new BusinessLogicException(ServiceErrorType.InvalidPassword);
             }
 
-            playerFromDb.IdStatus = 1;
+            if (PresenceManager.Instance.IsPlayerOnline(playerFromDb.idPlayer))
+            {
+                Logger.Warn($"Authentication failed: Player ID {playerFromDb.idPlayer} is already online.");
+                throw new BusinessLogicException(ServiceErrorType.SessionActive);
+            }
+
+            playerFromDb.IdStatus = (int)PlayerStatus.Online;
+
             await playerRepository.SaveChangesAsync();
             await PresenceManager.Instance.NotifyStatusChange(playerFromDb.idPlayer, 1);
 
@@ -71,34 +78,32 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task RegisterPlayerAsync(PlayerDto finalPlayerData)
         {
-            List<string> validationErrors = new List<string>
+            if (!string.IsNullOrEmpty(SignUpServerValidator.ValidateName(finalPlayerData.name)) ||
+                !string.IsNullOrEmpty(SignUpServerValidator.ValidateLastName(finalPlayerData.lastName)) ||
+                !string.IsNullOrEmpty(SignUpServerValidator.ValidateNickname(finalPlayerData.nickname)))
             {
-                SignUpServerValidator.ValidateName(finalPlayerData.name),
-                SignUpServerValidator.ValidateLastName(finalPlayerData.lastName),
-                SignUpServerValidator.ValidateNickname(finalPlayerData.nickname),
-                SignUpServerValidator.ValidatePassword(finalPlayerData.password)
-            };
+                Logger.Warn("Registration failed: Invalid name format.");
+                throw new BusinessLogicException(ServiceErrorType.InvalidNameFormat);
+            }
 
-            var errors = validationErrors.Where(e => !string.IsNullOrEmpty(e)).ToList();
-
-            if (errors.Any())
+            if (!string.IsNullOrEmpty(SignUpServerValidator.ValidatePassword(finalPlayerData.password)))
             {
-                string errorMsg = string.Join("; ", errors);
-                Logger.Warn($"Registration validation failed. Errors: {errorMsg}");
-                throw new ArgumentException(errorMsg);
+                Logger.Warn("Registration failed: Weak password.");
+                throw new BusinessLogicException(ServiceErrorType.InvalidPasswordFormat);
             }
 
             bool nicknameExists = await playerRepository.DoesNicknameExistAsync(finalPlayerData.nickname);
             if (nicknameExists)
             {
                 Logger.Warn("Registration failed: Nickname already exists.");
-                throw new InvalidOperationException(Lang.ErrorNicknameExists);
+                throw new BusinessLogicException(ServiceErrorType.DuplicateRecord);
             }
 
             var playerToUpdate = await playerRepository.GetPlayerByEmailAsync(finalPlayerData.email);
             if (playerToUpdate == null)
             {
-                throw new InvalidOperationException("El flujo de registro es incorrecto. Usuario no encontrado.");
+                Logger.Error("Registration flow error: Temporary user not found.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             playerToUpdate.password = PasswordHasher.hashPassword(finalPlayerData.password);
@@ -108,8 +113,8 @@ namespace ConquiánServidor.BusinessLogic
             playerToUpdate.pathPhoto = finalPlayerData.pathPhoto;
             playerToUpdate.verificationCode = null;
             playerToUpdate.codeExpiryDate = null;
-            playerToUpdate.level = "1";
-            playerToUpdate.currentPoints = 0;
+            playerToUpdate.level = INITIAL_PLAYER_LEVEL;
+            playerToUpdate.currentPoints = INITIAL_PLAYER_POINTS;
 
             await playerRepository.SaveChangesAsync();
 
@@ -122,34 +127,33 @@ namespace ConquiánServidor.BusinessLogic
 
             if (player == null || string.IsNullOrEmpty(player.password))
             {
-                Logger.Warn("Recovery token requested for non-existent user.");
-                throw new KeyNotFoundException(Lang.ErrorUserNotFound);
+                Logger.Warn("Recovery token requested for non-existent or invalid user.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             string recoveryCode = emailService.GenerateVerificationCode();
             player.verificationCode = recoveryCode;
-            player.codeExpiryDate = DateTime.UtcNow.AddMinutes(10);
-
+            player.codeExpiryDate = DateTime.UtcNow.AddMinutes(VERIFICATION_CODE_EXPIRY_MINUTES);
             await playerRepository.SaveChangesAsync();
 
             Logger.Info($"Recovery token generated for Player ID: {player.idPlayer}");
             return recoveryCode;
         }
 
-     public async Task<string> SendVerificationCodeAsync(string email)
+        public async Task<string> SendVerificationCodeAsync(string email)
         {
             string emailError = SignUpServerValidator.ValidateEmail(email);
             if (!string.IsNullOrEmpty(emailError))
             {
-                Logger.Warn("Verification code request with invalid email format.");
-                throw new ArgumentException(emailError);
+                Logger.Warn("Verification requested with invalid email format.");
+                throw new BusinessLogicException(ServiceErrorType.InvalidEmailFormat);
             }
 
             var existingPlayer = await playerRepository.GetPlayerForVerificationAsync(email);
             if (existingPlayer != null)
             {
-                Logger.Warn($"Verification attempted for existing account. Player ID: {existingPlayer.idPlayer}");
-                throw new InvalidOperationException("ERROR_EMAIL_EXISTS");
+                Logger.Warn($"Verification attempted for existing Player ID: {existingPlayer.idPlayer}");
+                throw new BusinessLogicException(ServiceErrorType.DuplicateRecord);
             }
 
             string verificationCode = emailService.GenerateVerificationCode();
@@ -163,8 +167,7 @@ namespace ConquiánServidor.BusinessLogic
 
             playerToVerify.email = email;
             playerToVerify.verificationCode = verificationCode;
-            playerToVerify.codeExpiryDate = DateTime.UtcNow.AddMinutes(10);
-
+            playerToVerify.codeExpiryDate = DateTime.UtcNow.AddMinutes(VERIFICATION_CODE_EXPIRY_MINUTES);
             await playerRepository.SaveChangesAsync();
 
             var emailTemplate = new VerificationEmailTemplate(verificationCode);
@@ -178,14 +181,21 @@ namespace ConquiánServidor.BusinessLogic
         {
             var player = await playerRepository.GetPlayerByEmailAsync(email);
 
-            bool isValid = player != null &&
-                           player.verificationCode == code &&
-                           DateTime.UtcNow < player.codeExpiryDate;
-
-            if (!isValid)
+            if (player == null)
             {
-                Logger.Warn("Verification code check failed.");
-                throw new ArgumentException(Lang.ErrorVerificationCodeIncorrect);
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
+            }
+
+            if (player.codeExpiryDate.HasValue && DateTime.UtcNow > player.codeExpiryDate.Value)
+            {
+                Logger.Warn($"Verification code expired for Player ID {player.idPlayer}");
+                throw new BusinessLogicException(ServiceErrorType.VerificationCodeExpired);
+            }
+
+            if (player.verificationCode != code)
+            {
+                Logger.Warn($"Incorrect verification code for Player ID {player.idPlayer}");
+                throw new BusinessLogicException(ServiceErrorType.InvalidVerificationCode);
             }
 
             Logger.Info($"Verification code verified for Player ID: {player.idPlayer}");
@@ -212,7 +222,7 @@ namespace ConquiánServidor.BusinessLogic
             if (!string.IsNullOrEmpty(passwordError))
             {
                 Logger.Warn("Password reset failed: Invalid password format.");
-                throw new ArgumentException(passwordError);
+                throw new BusinessLogicException(ServiceErrorType.InvalidPasswordFormat);
             }
 
             await HandleTokenValidationAsync(email, token);
@@ -220,7 +230,7 @@ namespace ConquiánServidor.BusinessLogic
             var player = await playerRepository.GetPlayerByEmailAsync(email);
             if (player == null)
             {
-                throw new KeyNotFoundException(Lang.ErrorUserNotFound);
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             player.password = PasswordHasher.hashPassword(newPassword);

@@ -1,6 +1,5 @@
 ﻿using System.Runtime.Serialization;
 
-
 namespace ConquiánServidor.Contracts.DataContracts
 {
     [DataContract]

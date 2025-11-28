@@ -22,7 +22,6 @@ namespace ConquiánServidor.ConquiánDB
             this.Game = new HashSet<Game>();
             this.Lobby = new HashSet<Lobby>();
             this.Social = new HashSet<Social>();
-            this.Lobby1 = new HashSet<Lobby>();
         }
     
         public int idPlayer { get; set; }
@@ -48,8 +47,6 @@ namespace ConquiánServidor.ConquiánDB
         public virtual ICollection<Lobby> Lobby { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Social> Social { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Lobby> Lobby1 { get; set; }
         public virtual StatusType StatusType { get; set; }
     }
 }

@@ -1,15 +1,14 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.Properties.Langs; 
 using NLog;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Security.Cryptography;
-using System.ServiceModel;
 using System.Threading.Tasks;
 using static ConquiánServidor.BusinessLogic.GuestInvitationManager;
 
@@ -17,6 +16,10 @@ namespace ConquiánServidor.BusinessLogic
 {
     public class LobbyLogic
     {
+        private const int ROOM_CODE_LENGTH = 5;
+        private const string ROOM_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        private const int MINIMUM_PLAYERS_TO_START = 2;
+
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly ILobbyRepository lobbyRepository;
         private readonly IPlayerRepository playerRepository;
@@ -40,14 +43,14 @@ namespace ConquiánServidor.BusinessLogic
             if (session == null)
             {
                 Logger.Warn($"Lobby state lookup failed: Session not found for Room Code {roomCode}");
-                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby == null)
             {
                 Logger.Warn($"Lobby state lookup failed: Database record not found for Room Code {roomCode}");
-                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
 
             Logger.Info($"Lobby state retrieved successfully for Room Code: {roomCode}");
@@ -72,7 +75,7 @@ namespace ConquiánServidor.BusinessLogic
             if (hostPlayerEntity == null)
             {
                 Logger.Warn($"Lobby creation failed: Host Player ID {idHostPlayer} not found.");
-                throw new ArgumentException(Lang.ErrorLobbyHostNotFound);
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             string newRoomCode;
@@ -86,7 +89,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 roomCode = newRoomCode,
                 idHostPlayer = idHostPlayer,
-                idStatusLobby = 1,
+                idStatusLobby = (int)LobbyStatus.Waiting,
                 creationDate = DateTime.UtcNow,
                 idGamemode = null
             };
@@ -116,20 +119,20 @@ namespace ConquiánServidor.BusinessLogic
             if (lobby == null)
             {
                 Logger.Warn($"Join lobby failed: Room Code {roomCode} not found.");
-                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
 
-            if (lobby.idStatusLobby != 1)
+            if (lobby.idStatusLobby != (int)LobbyStatus.Waiting)
             {
                 Logger.Warn($"Join lobby failed: Room Code {roomCode} is full or in-game (Status: {lobby.idStatusLobby}).");
-                throw new InvalidOperationException(Lang.ErrorLobbyFull);
+                throw new BusinessLogicException(ServiceErrorType.LobbyFull);
             }
 
             var playerToJoinEntity = await playerRepository.GetPlayerByIdAsync(idPlayer);
             if (playerToJoinEntity == null)
             {
                 Logger.Warn($"Join lobby failed: Player ID {idPlayer} not found in database.");
-                throw new ArgumentException(Lang.ErrorUserNotFound);
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
             var playerDto = new PlayerDto
@@ -150,6 +153,7 @@ namespace ConquiánServidor.BusinessLogic
                 else
                 {
                     Logger.Warn($"Join lobby failed: Lobby session logic returned null (likely full). Room: {roomCode}");
+                    throw new BusinessLogicException(ServiceErrorType.LobbyFull);
                 }
 
                 return result;
@@ -157,7 +161,7 @@ namespace ConquiánServidor.BusinessLogic
             catch (InvalidOperationException ex) when (ex.Message == "Banned")
             {
                 Logger.Warn($"Join lobby failed: Player {idPlayer} is banned from room {roomCode}.");
-                throw new InvalidOperationException(Lang.ErrorYouAreKicked);
+                throw new BusinessLogicException(ServiceErrorType.OperationFailed, "Banned");
             }
         }
 
@@ -170,14 +174,13 @@ namespace ConquiánServidor.BusinessLogic
             if (inviteResult == InviteResult.Used)
             {
                 Logger.Warn($"Guest join failed: Invitation already used. Room Code {roomCode}.");
-                var faultUsed = new ServiceFaultDto(ServiceErrorType.GuestInviteUsed, Lang.ErrorUsedInvitation);
-                throw new FaultException<ServiceFaultDto>(faultUsed, new FaultReason(Lang.ErrorUsedInvitation));
+                throw new BusinessLogicException(ServiceErrorType.GuestInviteUsed);
             }
 
             if (inviteResult != InviteResult.Valid)
             {
                 Logger.Warn($"Guest join failed: Invitation not found or expired. Room Code {roomCode}.");
-                throw new ArgumentException(Lang.ErrorInvalidInvitation);
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed);
             }
 
             bool isRegisteredPlayer = await dbContext.Player.AnyAsync(p => p.email == email);
@@ -185,19 +188,19 @@ namespace ConquiánServidor.BusinessLogic
             if (isRegisteredPlayer)
             {
                 Logger.Warn($"Guest join failed: User is already registered. Room Code {roomCode}.");
-                throw new RegisteredUserAsGuestException(Lang.ErrorRegisteredMail);
+                throw new BusinessLogicException(ServiceErrorType.RegisteredUserAsGuest);
             }
 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby == null)
             {
                 Logger.Warn($"Guest join failed: Room Code {roomCode} not found.");
-                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
-            if (lobby.idStatusLobby != 1)
+            if (lobby.idStatusLobby != (int)LobbyStatus.Waiting)
             {
                 Logger.Warn($"Guest join failed: Room Code {roomCode} is full or in-game.");
-                throw new InvalidOperationException(Lang.ErrorLobbyFull);
+                throw new BusinessLogicException(ServiceErrorType.LobbyFull);
             }
 
             var playerDto = sessionManager.AddGuestToLobby(roomCode);
@@ -228,7 +231,7 @@ namespace ConquiánServidor.BusinessLogic
 
             if (wasHost)
             {
-                lobby.idStatusLobby = 3;
+                lobby.idStatusLobby = (int)LobbyStatus.Finished;
                 await lobbyRepository.SaveChangesAsync();
                 sessionManager.RemoveLobby(roomCode);
                 Logger.Info($"Lobby closed: Host left. Room Code: {roomCode}");
@@ -237,12 +240,11 @@ namespace ConquiánServidor.BusinessLogic
             return wasHost;
         }
 
-        private static string GenerateRandomCode(int length = 5)
+        private static string GenerateRandomCode(int length = ROOM_CODE_LENGTH)
         {
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var data = new byte[length];
             randomGenerator.GetBytes(data);
-            return new string(data.Select(b => chars[b % chars.Length]).ToArray());
+            return new string(data.Select(b => ROOM_CODE_CHARS[b % ROOM_CODE_CHARS.Length]).ToArray());
         }
 
         public async Task SelectGamemodeAsync(string roomCode, int idGamemode)
@@ -260,7 +262,7 @@ namespace ConquiánServidor.BusinessLogic
             else
             {
                 Logger.Warn($"Gamemode change failed: Room Code {roomCode} not found.");
-                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
         }
 
@@ -273,17 +275,17 @@ namespace ConquiánServidor.BusinessLogic
             if (session == null)
             {
                 Logger.Warn($"Start game failed: Session not found for Room Code {roomCode}");
-                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
             if (!session.IdGamemode.HasValue)
             {
                 Logger.Warn($"Start game failed: No gamemode selected. Room Code: {roomCode}");
-                throw new InvalidOperationException(Lang.ErrorLobbyNoGamemode);
+                throw new BusinessLogicException(ServiceErrorType.OperationFailed);
             }
-            if (session.Players.Count < 2)
+            if (session.Players.Count < MINIMUM_PLAYERS_TO_START)
             {
                 Logger.Warn($"Start game failed: Not enough players ({session.Players.Count}). Room Code: {roomCode}");
-                throw new InvalidOperationException(Lang.ErrorLobbyNotEnoughPlayers);
+                throw new BusinessLogicException(ServiceErrorType.OperationFailed);
             }
 
             int gamemodeId = session.IdGamemode.Value;
@@ -301,7 +303,7 @@ namespace ConquiánServidor.BusinessLogic
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby != null)
             {
-                lobby.idStatusLobby = 2; 
+                lobby.idStatusLobby = (int)LobbyStatus.InGame;
                 await lobbyRepository.SaveChangesAsync();
             }
         }
@@ -313,18 +315,18 @@ namespace ConquiánServidor.BusinessLogic
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby == null)
             {
-                throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
 
             if (lobby.idHostPlayer != idRequestingPlayer)
             {
                 Logger.Warn($"Kick failed: Player {idRequestingPlayer} is not the host of room {roomCode}.");
-                throw new UnauthorizedAccessException(Lang.ErrorNotLobbyHost);
+                throw new BusinessLogicException(ServiceErrorType.OperationFailed);
             }
 
             if (idRequestingPlayer == idPlayerToKick)
             {
-                throw new InvalidOperationException("Cannot kick yourself.");
+                throw new BusinessLogicException(ServiceErrorType.OperationFailed, "Cannot kick yourself.");
             }
 
             if (idPlayerToKick > 0)

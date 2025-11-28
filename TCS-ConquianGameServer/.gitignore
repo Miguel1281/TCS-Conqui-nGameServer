@@ -417,11 +417,5 @@ FodyWeavers.xsd
 *.msm
 *.msp
 
-#Credenciales de conexion a Email
-credentials.config
-
-#Credenciales de conexion a Email
-connection.config
-
 # SonarQube
 .sonarqube/

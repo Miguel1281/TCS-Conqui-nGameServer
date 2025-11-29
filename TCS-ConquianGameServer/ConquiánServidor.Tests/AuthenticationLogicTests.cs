@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
@@ -15,14 +16,22 @@ namespace ConquiánServidor.Tests
         private readonly Mock<IPlayerRepository> mockPlayerRepository;
         private readonly AuthenticationLogic authLogic;
         private readonly Mock<IEmailService> mockEmailService;
-
+        private readonly Mock<PresenceManager> mockPresenceManager;
         public AuthenticationLogicTests()
         {
             mockPlayerRepository = new Mock<IPlayerRepository>();
             mockEmailService = new Mock<IEmailService>();
-            authLogic = new AuthenticationLogic(mockPlayerRepository.Object, mockEmailService.Object);
-        }
 
+            var mockScope = new Mock<ILifetimeScope>();
+
+            mockPresenceManager = new Mock<PresenceManager>(mockScope.Object);
+
+            authLogic = new AuthenticationLogic(
+                mockPlayerRepository.Object,
+                mockEmailService.Object,
+                mockPresenceManager.Object
+            );
+        }
         [Fact]
         public async Task SendVerificationCodeAsync_ShouldThrowArgumentException_WhenEmailFormatIsInvalid()
         {

@@ -21,18 +21,30 @@ namespace ConquiánServidor.BusinessLogic
         private const int MINIMUM_PLAYERS_TO_START = 2;
 
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+
         private readonly ILobbyRepository lobbyRepository;
         private readonly IPlayerRepository playerRepository;
         private readonly LobbySessionManager sessionManager;
+        private readonly GameSessionManager gameSessionManager;
+        private readonly GuestInvitationManager guestInvitationManager;
         private static readonly RandomNumberGenerator randomGenerator = RandomNumberGenerator.Create();
         private readonly ConquiánDBEntities dbContext;
 
-        public LobbyLogic(ILobbyRepository lobbyRepository, IPlayerRepository playerRepository, ConquiánDBEntities dbContext)
+        public LobbyLogic(
+                    ILobbyRepository lobbyRepository,
+                    IPlayerRepository playerRepository,
+                    ConquiánDBEntities dbContext,
+                    LobbySessionManager sessionManager,
+                    GameSessionManager gameSessionManager,
+                    GuestInvitationManager guestInvitationManager)
         {
             this.lobbyRepository = lobbyRepository;
             this.playerRepository = playerRepository;
-            this.sessionManager = LobbySessionManager.Instance;
             this.dbContext = dbContext;
+
+            this.sessionManager = sessionManager;
+            this.gameSessionManager = gameSessionManager;
+            this.guestInvitationManager = guestInvitationManager;
         }
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
@@ -169,7 +181,7 @@ namespace ConquiánServidor.BusinessLogic
         {
             Logger.Info($"Guest join attempt for Room Code: {roomCode}");
 
-            var inviteResult = GuestInvitationManager.Instance.ValidateInvitation(email, roomCode);
+            var inviteResult = this.guestInvitationManager.ValidateInvitation(email, roomCode);
 
             if (inviteResult == InviteResult.Used)
             {
@@ -291,8 +303,8 @@ namespace ConquiánServidor.BusinessLogic
             int gamemodeId = session.IdGamemode.Value;
             var players = session.Players.ToList();
 
-            GameSessionManager.Instance.CreateGame(roomCode, gamemodeId, players);
-            var game = GameSessionManager.Instance.GetGame(roomCode);
+            this.gameSessionManager.CreateGame(roomCode, gamemodeId, players);
+            var game = this.gameSessionManager.GetGame(roomCode);
 
             if (game != null)
             {

@@ -23,11 +23,13 @@ namespace ConquiánServidor.BusinessLogic
 
         private readonly IPlayerRepository playerRepository;
         private readonly IEmailService emailService;
+        private readonly PresenceManager presenceManager;
 
-        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService)
+        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService, PresenceManager presenceManager)
         {
             this.playerRepository = playerRepository;
             this.emailService = emailService;
+            this.presenceManager = presenceManager;
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string playerEmail, string playerPassword)
@@ -42,7 +44,7 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.InvalidPassword);
             }
 
-            if (PresenceManager.Instance.IsPlayerOnline(playerFromDb.idPlayer))
+            if (this.presenceManager.IsPlayerOnline(playerFromDb.idPlayer))
             {
                 Logger.Warn($"Authentication failed: Player ID {playerFromDb.idPlayer} is already online.");
                 throw new BusinessLogicException(ServiceErrorType.SessionActive);
@@ -51,7 +53,7 @@ namespace ConquiánServidor.BusinessLogic
             playerFromDb.IdStatus = (int)PlayerStatus.Online;
 
             await playerRepository.SaveChangesAsync();
-            await PresenceManager.Instance.NotifyStatusChange(playerFromDb.idPlayer, 1);
+            await this.presenceManager.NotifyStatusChange(playerFromDb.idPlayer, 1);
 
             Logger.Info($"Authentication successful for Player ID: {playerFromDb.idPlayer}");
 
@@ -71,7 +73,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 playerFromDb.IdStatus = 2;
                 await playerRepository.SaveChangesAsync();
-                await PresenceManager.Instance.NotifyStatusChange(idPlayer, 2);
+                await this.presenceManager.NotifyStatusChange(idPlayer, 2);
                 Logger.Info($"Sign out successful for Player ID: {idPlayer}");
             }
         }

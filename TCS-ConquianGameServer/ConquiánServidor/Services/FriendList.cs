@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
@@ -23,11 +24,13 @@ namespace ConquiánServidor.Services
 
         public FriendList()
         {
-            var dbContext = new ConquiánDBEntities();
-            IFriendshipRepository friendshipRepository = new FriendshipRepository(dbContext);
-            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
+            Bootstrapper.Init();
+            this.friendshipLogic = Bootstrapper.Container.Resolve<FriendshipLogic>();
+        }
 
-            friendshipLogic = new FriendshipLogic(friendshipRepository, playerRepository);
+        public FriendList(FriendshipLogic friendshipLogic)
+        {
+            this.friendshipLogic = friendshipLogic;
         }
 
         public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idCurrentUser)

@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
@@ -19,21 +20,24 @@ namespace ConquiánServidor.Services
     public class UserProfile : IUserProfile
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private readonly UserProfileLogic profileLogic;
+        private readonly UserProfileLogic userProfileLogic;
 
         public UserProfile()
         {
-            var dbContext = new ConquiánDBEntities();
-            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            ISocialRepository socialRepository = new SocialRepository(dbContext);
-            profileLogic = new UserProfileLogic(playerRepository, socialRepository);
+            Bootstrapper.Init();
+            this.userProfileLogic = Bootstrapper.Container.Resolve<UserProfileLogic>();
+        }
+
+        public UserProfile(UserProfileLogic userProfileLogic)
+        {
+            this.userProfileLogic = userProfileLogic;
         }
 
         public async Task<PlayerDto> GetPlayerByIdAsync(int idPlayer)
         {
             try
             {
-                return await profileLogic.GetPlayerByIdAsync(idPlayer);
+                return await userProfileLogic.GetPlayerByIdAsync(idPlayer);
             }
             catch (BusinessLogicException ex)
             {
@@ -58,7 +62,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                return await profileLogic.GetPlayerSocialsAsync(idPlayer);
+                return await userProfileLogic.GetPlayerSocialsAsync(idPlayer);
             }
             catch (BusinessLogicException ex)
             {
@@ -83,7 +87,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await profileLogic.UpdatePlayerAsync(playerDto);
+                await userProfileLogic.UpdatePlayerAsync(playerDto);
             }
             catch (BusinessLogicException ex)
             {
@@ -114,7 +118,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await profileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
+                await userProfileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
             }
             catch (BusinessLogicException ex)
             {
@@ -145,7 +149,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await profileLogic.UpdateProfilePictureAsync(idPlayer, newPath);
+                await userProfileLogic.UpdateProfilePictureAsync(idPlayer, newPath);
             }
             catch (BusinessLogicException ex)
             {

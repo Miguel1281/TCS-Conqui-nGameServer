@@ -17,11 +17,13 @@ namespace ConquiánServidor.BusinessLogic
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IFriendshipRepository friendshipRepository;
         private readonly IPlayerRepository playerRepository;
+        private readonly PresenceManager presenceManager;
 
-        public FriendshipLogic(IFriendshipRepository friendshipRepository, IPlayerRepository playerRepository)
+        public FriendshipLogic(IFriendshipRepository friendshipRepository, IPlayerRepository playerRepository, PresenceManager presenceManager)
         {
             this.friendshipRepository = friendshipRepository;
             this.playerRepository = playerRepository;
+            this.presenceManager = presenceManager;
         }
 
         public async Task<List<PlayerDto>> GetFriendsAsync(int idPlayer)
@@ -33,7 +35,7 @@ namespace ConquiánServidor.BusinessLogic
 
             foreach (var p in friends)
             {
-                bool isOnline = PresenceManager.Instance.IsPlayerOnline(p.idPlayer);
+                bool isOnline = this.presenceManager.IsPlayerOnline(p.idPlayer);
 
                 friendDtos.Add(new PlayerDto
                 {

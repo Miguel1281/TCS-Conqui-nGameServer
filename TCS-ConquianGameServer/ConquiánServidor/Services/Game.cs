@@ -1,7 +1,9 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Game;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
+using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Properties.Langs;
 using System;
 using System.Linq;
@@ -14,12 +16,25 @@ namespace ConquiánServidor.Services
     public class Game : IGame
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
+        private readonly GameSessionManager gameSessionManager;
+        private readonly ILifetimeScope lifetimeScope;
+        public Game()
+        {
+            Bootstrapper.Init();
+            this.gameSessionManager = Bootstrapper.Container.Resolve<GameSessionManager>();
+            this.lifetimeScope = Bootstrapper.Container.Resolve<ILifetimeScope>();
+        }
 
+        public Game(GameSessionManager gameSessionManager, ILifetimeScope scope)
+        {
+            this.gameSessionManager = gameSessionManager;
+            this.lifetimeScope = scope;
+        }
         public async Task<GameStateDto> JoinGameAsync(string roomCode, int playerId)
         {
             try
             {
-                var game = GameSessionManager.Instance.GetGame(roomCode);
+                var game = this.gameSessionManager.GetGame(roomCode);
                 if (game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
@@ -54,7 +69,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = GameSessionManager.Instance.GetGame(roomCode);
+                var game = this.gameSessionManager.GetGame(roomCode);
                 if (game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
@@ -88,13 +103,13 @@ namespace ConquiánServidor.Services
             {
                 try
                 {
-                    using (var context = new ConquiánDB.ConquiánDBEntities())
+                    using (var scope = this.lifetimeScope.BeginLifetimeScope())
                     {
-                        var repository = new DataAccess.Repositories.PlayerRepository(context);
-
-                        var task = repository.UpdatePlayerPointsAsync(result.WinnerId, result.PointsWon);
+                        var playerRepository = scope.Resolve<IPlayerRepository>();
+                        var task = playerRepository.UpdatePlayerPointsAsync(result.WinnerId, result.PointsWon);
                         task.Wait();
                     }
+
                     Logger.Info($"Points updated for winner {result.WinnerId}");
                 }
                 catch (Exception ex)
@@ -108,8 +123,8 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = GameSessionManager.Instance.GetGame(roomCode);
-                if (game == null)
+                var game = this.gameSessionManager.GetGame(roomCode);
+                if(game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
                 }
@@ -135,7 +150,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = GameSessionManager.Instance.GetGame(roomCode);
+                var game = this.gameSessionManager.GetGame(roomCode); 
                 if (game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
@@ -162,7 +177,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = GameSessionManager.Instance.GetGame(roomCode);
+                var game = this.gameSessionManager.GetGame(roomCode);
                 if (game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
@@ -236,12 +251,12 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = GameSessionManager.Instance.GetGame(roomCode);
+                var game = this.gameSessionManager.GetGame(roomCode);
                 if (game != null)
                 {
                     game.NotifyGameEndedByAbandonment(playerId);
 
-                    GameSessionManager.Instance.RemoveGame(roomCode);
+                    this.gameSessionManager.RemoveGame(roomCode);
                     Logger.Info($"Partida {roomCode} terminada por abandono del jugador {playerId}.");
                 }
             }
@@ -255,7 +270,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = GameSessionManager.Instance.GetGame(roomCode);
+                var game = this.gameSessionManager.GetGame(roomCode);
                 if (game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);

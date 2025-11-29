@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.Properties.Langs;
@@ -12,14 +13,24 @@ namespace ConquiánServidor.Services
     public class Invitation : IInvitationService
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        private readonly InvitationManager manager = InvitationManager.Instance;
+        private readonly InvitationManager invitationManager;
 
+        public Invitation()
+        {
+            Bootstrapper.Init();
+            this.invitationManager = Bootstrapper.Container.Resolve<InvitationManager>();
+        }
+
+        public Invitation(InvitationManager invitationManager)
+        {
+            this.invitationManager = invitationManager;
+        }
         public void Subscribe(int idPlayer)
         {
             try
             {
                 var currentCallback = OperationContext.Current.GetCallbackChannel<IInvitationCallback>();
-                manager.Subscribe(idPlayer, currentCallback);
+                invitationManager.Subscribe(idPlayer, currentCallback);
             }
             catch (Exception ex)
             {
@@ -31,7 +42,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                manager.Unsubscribe(idPlayer);
+                invitationManager.Unsubscribe(idPlayer);
             }
             catch (Exception ex)
             {
@@ -43,7 +54,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await manager.SendInvitationAsync(idSender, senderNickname, idReceiver, roomCode);
+                await invitationManager.SendInvitationAsync(idSender, senderNickname, idReceiver, roomCode);
             }
             catch (InvalidOperationException ex)
             {

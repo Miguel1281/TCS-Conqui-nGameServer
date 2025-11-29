@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
@@ -19,21 +20,24 @@ namespace ConquiánServidor.Services
     public class SignUp : ISignUp
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private readonly AuthenticationLogic authLogic;
+        private readonly AuthenticationLogic authenticationLogic;
 
         public SignUp()
         {
-            var dbContext = new ConquiánDBEntities();
-            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            IEmailService emailService = new EmailService();
-            authLogic = new AuthenticationLogic(playerRepository, emailService);
+            Bootstrapper.Init();
+            this.authenticationLogic = Bootstrapper.Container.Resolve<AuthenticationLogic>();
+        }
+
+        public SignUp(AuthenticationLogic authenticationLogic)
+        {
+            this.authenticationLogic = authenticationLogic;
         }
 
         public async Task<bool> RegisterPlayerAsync(PlayerDto newPlayer)
         {
             try
             {
-                await authLogic.RegisterPlayerAsync(newPlayer);
+                await authenticationLogic.RegisterPlayerAsync(newPlayer);
                 return true;
             }
             catch (BusinessLogicException ex)
@@ -51,7 +55,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                return await authLogic.SendVerificationCodeAsync(email);
+                return await authenticationLogic.SendVerificationCodeAsync(email);
             }
             catch (BusinessLogicException ex)
             {
@@ -75,7 +79,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await authLogic.VerifyCodeAsync(email, code);
+                await authenticationLogic.VerifyCodeAsync(email, code);
                 return true;
             }
             catch (BusinessLogicException ex)
@@ -93,7 +97,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await authLogic.DeleteTemporaryPlayerAsync(email);
+                await authenticationLogic.DeleteTemporaryPlayerAsync(email);
                 return true;
             }
             catch (Exception ex)

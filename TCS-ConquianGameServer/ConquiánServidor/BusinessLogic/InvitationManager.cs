@@ -10,15 +10,13 @@ namespace ConquiánServidor.BusinessLogic
     public class InvitationManager
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private static readonly Lazy<InvitationManager> instance =
-            new Lazy<InvitationManager>(() => new InvitationManager());
 
         private readonly ConcurrentDictionary<int, IInvitationCallback> onlinePlayers =
             new ConcurrentDictionary<int, IInvitationCallback>();
 
-        private InvitationManager() { }
-
-        public static InvitationManager Instance => instance.Value;
+        public InvitationManager()
+        {
+        }
 
         public void Subscribe(int idPlayer, IInvitationCallback callback)
         {

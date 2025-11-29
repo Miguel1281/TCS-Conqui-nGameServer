@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.ConquiánDB;
+﻿using Autofac;
+using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
@@ -13,22 +14,16 @@ namespace ConquiánServidor.BusinessLogic
 {
     public class PresenceManager
     {
-        private static readonly PresenceManager instance = new PresenceManager();
         private readonly Dictionary<int, IPresenceCallback> onlineSubscribers = new Dictionary<int, IPresenceCallback>();
         private readonly object lockObj = new object();
-        private readonly FriendshipLogic friendshipLogic;
+        private readonly ILifetimeScope lifetimeScope;
 
-        public static PresenceManager Instance => instance;
-
-        private PresenceManager()
+        public PresenceManager(ILifetimeScope scope)
         {
-            var dbContext = new ConquiánDBEntities();
-            IFriendshipRepository friendshipRepository = new FriendshipRepository(dbContext);
-            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            friendshipLogic = new FriendshipLogic(friendshipRepository, playerRepository);
+            this.lifetimeScope = scope;
         }
 
-        public bool IsPlayerOnline(int idPlayer)
+        public virtual bool IsPlayerOnline(int idPlayer)
         {
             lock (lockObj)
             {
@@ -52,12 +47,16 @@ namespace ConquiánServidor.BusinessLogic
             }
         }
 
-        public async Task NotifyStatusChange(int changedPlayerId, int newStatusId)
+        public virtual async Task NotifyStatusChange(int changedPlayerId, int newStatusId)
         {
             List<PlayerDto> friends;
             try
             {
-                friends = await friendshipLogic.GetFriendsAsync(changedPlayerId);
+                using (var scope = this.lifetimeScope.BeginLifetimeScope())
+                {
+                    var friendshipLogic = scope.Resolve<FriendshipLogic>();
+                    friends = await friendshipLogic.GetFriendsAsync(changedPlayerId);
+                }
             }
             catch (Exception ex)
             {

@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic; 
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic; 
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
@@ -18,15 +19,24 @@ namespace ConquiánServidor.Services
     public class GuestInvitation : IGuestInvitation
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private readonly ConquiánDBEntities dbContext;
         private readonly IEmailService emailService;
         private readonly ILobbyRepository lobbyRepository;
+        private readonly GuestInvitationManager guestInvitationManager;
 
         public GuestInvitation()
         {
-            dbContext = new ConquiánDBEntities();
-            emailService = new EmailService();
-            lobbyRepository = new LobbyRepository(dbContext);
+            Bootstrapper.Init();
+            this.emailService = Bootstrapper.Container.Resolve<IEmailService>();
+            this.lobbyRepository = Bootstrapper.Container.Resolve<ILobbyRepository>();
+            this.guestInvitationManager = Bootstrapper.Container.Resolve<GuestInvitationManager>();
+        }
+
+        public GuestInvitation(IEmailService emailService, ILobbyRepository lobbyRepository, GuestInvitationManager guestInvitationManager)
+        {
+            Bootstrapper.Init();
+            this.emailService = emailService;
+            this.lobbyRepository = lobbyRepository;
+            this.guestInvitationManager = guestInvitationManager;
         }
 
         public async Task SendGuestInviteAsync(string roomCode, string email)
@@ -39,7 +49,7 @@ namespace ConquiánServidor.Services
                     throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
                 }
 
-                GuestInvitationManager.Instance.AddInvitation(email, roomCode);
+                this.guestInvitationManager.AddInvitation(email, roomCode);
 
                 try
                 {

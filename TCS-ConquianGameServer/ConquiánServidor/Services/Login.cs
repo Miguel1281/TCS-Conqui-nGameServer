@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
@@ -19,22 +20,24 @@ namespace ConquiánServidor.Services
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private readonly AuthenticationLogic authLogic;
-        private readonly IPlayerRepository playerRepository;
+        private readonly AuthenticationLogic authenticationLogic;
 
         public Login()
         {
-            var dbContext = new ConquiánDBEntities();
-            this.playerRepository = new PlayerRepository(dbContext);
-            IEmailService emailService = new EmailService();
-            this.authLogic = new AuthenticationLogic(playerRepository, emailService);
+            Bootstrapper.Init();
+            this.authenticationLogic = Bootstrapper.Container.Resolve<AuthenticationLogic>();
+        }
+
+        public Login(AuthenticationLogic authenticationLogic)
+        {
+            this.authenticationLogic = authenticationLogic;
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string email, string password)
         {
             try
             {
-                return await authLogic.AuthenticatePlayerAsync(email, password);
+                return await authenticationLogic.AuthenticatePlayerAsync(email, password);
             }
             catch (BusinessLogicException ex)
             {
@@ -71,7 +74,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await authLogic.SignOutPlayerAsync(idPlayer);
+                await authenticationLogic.SignOutPlayerAsync(idPlayer);
             }
             catch (Exception ex)
             {

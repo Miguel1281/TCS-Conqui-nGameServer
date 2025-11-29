@@ -6,16 +6,11 @@ namespace ConquiánServidor.BusinessLogic
 {
     public class GuestInvitationManager
     {
-        private static readonly Lazy<GuestInvitationManager> instance =
-            new Lazy<GuestInvitationManager>(() => new GuestInvitationManager());
-
-        public static GuestInvitationManager Instance => instance.Value;
-
         private readonly ConcurrentDictionary<string, GuestInviteData> invitations;
 
         public enum InviteResult { Valid, NotFound, Expired, Used }
 
-        private GuestInvitationManager()
+        public GuestInvitationManager()
         {
             invitations = new ConcurrentDictionary<string, GuestInviteData>();
         }

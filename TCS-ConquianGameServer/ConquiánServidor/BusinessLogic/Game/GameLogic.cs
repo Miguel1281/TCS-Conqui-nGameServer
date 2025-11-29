@@ -405,8 +405,8 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             if (StockPile.Count == 0)
             {
+                DetermineWinnerByPoints();
                 throw new InvalidOperationException("Mazo vacío.");
-                DetermineWinnerByPoints(); 
             }
 
             var card = StockPile[0];

@@ -13,5 +13,6 @@ namespace ConquiánServidor.DataAccess.Abstractions
         void AddPlayer(Player player);
         Task<int> SaveChangesAsync();
         Task<bool> DeletePlayerAsync(Player playerToDelete);
+        Task UpdatePlayerPointsAsync(int playerId, int pointsToAdd);
     }
 }

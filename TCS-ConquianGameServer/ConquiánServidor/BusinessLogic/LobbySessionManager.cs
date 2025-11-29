@@ -8,13 +8,11 @@ namespace ConquiánServidor.BusinessLogic
 {
     public class LobbySessionManager
     {
-        private static readonly LobbySessionManager instance = new LobbySessionManager();
-        public static LobbySessionManager Instance => instance;
         private readonly ConcurrentDictionary<string, LobbySession> activeLobbies;
         private readonly ConcurrentStack<int> availableGuestIds;
         private const int MAX_CONCURRENT_GUESTS = 100;
 
-        private LobbySessionManager()
+        public LobbySessionManager()
         {
             activeLobbies = new ConcurrentDictionary<string, LobbySession>();
             availableGuestIds = new ConcurrentStack<int>();

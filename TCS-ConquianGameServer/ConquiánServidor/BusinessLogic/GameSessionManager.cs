@@ -9,14 +9,13 @@ namespace ConquiánServidor.BusinessLogic
     public class GameSessionManager
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private static readonly GameSessionManager instance = new GameSessionManager();
 
         private readonly ConcurrentDictionary<string, ConquianGame> games =
             new ConcurrentDictionary<string, ConquianGame>();
 
-        private GameSessionManager() { }
-
-        public static GameSessionManager Instance => instance;
+        public GameSessionManager() 
+        {
+        }
 
         public void CreateGame(string roomCode, int gamemodeId, List<PlayerDto> players)
         {

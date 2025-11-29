@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
@@ -25,24 +26,28 @@ namespace ConquiánServidor.Services
             Recovery = 0,
             Change = 1
         }
-        private readonly AuthenticationLogic authLogic;
+        private readonly AuthenticationLogic authenticationLogic;
 
         private readonly IEmailService emailService;
 
         public PasswordRecovery()
         {
-            var dbContext = new ConquiánDBEntities();
-            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            IEmailService emailServiceInstance = new EmailService();
-            this.authLogic = new AuthenticationLogic(playerRepository, emailServiceInstance); 
-            this.emailService = emailServiceInstance;
+            Bootstrapper.Init();
+            this.authenticationLogic = Bootstrapper.Container.Resolve<AuthenticationLogic>();
+            this.emailService = Bootstrapper.Container.Resolve<IEmailService>();
+        }
+
+        public PasswordRecovery(AuthenticationLogic authenticationLogic, IEmailService emailService)
+        {
+            this.authenticationLogic = authenticationLogic;
+            this.emailService = emailService;
         }
 
         public async Task<bool> RequestPasswordRecoveryAsync(string email, int mode)
         {
             try
             {
-                string token = await authLogic.GenerateAndStoreRecoveryTokenAsync(email);
+                string token = await authenticationLogic.GenerateAndStoreRecoveryTokenAsync(email);
 
                 IEmailTemplate emailTemplate;
 
@@ -80,7 +85,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await authLogic.HandleTokenValidationAsync(email, token);
+                await authenticationLogic.HandleTokenValidationAsync(email, token);
                 return true;
             }
             catch (ArgumentException ex)
@@ -99,7 +104,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await authLogic.HandlePasswordResetAsync(email, token, newPassword);
+                await authenticationLogic.HandlePasswordResetAsync(email, token, newPassword);
                 return true;
             }
             catch (ArgumentException ex)

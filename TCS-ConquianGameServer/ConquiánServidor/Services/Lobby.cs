@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using Autofac;
+using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Repositories;
@@ -29,10 +30,13 @@ namespace ConquiánServidor.Services
 
         public Lobby()
         {
-            var dbContext = new ConquiánDBEntities();
-            IPlayerRepository playerRepository = new PlayerRepository(dbContext);
-            ILobbyRepository lobbyRepository = new LobbyRepository(dbContext);
-            lobbyLogic = new LobbyLogic(lobbyRepository, playerRepository, dbContext);
+            Bootstrapper.Init();
+            this.lobbyLogic = Bootstrapper.Container.Resolve<LobbyLogic>();
+        }
+
+        public Lobby(LobbyLogic lobbyLogic)
+        {
+            this.lobbyLogic = lobbyLogic;
         }
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)

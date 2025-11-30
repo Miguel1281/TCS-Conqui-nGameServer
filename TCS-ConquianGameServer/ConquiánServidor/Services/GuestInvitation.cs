@@ -1,5 +1,6 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic; 
+using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
@@ -46,7 +47,7 @@ namespace ConquiánServidor.Services
                 var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
                 if (lobby == null)
                 {
-                    throw new InvalidOperationException(Lang.ErrorLobbyNotFound);
+                    throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
                 }
 
                 this.guestInvitationManager.AddInvitation(email, roomCode);
@@ -58,22 +59,17 @@ namespace ConquiánServidor.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.Warn(ex, $"Fallo envío de correo invitado a {email}. Revirtiendo cambios en memoria.");
-                    throw new InvalidOperationException(string.Format(Lang.ErrorGuestInviteEmailFailed, email));
+                    Logger.Warn(ex, $"Failed to send guest email to {email}.");
+                    throw new BusinessLogicException(ServiceErrorType.CommunicationError);
                 }
 
                 Logger.Info(string.Format(Lang.LogGuestInviteSent, email, roomCode));
             }
-            catch (InvalidOperationException ex)
-            {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error crítico enviando invitación huésped a {email} para sala {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorInvitationFailed);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(Lang.InternalServerError));
+                Logger.Error(ex, $"Critical error sending guest invitation to {email}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
     }

@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
@@ -64,10 +65,10 @@ namespace ConquiánServidor.Services
 
                 return true;
             }
-            catch (KeyNotFoundException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Usuario no encontrado"));
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (SmtpException ex)
             {
@@ -88,10 +89,10 @@ namespace ConquiánServidor.Services
                 await authenticationLogic.HandleTokenValidationAsync(email, token);
                 return true;
             }
-            catch (ArgumentException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Token Inválido"));
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
@@ -107,15 +108,10 @@ namespace ConquiánServidor.Services
                 await authenticationLogic.HandlePasswordResetAsync(email, token, newPassword);
                 return true;
             }
-            catch (ArgumentException ex)
+            catch (BusinessLogicException ex)
             {
-                var fault = new ServiceFaultDto(ServiceErrorType.ValidationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Datos Inválidos"));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                var fault = new ServiceFaultDto(ServiceErrorType.NotFound, ex.Message);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason("Usuario no encontrado"));
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (DbUpdateException)
             {

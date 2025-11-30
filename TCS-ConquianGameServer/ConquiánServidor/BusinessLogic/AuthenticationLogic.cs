@@ -155,7 +155,7 @@ namespace ConquiánServidor.BusinessLogic
             if (existingPlayer != null)
             {
                 Logger.Warn($"Verification attempted for existing Player ID: {existingPlayer.idPlayer}");
-                throw new BusinessLogicException(ServiceErrorType.DuplicateRecord);
+                throw new BusinessLogicException(ServiceErrorType.RegisteredMail);
             }
 
             string verificationCode = emailService.GenerateVerificationCode();

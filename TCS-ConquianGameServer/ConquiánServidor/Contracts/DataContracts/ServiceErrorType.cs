@@ -1,68 +1,129 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Data.Entity.Core.Metadata.Edm;
+using System.Runtime.Serialization;
 
 namespace ConquiánServidor.Contracts.DataContracts
 {
     [DataContract(Name = "ServiceErrorType")]
     public enum ServiceErrorType
     {
-        [EnumMember] 
+        [EnumMember]
         Unknown = 0,
 
-        [EnumMember] 
+        [EnumMember]
         DatabaseError = 1,
 
-        [EnumMember] 
+        [EnumMember]
         DuplicateRecord = 2,
 
-        [EnumMember] 
+        [EnumMember]
         ValidationFailed = 3,
 
-        [EnumMember] 
+        [EnumMember]
         NotFound = 4,
 
-        [EnumMember] 
+        [EnumMember]
         OperationFailed = 5,
 
-        [EnumMember] 
+        [EnumMember]
         CommunicationError = 6,
 
-        [EnumMember] 
+        [EnumMember]
         ServerInternalError = 7,
 
-        [EnumMember] 
+        [EnumMember]
         UserNotFound = 8,
 
-        [EnumMember] 
+        [EnumMember]
         InvalidPassword = 9,
 
-        [EnumMember] 
+        [EnumMember]
         SessionActive = 10,
 
-        [EnumMember] 
+        [EnumMember]
         GuestInviteUsed = 11,
 
-        [EnumMember] 
+        [EnumMember]
         RegisteredUserAsGuest = 12,
 
-        [EnumMember] 
+        [EnumMember]
         LobbyFull = 13,
 
-        [EnumMember] 
+        [EnumMember]
         GameInProgress = 14,
 
-        [EnumMember] 
+        [EnumMember]
         InvalidEmailFormat = 15,
 
-        [EnumMember] 
+        [EnumMember]
         InvalidPasswordFormat = 16,
 
-        [EnumMember] 
+        [EnumMember]
         InvalidNameFormat = 17,
 
-        [EnumMember] 
+        [EnumMember]
         InvalidVerificationCode = 18,
 
-        [EnumMember] 
-        VerificationCodeExpired = 19
+        [EnumMember]
+        VerificationCodeExpired = 19,
+
+        [EnumMember]
+        GameNotFound = 20,
+
+        [EnumMember]
+        NotYourTurn = 21,
+
+        [EnumMember]
+        MustDiscardToFinish = 22,
+
+        [EnumMember]
+        AlreadyDrawn = 23,
+
+        [EnumMember]
+        PendingDiscardAction = 24,
+
+        [EnumMember]
+        DeckEmpty = 25,
+
+        [EnumMember]
+        InvalidMeld = 26,
+
+        [EnumMember]
+        CardNotFound = 27,
+
+        [EnumMember]
+        InvalidCardAction = 28,
+
+        [EnumMember]
+        GameRuleViolation = 29,
+
+        [EnumMember]
+        EmptyDiscaard = 30,
+
+        [EnumMember]
+        LobbyNotFound = 31,
+
+        [EnumMember]
+        UserOffline = 32,
+
+        [EnumMember]
+        InvitationFailed = 33,
+
+        [EnumMember]
+        ExistingRequest = 34,
+
+        [EnumMember]
+        HostUserNotFound = 35,
+
+        [EnumMember]
+        NotEnoughPlayers = 36,
+
+        [EnumMember]
+        NotLobbyHost = 37,
+
+        [EnumMember]
+        NotKickYourSelf = 38,
+
+        [EnumMember]
+        RegisteredMail = 39,
     }
 }

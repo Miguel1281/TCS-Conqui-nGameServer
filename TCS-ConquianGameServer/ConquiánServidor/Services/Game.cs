@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Game;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
@@ -37,7 +38,7 @@ namespace ConquiánServidor.Services
                 var game = this.gameSessionManager.GetGame(roomCode);
                 if (game == null)
                 {
-                    throw new InvalidOperationException(Lang.ErrorGameNotFound);
+                    throw new BusinessLogicException(ServiceErrorType.NotFound);
                 }
 
                 game.OnGameFinished -= HandleGameFinished;
@@ -51,16 +52,15 @@ namespace ConquiánServidor.Services
 
                 return await Task.FromResult(gameState);
             }
-            catch (InvalidOperationException ex)
+            catch (BusinessLogicException ex)
             {
-                Logger.Warn(ex, $"Error controlado en JoinGameAsync: {ex.Message}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error crítico en JoinGameAsync room {roomCode} player {playerId}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
+                Logger.Error(ex, $"Critical error in JoinGameAsync room {roomCode} player {playerId}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Server Error"));
             }
         }
@@ -79,21 +79,16 @@ namespace ConquiánServidor.Services
 
                 await Task.CompletedTask;
             }
-            catch (InvalidOperationException ex)
+            catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
-            }
-            catch (ArgumentException ex)
-            {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en PlayCards para jugador {playerId} en sala {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error procesando jugada"));
+                Logger.Error(ex, $"Error in PlayCards for player {playerId} in room {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
 
@@ -133,16 +128,16 @@ namespace ConquiánServidor.Services
 
                 await Task.CompletedTask;
             }
-            catch (InvalidOperationException ex)
+            catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en DrawFromDeck para jugador {playerId} en sala {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error tomando carta"));
+                Logger.Error(ex, $"Error in DrawFromDeck for player {playerId} in room {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
 
@@ -160,16 +155,16 @@ namespace ConquiánServidor.Services
 
                 await Task.CompletedTask;
             }
-            catch (InvalidOperationException ex)
+            catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en PassTurnAsync para jugador {playerId} en sala {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error pasando turno"));
+                Logger.Error(ex, $"Error in PassTurnAsync for player {playerId} in room {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
 
@@ -187,21 +182,16 @@ namespace ConquiánServidor.Services
 
                 await Task.CompletedTask;
             }
-            catch (InvalidOperationException ex)
+            catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
-            }
-            catch (ArgumentException ex)
-            {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en DiscardCard para jugador {playerId} en sala {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error descartando carta"));
+                Logger.Error(ex, $"Error in DiscardCard for player {playerId} in room {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
 
@@ -257,12 +247,12 @@ namespace ConquiánServidor.Services
                     game.NotifyGameEndedByAbandonment(playerId);
 
                     this.gameSessionManager.RemoveGame(roomCode);
-                    Logger.Info($"Partida {roomCode} terminada por abandono del jugador {playerId}.");
+                    Logger.Info($"Game {roomCode} ended due to player {playerId} leaving.");
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en LeaveGame para la sala {roomCode}");
+                Logger.Error(ex, $"Error in LeaveGame for room {roomCode}");
             }
         }
 
@@ -280,21 +270,16 @@ namespace ConquiánServidor.Services
 
                 await Task.CompletedTask;
             }
-            catch (InvalidOperationException ex)
+            catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
-            }
-            catch (ArgumentException ex)
-            {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
+                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en SwapDrawnCardAsync para jugador {playerId} en sala {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorGameAction);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Error cambiando carta"));
+                Logger.Error(ex, $"Error in SwapDrawnCardAsync for player {playerId} in room {roomCode}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
     }

@@ -1,4 +1,6 @@
-﻿using ConquiánServidor.Contracts.ServiceContracts;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.Properties.Langs;
 using NLog;
 using System;
@@ -48,13 +50,13 @@ namespace ConquiánServidor.BusinessLogic
                 {
                     Logger.Warn(ex, $"Invitation delivery failed for Receiver ID: {idReceiver}. Removing from active list.");
                     onlinePlayers.TryRemove(idReceiver, out _);
-                    throw new InvalidOperationException(Lang.ErrorPlayerOffline);
+                    throw new BusinessLogicException(ServiceErrorType.OperationFailed);
                 }
             }
             else
             {
                 Logger.Warn($"Invitation failed: Receiver ID {idReceiver} is not online/subscribed.");
-                throw new InvalidOperationException(Lang.ErrorPlayerOffline);
+                throw new BusinessLogicException(ServiceErrorType.OperationFailed);
             }
 
             await Task.CompletedTask;

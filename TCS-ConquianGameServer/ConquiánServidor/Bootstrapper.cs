@@ -1,7 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.ConquiánDB.Repositories; // Asegúrate de tener este using
+using ConquiánServidor.ConquiánDB.Repositories; 
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;

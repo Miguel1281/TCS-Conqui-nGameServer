@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.Properties.Langs;
@@ -34,7 +35,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en Subscribe para jugador {idPlayer}");
+                Logger.Error(ex, $"Error in Subscribe for player {idPlayer}");
             }
         }
 
@@ -46,7 +47,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error en Unsubscribe para jugador {idPlayer}");
+                Logger.Error(ex, $"Error unsubscribing player {idPlayer}");
             }
         }
 
@@ -56,15 +57,15 @@ namespace ConquiánServidor.Services
             {
                 await invitationManager.SendInvitationAsync(idSender, senderNickname, idReceiver, roomCode);
             }
-            catch (InvalidOperationException ex)
+            catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ServiceErrorType.OperationFailed, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
+                var fault = new ServiceFaultDto(ex.ErrorType, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error crítico enviando invitación de {idSender} a {idReceiver}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, Lang.ErrorInvitationFailed);
+                Logger.Error(ex, $"Critical error sending invitation from {idSender} to {idReceiver}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Server Error"));
             }
         }

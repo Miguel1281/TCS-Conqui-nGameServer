@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.Properties.Langs;
 using NLog;
@@ -197,17 +198,17 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
+                throw new BusinessLogicException(ServiceErrorType.NotYourTurn);
             }
 
             if (mustDiscardToFinishTurn)
             {
-                throw new InvalidOperationException("Ya bajaste juego. Debes pagar una carta para terminar.");
+                throw new BusinessLogicException(ServiceErrorType.MustDiscardToFinish);
             }
 
             if (cardIds == null || cardIds.Count < 2) 
             {
-                throw new ArgumentException(Lang.ErrorGameInvalidMove);
+                throw new BusinessLogicException(ServiceErrorType.GameRuleViolation);
             }
 
             if (PlayerHands.TryGetValue(playerId, out List<Card> hand))
@@ -222,7 +223,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                     {
                         if (playerId != playerReviewingDiscardId && !isCardDrawnFromDeck)
                         {
-                            throw new InvalidOperationException("No puedes tomar esta carta ahora.");
+                            throw new BusinessLogicException(ServiceErrorType.InvalidCardAction);
                         }
                         usingDiscardCard = true;
                     }
@@ -233,7 +234,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
                 if (cardsToPlay.Count != handCardIds.Count)
                 {
-                    throw new InvalidOperationException(Lang.ErrorGameInvalidMove); 
+                    throw new BusinessLogicException(ServiceErrorType.GameRuleViolation); 
                 }
 
                 var fullMeld = new List<Card>(cardsToPlay);
@@ -244,7 +245,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
                 if (fullMeld.Count < 3)
                 {
-                    throw new ArgumentException("Un juego debe tener al menos 3 cartas.");
+                    throw new BusinessLogicException(ServiceErrorType.InvalidMeld);
                 }
 
                 if (IsValidMeld(fullMeld))
@@ -294,12 +295,12 @@ namespace ConquiánServidor.BusinessLogic.Game
                 }
                 else
                 {
-                    throw new InvalidOperationException("Jugada invalida");
+                    throw new BusinessLogicException(ServiceErrorType.InvalidMeld);
                 }
             }
             else
             {
-                throw new InvalidOperationException(Lang.ErrorGameAction);
+                throw new InvalidOperationException(ServiceErrorType.OperationFailed.ToString());
             }
         }
 
@@ -349,7 +350,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             if (mustDiscardToFinishTurn)
             {
-                throw new InvalidOperationException("No puedes pasar. Debes pagar una carta para terminar.");
+                throw new BusinessLogicException(ServiceErrorType.MustDiscardToFinish);
             }
 
             if (!hasHostPassedInitialDiscard && playerId == Players[0].idPlayer && playerReviewingDiscardId == playerId)
@@ -385,28 +386,28 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
+                throw new BusinessLogicException(ServiceErrorType.NotYourTurn);
             }
 
             if (isCardDrawnFromDeck)
             {
-                throw new InvalidOperationException("Ya has tomado una carta del mazo en este turno.");
+                throw new BusinessLogicException(ServiceErrorType.AlreadyDrawn);
             }
 
             if (mustDiscardToFinishTurn)
             {
-                throw new InvalidOperationException("No puedes robar. Debes pagar una carta para terminar.");
+                throw new BusinessLogicException(ServiceErrorType.MustDiscardToFinish);
             }
 
             if (playerReviewingDiscardId != null)
             {
-                throw new InvalidOperationException("Debes decidir sobre la carta del descarte primero (Tomar o Pasar).");
+                throw new BusinessLogicException(ServiceErrorType.PendingDiscardAction);
             }
 
             if (StockPile.Count == 0)
             {
                 DetermineWinnerByPoints();
-                throw new InvalidOperationException("Mazo vacío.");
+                throw new BusinessLogicException(ServiceErrorType.DeckEmpty);
             }
 
             var card = StockPile[0];
@@ -436,13 +437,13 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
+                throw new BusinessLogicException(ServiceErrorType.NotYourTurn);
             }
 
             var card = PlayerHands[playerId].FirstOrDefault(c => c.Id == cardId);
             if (card == null)
             {
-                throw new ArgumentException(Lang.ErrorGameInvalidMove);
+                throw new BusinessLogicException(ServiceErrorType.GameRuleViolation);
             }
 
             PlayerHands[playerId].Remove(card);
@@ -594,22 +595,22 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             if (playerId != currentTurnPlayerId)
             {
-                throw new InvalidOperationException(Lang.ErrorGameNotYourTurn);
+                throw new BusinessLogicException(ServiceErrorType.NotYourTurn);
             }
 
             if (!isCardDrawnFromDeck)
             {
-                throw new InvalidOperationException("Solo puedes cambiar la carta si acaba de salir del mazo.");
+                throw new BusinessLogicException(ServiceErrorType.InvalidCardAction);
             }
 
             if (playerReviewingDiscardId != playerId)
             {
-                throw new InvalidOperationException("No tienes permiso para tomar esta carta.");
+                throw new BusinessLogicException(ServiceErrorType.InvalidCardAction);
             }
 
             if (mustDiscardToFinishTurn)
             {
-                throw new InvalidOperationException("Ya bajaste juego. Solo debes pagar una carta.");
+                throw new BusinessLogicException(ServiceErrorType.MustDiscardToFinish);
             }
 
             if (PlayerHands.TryGetValue(playerId, out List<Card> hand))
@@ -617,10 +618,10 @@ namespace ConquiánServidor.BusinessLogic.Game
                 var cardToDiscard = hand.FirstOrDefault(c => c.Id == cardIdToDiscard);
                 if (cardToDiscard == null)
                 {
-                    throw new ArgumentException(Lang.ErrorGameInvalidMove);
+                    throw new BusinessLogicException(ServiceErrorType.GameRuleViolation);
                 }
 
-                if (DiscardPile.Count == 0) throw new InvalidOperationException("Error crítico: Descarte vacío.");
+                if (DiscardPile.Count == 0) throw new BusinessLogicException(ServiceErrorType.EmptyDiscaard);
                 var cardToTake = DiscardPile.Last();
 
                 hand.Add(cardToTake);             

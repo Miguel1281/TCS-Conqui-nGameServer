@@ -97,7 +97,7 @@ namespace ConquiánServidor.BusinessLogic
             if (existingFriendship != null)
             {
                 Logger.Warn($"Friend request failed: Relationship already exists between Player ID {idPlayer} and Target ID {idFriend}");
-                throw new BusinessLogicException(ServiceErrorType.DuplicateRecord);
+                throw new BusinessLogicException(ServiceErrorType.ExistingRequest);
             }
 
             var newRequest = new Friendship

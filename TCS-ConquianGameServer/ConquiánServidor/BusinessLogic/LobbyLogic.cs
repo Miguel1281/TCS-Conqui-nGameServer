@@ -55,14 +55,14 @@ namespace ConquiánServidor.BusinessLogic
             if (session == null)
             {
                 Logger.Warn($"Lobby state lookup failed: Session not found for Room Code {roomCode}");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby == null)
             {
                 Logger.Warn($"Lobby state lookup failed: Database record not found for Room Code {roomCode}");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
 
             Logger.Info($"Lobby state retrieved successfully for Room Code: {roomCode}");
@@ -87,7 +87,7 @@ namespace ConquiánServidor.BusinessLogic
             if (hostPlayerEntity == null)
             {
                 Logger.Warn($"Lobby creation failed: Host Player ID {idHostPlayer} not found.");
-                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
+                throw new BusinessLogicException(ServiceErrorType.HostUserNotFound);
             }
 
             string newRoomCode;
@@ -131,7 +131,7 @@ namespace ConquiánServidor.BusinessLogic
             if (lobby == null)
             {
                 Logger.Warn($"Join lobby failed: Room Code {roomCode} not found.");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
 
             if (lobby.idStatusLobby != (int)LobbyStatus.Waiting)
@@ -207,7 +207,7 @@ namespace ConquiánServidor.BusinessLogic
             if (lobby == null)
             {
                 Logger.Warn($"Guest join failed: Room Code {roomCode} not found.");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
             if (lobby.idStatusLobby != (int)LobbyStatus.Waiting)
             {
@@ -274,7 +274,7 @@ namespace ConquiánServidor.BusinessLogic
             else
             {
                 Logger.Warn($"Gamemode change failed: Room Code {roomCode} not found.");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
         }
 
@@ -287,7 +287,7 @@ namespace ConquiánServidor.BusinessLogic
             if (session == null)
             {
                 Logger.Warn($"Start game failed: Session not found for Room Code {roomCode}");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
             if (!session.IdGamemode.HasValue)
             {
@@ -297,7 +297,7 @@ namespace ConquiánServidor.BusinessLogic
             if (session.Players.Count < MINIMUM_PLAYERS_TO_START)
             {
                 Logger.Warn($"Start game failed: Not enough players ({session.Players.Count}). Room Code: {roomCode}");
-                throw new BusinessLogicException(ServiceErrorType.OperationFailed);
+                throw new BusinessLogicException(ServiceErrorType.NotEnoughPlayers);
             }
 
             int gamemodeId = session.IdGamemode.Value;
@@ -327,18 +327,18 @@ namespace ConquiánServidor.BusinessLogic
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
             if (lobby == null)
             {
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
 
             if (lobby.idHostPlayer != idRequestingPlayer)
             {
                 Logger.Warn($"Kick failed: Player {idRequestingPlayer} is not the host of room {roomCode}.");
-                throw new BusinessLogicException(ServiceErrorType.OperationFailed);
+                throw new BusinessLogicException(ServiceErrorType.NotLobbyHost);
             }
 
             if (idRequestingPlayer == idPlayerToKick)
             {
-                throw new BusinessLogicException(ServiceErrorType.OperationFailed, "Cannot kick yourself.");
+                throw new BusinessLogicException(ServiceErrorType.NotKickYourSelf);
             }
 
             if (idPlayerToKick > 0)

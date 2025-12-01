@@ -172,7 +172,7 @@ namespace ConquiánServidor.BusinessLogic
             }
             catch (InvalidOperationException ex) when (ex.Message == "Banned")
             {
-                Logger.Warn($"Join lobby failed: Player {idPlayer} is banned from room {roomCode}.");
+                Logger.Warn(ex, $"Join lobby failed: Player {idPlayer} is banned from room {roomCode}.");
                 throw new BusinessLogicException(ServiceErrorType.OperationFailed, "Banned");
             }
         }

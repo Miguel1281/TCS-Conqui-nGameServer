@@ -19,6 +19,9 @@ namespace ConquiánServidor.Services
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly GameSessionManager gameSessionManager;
         private readonly ILifetimeScope lifetimeScope;
+
+        private const string INTERNAL_SERVER_ERROR_REASON = "Internal server error";
+
         public Game()
         {
             Bootstrapper.Init();
@@ -31,6 +34,7 @@ namespace ConquiánServidor.Services
             this.gameSessionManager = gameSessionManager;
             this.lifetimeScope = scope;
         }
+
         public async Task<GameStateDto> JoinGameAsync(string roomCode, int playerId)
         {
             try
@@ -61,7 +65,7 @@ namespace ConquiánServidor.Services
             {
                 Logger.Error(ex, $"Critical error in JoinGameAsync room {roomCode} player {playerId}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Server Error"));
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
             }
         }
 
@@ -88,7 +92,7 @@ namespace ConquiánServidor.Services
             {
                 Logger.Error(ex, $"Error in PlayCards for player {playerId} in room {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
             }
         }
 
@@ -119,7 +123,7 @@ namespace ConquiánServidor.Services
             try
             {
                 var game = this.gameSessionManager.GetGame(roomCode);
-                if(game == null)
+                if (game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
                 }
@@ -137,7 +141,7 @@ namespace ConquiánServidor.Services
             {
                 Logger.Error(ex, $"Error in DrawFromDeck for player {playerId} in room {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
             }
         }
 
@@ -145,7 +149,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = this.gameSessionManager.GetGame(roomCode); 
+                var game = this.gameSessionManager.GetGame(roomCode);
                 if (game == null)
                 {
                     throw new InvalidOperationException(Lang.ErrorGameNotFound);
@@ -164,7 +168,7 @@ namespace ConquiánServidor.Services
             {
                 Logger.Error(ex, $"Error in PassTurnAsync for player {playerId} in room {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
             }
         }
 
@@ -191,7 +195,7 @@ namespace ConquiánServidor.Services
             {
                 Logger.Error(ex, $"Error in DiscardCard for player {playerId} in room {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
             }
         }
 
@@ -279,7 +283,7 @@ namespace ConquiánServidor.Services
             {
                 Logger.Error(ex, $"Error in SwapDrawnCardAsync for player {playerId} in room {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
             }
         }
     }

@@ -1,12 +1,8 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
-using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories;
-using ConquiánServidor.Utilities.Email;
 using NLog;
 using System;
 using System.Data.Entity.Core;
@@ -106,7 +102,7 @@ namespace ConquiánServidor.Services
             }
         }
 
-        private bool HandleException(Exception ex, string context)
+        private static bool HandleException(Exception ex, string context)
         {
             if (ex is SqlException || ex is EntityException)
             {

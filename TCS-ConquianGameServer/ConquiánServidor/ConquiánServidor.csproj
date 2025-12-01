@@ -107,6 +107,8 @@
     <Compile Include="BusinessLogic\LobbySessionManager.cs" />
     <Compile Include="BusinessLogic\PresenceManager.cs" />
     <Compile Include="BusinessLogic\UserProfileLogic.cs" />
+    <Compile Include="BusinessLogic\Validation\GameValidationContexts.cs" />
+    <Compile Include="BusinessLogic\Validation\GameValidator.cs" />
     <Compile Include="BusinessLogic\Validation\SignUpServerValidator.cs" />
     <Compile Include="ConquiánDB\Abstractions\IFriendshipRepository.cs" />
     <Compile Include="ConquiánDB\Abstractions\ILobbyRepository.cs" />

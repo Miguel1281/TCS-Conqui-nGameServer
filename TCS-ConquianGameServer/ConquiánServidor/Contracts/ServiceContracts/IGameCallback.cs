@@ -2,6 +2,7 @@
 using System.ServiceModel;
 namespace ConquiánServidor.Contracts.ServiceContracts
 {
+    [ServiceContract]
     public interface IGameCallback
     {
         [OperationContract(IsOneWay = true)]

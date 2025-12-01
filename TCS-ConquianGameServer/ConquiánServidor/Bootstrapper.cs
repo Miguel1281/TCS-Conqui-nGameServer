@@ -6,6 +6,7 @@ using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
 using NLog;
+using System;
 
 namespace ConquiánServidor
 {
@@ -51,10 +52,11 @@ namespace ConquiánServidor
                     Container = builder.Build();
                     isInitialized = true;
                 }
-                catch (System.Exception ex)
+                catch (Exception ex)
                 {
                     logger.Fatal(ex, "Error initializing Bootstrapper.");
-                    throw;
+
+                    throw new InvalidOperationException("Critical failure: Could not initialize Dependency Injection Container.", ex);
                 }
             }
         }

@@ -56,12 +56,12 @@ namespace ConquiánServidor.Utilities.Email
             catch (SmtpException smtpEx)
             {
                 Logger.Error(smtpEx, "SMTP Protocol Error: Failed to send email.");
-                throw;
+                throw new InvalidOperationException("Failed to transmit email via SMTP provider.", smtpEx);
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, "General Error: Failed to send email.");
-                throw;
+                throw new InvalidOperationException("An unexpected error occurred while attempting to send email.", ex);
             }
         }
     }

@@ -28,6 +28,12 @@ namespace ConquiánServidor.Services
 
         private readonly LobbyLogic lobbyLogic;
 
+        private const string LOGIC_ERROR_MESSAGE = "Logic Error";
+        private const string INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
+        private const string INTERNAL_ERROR_REASON = "Internal Error";
+        private const string LOBBY_NOT_FOUND_MESSAGE = "Lobby not found in memory";
+        private const string LOBBY_NOT_FOUND_REASON = "Lobby Not Found";
+
         public Lobby()
         {
             Bootstrapper.Init();
@@ -53,14 +59,14 @@ namespace ConquiánServidor.Services
             }
             catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Error crítico en GetLobbyStateAsync {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -78,14 +84,14 @@ namespace ConquiánServidor.Services
             }
             catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Error creando lobby para host {idHostPlayer}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -97,8 +103,8 @@ namespace ConquiánServidor.Services
             {
                 if (!lobbyCallbacks.ContainsKey(roomCode))
                 {
-                    var faultData = new ServiceFaultDto(ServiceErrorType.NotFound, "Lobby not found in memory");
-                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Lobby Not Found"));
+                    var faultData = new ServiceFaultDto(ServiceErrorType.NotFound, LOBBY_NOT_FOUND_MESSAGE);
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(LOBBY_NOT_FOUND_REASON));
                 }
 
                 var playerDto = await lobbyLogic.JoinLobbyAsync(roomCode, idPlayer);
@@ -111,14 +117,14 @@ namespace ConquiánServidor.Services
             }
             catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Error en JoinAndSubscribeAsync room {roomCode} player {idPlayer}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -130,8 +136,8 @@ namespace ConquiánServidor.Services
             {
                 if (!lobbyCallbacks.ContainsKey(roomCode))
                 {
-                    var faultData = new ServiceFaultDto(ServiceErrorType.NotFound, "Lobby not found in memory");
-                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Lobby Not Found"));
+                    var faultData = new ServiceFaultDto(ServiceErrorType.NotFound, LOBBY_NOT_FOUND_MESSAGE);
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(LOBBY_NOT_FOUND_REASON));
                 }
 
                 var playerDto = await lobbyLogic.JoinLobbyAsGuestAsync(email, roomCode);
@@ -146,23 +152,22 @@ namespace ConquiánServidor.Services
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return playerDto;
             }
-
             catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Error crítico en JoinAndSubscribeAsGuestAsync room {roomCode} email {email}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
         public void LeaveAndUnsubscribe(string roomCode, int idPlayer)
         {
-           try
+            try
             {
                 bool isHost = lobbyLogic.LeaveLobbyAsync(roomCode, idPlayer).Result;
 
@@ -219,14 +224,14 @@ namespace ConquiánServidor.Services
             }
             catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, "Error seleccionando modo de juego");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -239,14 +244,14 @@ namespace ConquiánServidor.Services
             }
             catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Error al iniciar juego en lobby {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -288,18 +293,16 @@ namespace ConquiánServidor.Services
             {
                 await lobbyLogic.KickPlayerAsync(roomCode, idRequestingPlayer, idPlayerToKick);
 
-                if (lobbyCallbacks.TryGetValue(roomCode, out var roomCallbacks))
+                if (lobbyCallbacks.TryGetValue(roomCode, out var roomCallbacks) &&
+                    roomCallbacks.TryRemove(idPlayerToKick, out var kickedClientCallback))
                 {
-                    if (roomCallbacks.TryRemove(idPlayerToKick, out var kickedClientCallback))
+                    try
                     {
-                        try
-                        {
-                            kickedClientCallback.YouWereKicked();
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Warn(ex, "Could not notify kicked player (connection might be lost).");
-                        }
+                        kickedClientCallback.YouWereKicked();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn(ex, "Could not notify kicked player (connection might be lost).");
                     }
                 }
 
@@ -307,14 +310,14 @@ namespace ConquiánServidor.Services
             }
             catch (BusinessLogicException ex)
             {
-                var faultData = new ServiceFaultDto(ex.ErrorType, "Logic Error");
+                var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, $"Error kicking player {idPlayerToKick} from room {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
     }

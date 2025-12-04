@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using NLog;
@@ -17,7 +18,7 @@ namespace ConquiánServidor.Services
     public class FriendList : IFriendList
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private readonly FriendshipLogic friendshipLogic;
+        private readonly IFriendshipLogic friendshipLogic;
 
         private const string LOGIC_ERROR_MESSAGE = "Logic Error";
         private const string INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
@@ -29,10 +30,10 @@ namespace ConquiánServidor.Services
   public FriendList()
         {
             Bootstrapper.Init();
-            this.friendshipLogic = Bootstrapper.Container.Resolve<FriendshipLogic>();
+            this.friendshipLogic = Bootstrapper.Container.Resolve<IFriendshipLogic>();
         }
 
-        public FriendList(FriendshipLogic friendshipLogic)
+        public FriendList(IFriendshipLogic friendshipLogic)
         {
             this.friendshipLogic = friendshipLogic;
         }

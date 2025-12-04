@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
@@ -20,7 +21,7 @@ namespace ConquiánServidor.Services
     public class UserProfile : IUserProfile
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        private readonly UserProfileLogic userProfileLogic;
+        private readonly IUserProfileLogic userProfileLogic;
 
         private const string LOGIC_ERROR_MESSAGE = "Logic Error";
         private const string INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
@@ -34,10 +35,10 @@ namespace ConquiánServidor.Services
         public UserProfile()
         {
             Bootstrapper.Init();
-            this.userProfileLogic = Bootstrapper.Container.Resolve<UserProfileLogic>();
+            this.userProfileLogic = Bootstrapper.Container.Resolve<IUserProfileLogic>();
         }
 
-        public UserProfile(UserProfileLogic userProfileLogic)
+        public UserProfile(IUserProfileLogic userProfileLogic)
         {
             this.userProfileLogic = userProfileLogic;
         }

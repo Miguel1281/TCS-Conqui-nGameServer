@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Repositories; 
 using ConquiánServidor.DataAccess.Abstractions;
@@ -38,16 +39,16 @@ namespace ConquiánServidor
 
                     builder.RegisterType<EmailService>().As<IEmailService>();
 
-                    builder.RegisterType<AuthenticationLogic>().AsSelf();
-                    builder.RegisterType<LobbyLogic>().AsSelf();
-                    builder.RegisterType<UserProfileLogic>().AsSelf();
-                    builder.RegisterType<FriendshipLogic>().AsSelf();
+                    builder.RegisterType<AuthenticationLogic>().As<IAuthenticationLogic>(); 
+                    builder.RegisterType<LobbyLogic>().As<ILobbyLogic>();
+                    builder.RegisterType<UserProfileLogic>().As<IUserProfileLogic>();
+                    builder.RegisterType<FriendshipLogic>().As<IFriendshipLogic>();
 
-                    builder.RegisterType<PresenceManager>().AsSelf().SingleInstance();
-                    builder.RegisterType<InvitationManager>().AsSelf().SingleInstance();
-                    builder.RegisterType<GuestInvitationManager>().AsSelf().SingleInstance();
-                    builder.RegisterType<GameSessionManager>().AsSelf().SingleInstance();
-                    builder.RegisterType<LobbySessionManager>().AsSelf().SingleInstance();
+                    builder.RegisterType<PresenceManager>().As<IPresenceManager>().SingleInstance();
+                    builder.RegisterType<InvitationManager>().As<IInvitationManager>().SingleInstance();
+                    builder.RegisterType<LobbySessionManager>().As<ILobbySessionManager>().SingleInstance();
+                    builder.RegisterType<GameSessionManager>().As<IGameSessionManager>().SingleInstance();
+                    builder.RegisterType<GuestInvitationManager>().As<IGuestInvitationManager>().SingleInstance();
 
                     Container = builder.Build();
                     isInitialized = true;

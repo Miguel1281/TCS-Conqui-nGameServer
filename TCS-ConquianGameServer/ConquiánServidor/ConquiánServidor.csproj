@@ -100,6 +100,15 @@
     <Compile Include="BusinessLogic\Game\GameLogic.cs" />
     <Compile Include="BusinessLogic\GuestInvitationManager.cs" />
     <Compile Include="BusinessLogic\GuestInviteData.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IAuthenticationLogic.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IFriendshipLogic.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IGameSessionManager.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IGuestInvitationManager.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IInvitationManager.cs" />
+    <Compile Include="BusinessLogic\Interfaces\ILobbyLogic.cs" />
+    <Compile Include="BusinessLogic\Interfaces\ILobbySessionManager.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IPresenceManager.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IUserProfileLogic.cs" />
     <Compile Include="BusinessLogic\InvitationManager.cs" />
     <Compile Include="BusinessLogic\LobbyLogic.cs" />
     <Compile Include="BusinessLogic\LobbyOperationException.cs" />

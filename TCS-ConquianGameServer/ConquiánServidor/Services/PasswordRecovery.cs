@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
@@ -27,18 +28,18 @@ namespace ConquiánServidor.Services
             Recovery = 0,
             Change = 1
         }
-        private readonly AuthenticationLogic authenticationLogic;
+        private readonly IAuthenticationLogic authenticationLogic;
 
         private readonly IEmailService emailService;
 
         public PasswordRecovery()
         {
             Bootstrapper.Init();
-            this.authenticationLogic = Bootstrapper.Container.Resolve<AuthenticationLogic>();
+            this.authenticationLogic = Bootstrapper.Container.Resolve<IAuthenticationLogic>();
             this.emailService = Bootstrapper.Container.Resolve<IEmailService>();
         }
 
-        public PasswordRecovery(AuthenticationLogic authenticationLogic, IEmailService emailService)
+        public PasswordRecovery(IAuthenticationLogic authenticationLogic, IEmailService emailService)
         {
             this.authenticationLogic = authenticationLogic;
             this.emailService = emailService;

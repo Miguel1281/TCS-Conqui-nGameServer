@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.Properties.Langs;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class InvitationManager
+    public class InvitationManager:IInvitationManager 
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 

@@ -1,18 +1,15 @@
 ﻿using Autofac;
-using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class PresenceManager
+    public class PresenceManager:IPresenceManager
     {
         private readonly Dictionary<int, IPresenceCallback> onlineSubscribers = new Dictionary<int, IPresenceCallback>();
         private readonly object lockObj = new object();
@@ -54,7 +51,7 @@ namespace ConquiánServidor.BusinessLogic
             {
                 using (var scope = this.lifetimeScope.BeginLifetimeScope())
                 {
-                    var friendshipLogic = scope.Resolve<FriendshipLogic>();
+                    var friendshipLogic = scope.Resolve<IFriendshipLogic>();
                     friends = await friendshipLogic.GetFriendsAsync(changedPlayerId);
                 }
             }

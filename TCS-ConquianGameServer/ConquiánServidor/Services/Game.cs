@@ -2,6 +2,7 @@
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Game;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
@@ -17,7 +18,7 @@ namespace ConquiánServidor.Services
     public class Game : IGame
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        private readonly GameSessionManager gameSessionManager;
+        private readonly IGameSessionManager gameSessionManager;
         private readonly ILifetimeScope lifetimeScope;
 
         private const string INTERNAL_SERVER_ERROR_REASON = "Internal server error";
@@ -25,11 +26,11 @@ namespace ConquiánServidor.Services
         public Game()
         {
             Bootstrapper.Init();
-            this.gameSessionManager = Bootstrapper.Container.Resolve<GameSessionManager>();
+            this.gameSessionManager = Bootstrapper.Container.Resolve<IGameSessionManager>();
             this.lifetimeScope = Bootstrapper.Container.Resolve<ILifetimeScope>();
         }
 
-        public Game(GameSessionManager gameSessionManager, ILifetimeScope scope)
+        public Game(IGameSessionManager gameSessionManager, ILifetimeScope scope)
         {
             this.gameSessionManager = gameSessionManager;
             this.lifetimeScope = scope;

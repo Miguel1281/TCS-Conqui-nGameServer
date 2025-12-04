@@ -1,10 +1,11 @@
-﻿using ConquiánServidor.Services;
+﻿using ConquiánServidor.BusinessLogic.Interfaces;
+using ConquiánServidor.Services;
 using System;
 using System.Collections.Concurrent;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class GuestInvitationManager
+    public class GuestInvitationManager:IGuestInvitationManager
     {
         private readonly ConcurrentDictionary<string, GuestInviteData> invitations;
 

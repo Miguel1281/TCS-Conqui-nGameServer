@@ -1,5 +1,5 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
-using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class UserProfileLogic
+    public class UserProfileLogic:IUserProfileLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IPlayerRepository playerRepository;

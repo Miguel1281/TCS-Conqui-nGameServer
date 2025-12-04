@@ -3,10 +3,11 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
 using System;
+using ConquiánServidor.BusinessLogic.Interfaces;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class LobbySessionManager
+    public class LobbySessionManager:ILobbySessionManager 
     {
         private readonly ConcurrentDictionary<string, LobbySession> activeLobbies;
         private readonly ConcurrentStack<int> availableGuestIds;

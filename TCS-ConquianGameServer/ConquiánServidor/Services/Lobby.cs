@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
@@ -26,7 +27,7 @@ namespace ConquiánServidor.Services
         private static readonly ConcurrentDictionary<string, List<MessageDto>> chatHistories =
             new ConcurrentDictionary<string, List<MessageDto>>();
 
-        private readonly LobbyLogic lobbyLogic;
+        private readonly ILobbyLogic lobbyLogic;
 
         private const string LOGIC_ERROR_MESSAGE = "Logic Error";
         private const string INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
@@ -37,10 +38,9 @@ namespace ConquiánServidor.Services
         public Lobby()
         {
             Bootstrapper.Init();
-            this.lobbyLogic = Bootstrapper.Container.Resolve<LobbyLogic>();
-        }
+            this.lobbyLogic = Bootstrapper.Container.Resolve<ILobbyLogic>();        }
 
-        public Lobby(LobbyLogic lobbyLogic)
+        public Lobby(ILobbyLogic lobbyLogic)
         {
             this.lobbyLogic = lobbyLogic;
         }

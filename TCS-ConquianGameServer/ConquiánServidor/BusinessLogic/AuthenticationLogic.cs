@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.BusinessLogic.Validation;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class AuthenticationLogic
+    public class AuthenticationLogic:IAuthenticationLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -23,9 +24,9 @@ namespace ConquiánServidor.BusinessLogic
 
         private readonly IPlayerRepository playerRepository;
         private readonly IEmailService emailService;
-        private readonly PresenceManager presenceManager;
+        private readonly IPresenceManager presenceManager;
 
-        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService, PresenceManager presenceManager)
+        public AuthenticationLogic(IPlayerRepository playerRepository, IEmailService emailService, IPresenceManager presenceManager)
         {
             this.playerRepository = playerRepository;
             this.emailService = emailService;

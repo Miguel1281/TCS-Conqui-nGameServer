@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts;
 using ConquiánServidor.Contracts.DataContracts;
@@ -12,14 +13,14 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class FriendshipLogic
+    public class FriendshipLogic:IFriendshipLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IFriendshipRepository friendshipRepository;
         private readonly IPlayerRepository playerRepository;
-        private readonly PresenceManager presenceManager;
+        private readonly IPresenceManager presenceManager;
 
-        public FriendshipLogic(IFriendshipRepository friendshipRepository, IPlayerRepository playerRepository, PresenceManager presenceManager)
+        public FriendshipLogic(IFriendshipRepository friendshipRepository, IPlayerRepository playerRepository, IPresenceManager presenceManager)
         {
             this.friendshipRepository = friendshipRepository;
             this.playerRepository = playerRepository;

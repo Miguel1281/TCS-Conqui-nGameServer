@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.Properties.Langs;
@@ -14,15 +15,15 @@ namespace ConquiánServidor.Services
     public class Invitation : IInvitationService
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
-        private readonly InvitationManager invitationManager;
+        private readonly IInvitationManager invitationManager;
 
         public Invitation()
         {
             Bootstrapper.Init();
-            this.invitationManager = Bootstrapper.Container.Resolve<InvitationManager>();
+            this.invitationManager = Bootstrapper.Container.Resolve<IInvitationManager>();
         }
 
-        public Invitation(InvitationManager invitationManager)
+        public Invitation(IInvitationManager invitationManager)
         {
             this.invitationManager = invitationManager;
         }

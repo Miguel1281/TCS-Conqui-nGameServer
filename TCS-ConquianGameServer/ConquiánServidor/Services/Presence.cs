@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.ServiceContracts;
 using System.ServiceModel;
 
@@ -8,12 +9,12 @@ namespace ConquiánServidor.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple)]
     public class Presence : IPresence
     {
-        private readonly PresenceManager presenceManager;
+        private readonly IPresenceManager presenceManager;
 
         public Presence()
         {
             Bootstrapper.Init();
-            this.presenceManager = Bootstrapper.Container.Resolve<PresenceManager>();
+            this.presenceManager = Bootstrapper.Container.Resolve<IPresenceManager>();
         }
 
         public Presence(PresenceManager presenceManager)

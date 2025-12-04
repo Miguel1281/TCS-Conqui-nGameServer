@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
@@ -20,15 +21,15 @@ namespace ConquiánServidor.Services
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private readonly AuthenticationLogic authenticationLogic;
+        private readonly IAuthenticationLogic authenticationLogic;
 
         public Login()
         {
             Bootstrapper.Init();
-            this.authenticationLogic = Bootstrapper.Container.Resolve<AuthenticationLogic>();
+            this.authenticationLogic = Bootstrapper.Container.Resolve<IAuthenticationLogic>();
         }
 
-        public Login(AuthenticationLogic authenticationLogic)
+        public Login(IAuthenticationLogic authenticationLogic)
         {
             this.authenticationLogic = authenticationLogic;
         }

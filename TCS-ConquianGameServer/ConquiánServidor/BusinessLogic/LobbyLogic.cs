@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
@@ -14,7 +15,7 @@ using static ConquiánServidor.BusinessLogic.GuestInvitationManager;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class LobbyLogic
+    public class LobbyLogic:ILobbyLogic
     {
         private const int ROOM_CODE_LENGTH = 5;
         private const string ROOM_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -24,23 +25,20 @@ namespace ConquiánServidor.BusinessLogic
 
         private readonly ILobbyRepository lobbyRepository;
         private readonly IPlayerRepository playerRepository;
-        private readonly LobbySessionManager sessionManager;
-        private readonly GameSessionManager gameSessionManager;
-        private readonly GuestInvitationManager guestInvitationManager;
+        private readonly ILobbySessionManager sessionManager;
+        private readonly IGameSessionManager gameSessionManager;
+        private readonly IGuestInvitationManager guestInvitationManager;
         private static readonly RandomNumberGenerator randomGenerator = RandomNumberGenerator.Create();
-        private readonly ConquiánDBEntities dbContext;
 
         public LobbyLogic(
                     ILobbyRepository lobbyRepository,
                     IPlayerRepository playerRepository,
-                    ConquiánDBEntities dbContext,
-                    LobbySessionManager sessionManager,
-                    GameSessionManager gameSessionManager,
-                    GuestInvitationManager guestInvitationManager)
+                    ILobbySessionManager sessionManager,
+                    IGameSessionManager gameSessionManager,
+                    IGuestInvitationManager guestInvitationManager)
         {
             this.lobbyRepository = lobbyRepository;
             this.playerRepository = playerRepository;
-            this.dbContext = dbContext;
 
             this.sessionManager = sessionManager;
             this.gameSessionManager = gameSessionManager;
@@ -195,7 +193,8 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.ValidationFailed);
             }
 
-            bool isRegisteredPlayer = await dbContext.Player.AnyAsync(p => p.email == email);
+            var existingPlayer = await playerRepository.GetPlayerByEmailAsync(email);
+            bool isRegisteredPlayer = existingPlayer != null;
 
             if (isRegisteredPlayer)
             {

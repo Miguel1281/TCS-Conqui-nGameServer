@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.BusinessLogic.Game;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using NLog;
 using System.Collections.Concurrent;
@@ -6,7 +7,7 @@ using System.Collections.Generic;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class GameSessionManager
+    public class GameSessionManager:IGameSessionManager
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 

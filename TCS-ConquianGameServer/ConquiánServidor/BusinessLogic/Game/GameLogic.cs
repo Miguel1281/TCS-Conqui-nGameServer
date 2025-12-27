@@ -2,7 +2,6 @@
 using ConquiánServidor.BusinessLogic.Validation;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.Properties.Langs;
 using NLog;
 using System;
 using System.Collections.Concurrent;
@@ -417,12 +416,20 @@ namespace ConquiánServidor.BusinessLogic.Game
                 loserId = Players.FirstOrDefault(p => p.idPlayer != winnerId)?.idPlayer ?? -1;
             }
 
+            var p1 = Players.Count > 0 ? Players[PLAYER_1_INDEX] : null;
+            var p2 = Players.Count > 1 ? Players[PLAYER_2_INDEX] : null;
+
             var result = new GameResultDto
             {
                 WinnerId = winnerId,
                 LoserId = loserId,
                 IsDraw = isDraw,
-                PointsWon = isDraw ? POINTS_FOR_DRAW : POINTS_FOR_WIN
+                PointsWon = isDraw ? POINTS_FOR_DRAW : POINTS_FOR_WIN,
+                GamemodeId = GamemodeId,
+                Player1Id = p1?.idPlayer ?? -1,
+                Player1Name = p1?.nickname ?? "Unknown",
+                Player2Id = p2?.idPlayer ?? -1,
+                Player2Name = p2?.nickname ?? "Unknown"
             };
 
             OnGameFinished?.Invoke(result);

@@ -2,6 +2,7 @@
 using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
+using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.ConquiánDB.Repositories; 
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
@@ -49,6 +50,7 @@ namespace ConquiánServidor
                     builder.RegisterType<LobbySessionManager>().As<ILobbySessionManager>().SingleInstance();
                     builder.RegisterType<GameSessionManager>().As<IGameSessionManager>().SingleInstance();
                     builder.RegisterType<GuestInvitationManager>().As<IGuestInvitationManager>().SingleInstance();
+                    builder.RegisterType<GameRepository>().As<IGameRepository>();
 
                     Container = builder.Build();
                     isInitialized = true;

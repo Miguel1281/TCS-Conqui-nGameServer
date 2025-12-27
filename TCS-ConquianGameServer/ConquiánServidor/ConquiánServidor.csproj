@@ -120,6 +120,7 @@
     <Compile Include="BusinessLogic\Validation\GameValidator.cs" />
     <Compile Include="BusinessLogic\Validation\SignUpServerValidator.cs" />
     <Compile Include="ConquiánDB\Abstractions\IFriendshipRepository.cs" />
+    <Compile Include="ConquiánDB\Abstractions\IGameRepository.cs" />
     <Compile Include="ConquiánDB\Abstractions\ILobbyRepository.cs" />
     <Compile Include="ConquiánDB\Abstractions\IPlayerRepository.cs" />
     <Compile Include="ConquiánDB\Abstractions\ISocialRepository.cs" />
@@ -154,6 +155,7 @@
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
     <Compile Include="ConquiánDB\Repositories\FriendshipRepository.cs" />
+    <Compile Include="ConquiánDB\Repositories\GameRepository.cs" />
     <Compile Include="ConquiánDB\Repositories\LobbyRepository.cs" />
     <Compile Include="ConquiánDB\Repositories\PlayerRepository.cs" />
     <Compile Include="ConquiánDB\Repositories\SocialRepository.cs" />

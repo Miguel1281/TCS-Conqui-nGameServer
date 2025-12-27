@@ -1,8 +1,8 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Game;
 using ConquiánServidor.BusinessLogic.Interfaces;
+using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
@@ -97,25 +97,75 @@ namespace ConquiánServidor.Services
             }
         }
 
-        private void HandleGameFinished(GameResultDto result)
+        private async void HandleGameFinished(GameResultDto result)
         {
-            if (!result.IsDraw && result.WinnerId > 0 && result.PointsWon > 0)
+            using (var scope = this.lifetimeScope.BeginLifetimeScope())
             {
-                try
+                if (!result.IsDraw && result.WinnerId > 0 && result.PointsWon > 0)
                 {
-                    using (var scope = this.lifetimeScope.BeginLifetimeScope())
+                    try
                     {
                         var playerRepository = scope.Resolve<IPlayerRepository>();
-                        var task = playerRepository.UpdatePlayerPointsAsync(result.WinnerId, result.PointsWon);
-                        task.Wait();
+                        await playerRepository.UpdatePlayerPointsAsync(result.WinnerId, result.PointsWon);
                     }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, "Error updating points in DB (Player might be Guest or not found)");
+                    }
+                }
 
-                    Logger.Info($"Points updated for winner {result.WinnerId}");
+                try
+                {
+                    var gameRepository = scope.Resolve<IGameRepository>();
+                    var dateString = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+
+                    string p1Result = result.IsDraw ? "Empate" : (result.WinnerId == result.Player1Id ? "Victoria" : "Derrota");
+                    string p1Score = result.IsDraw ? "0" : (result.WinnerId == result.Player1Id ? result.PointsWon.ToString() : "0");
+
+                    string p2Result = result.IsDraw ? "Empate" : (result.WinnerId == result.Player2Id ? "Victoria" : "Derrota");
+                    string p2Score = result.IsDraw ? "0" : (result.WinnerId == result.Player2Id ? result.PointsWon.ToString() : "0");
+
+
+                    await SavePlayerHistorySafeAsync(gameRepository, new ConquiánServidor.ConquiánDB.Game
+                    {
+                        idPlayer = result.Player1Id,
+                        rival = result.Player2Name,
+                        gameTime = dateString,
+                        result = p1Result,
+                        score = p1Score,
+                        idGamemode = result.GamemodeId
+                    });
+
+                    await SavePlayerHistorySafeAsync(gameRepository, new ConquiánServidor.ConquiánDB.Game
+                    {
+                        idPlayer = result.Player2Id,
+                        rival = result.Player1Name,
+                        gameTime = dateString,
+                        result = p2Result,
+                        score = p2Score,
+                        idGamemode = result.GamemodeId
+                    });
+
+                    Logger.Info($"History saved for players {result.Player1Id} and {result.Player2Id}");
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, "Error updating points in DB");
+                    Logger.Error(ex, "Error saving history logic.");
                 }
+            }
+        }
+
+        private async Task SavePlayerHistorySafeAsync(IGameRepository repo, ConquiánServidor.ConquiánDB.Game gameRecord)
+        {
+            try
+            {
+                if (gameRecord.idPlayer <= 0) return;
+
+                await repo.AddGameAsync(gameRecord);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn($"Could not save game history for player {gameRecord.idPlayer}. Reason: {ex.Message}");
             }
         }
 

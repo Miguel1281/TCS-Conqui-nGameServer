@@ -4,12 +4,12 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-    <Schema xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl" Alias="Self" Namespace="ConquiánDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012">
+    <Schema Namespace="ConquiánDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Friendship">
           <Key>
             <PropertyRef Name="idFriendship" />
           </Key>
-          <Property Name="idFriendship" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
+          <Property Name="idFriendship" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="idOrigen" Type="int" />
           <Property Name="idDestino" Type="int" />
           <Property Name="idStatus" Type="int" />
@@ -18,11 +18,11 @@
           <Key>
             <PropertyRef Name="idGame" />
           </Key>
-          <Property Name="idGame" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="rival" MaxLength="15" Type="varchar" />
-          <Property Name="gameTime" MaxLength="5" Type="varchar" />
-          <Property Name="result" MaxLength="10" Type="varchar" />
-          <Property Name="score" MaxLength="4" Type="varchar" />
+          <Property Name="idGame" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="rival" Type="varchar" MaxLength="15" />
+          <Property Name="gameTime" Type="varchar" MaxLength="20" />
+          <Property Name="result" Type="varchar" MaxLength="20" />
+          <Property Name="score" Type="varchar" MaxLength="4" />
           <Property Name="idPlayer" Type="int" />
           <Property Name="idGamemode" Type="int" />
         </EntityType>
@@ -30,34 +30,34 @@
           <Key>
             <PropertyRef Name="idGamemode" />
           </Key>
-          <Property Name="idGamemode" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="gamemode" MaxLength="45" Type="varchar" />
+          <Property Name="idGamemode" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="gamemode" Type="varchar" MaxLength="45" />
         </EntityType>
         <EntityType Name="Lobby">
           <Key>
             <PropertyRef Name="idLobby" />
           </Key>
-          <Property Name="idLobby" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="roomCode" Nullable="false" MaxLength="10" Type="varchar" />
-          <Property Name="idHostPlayer" Nullable="false" Type="int" />
-          <Property Name="idStatusLobby" Nullable="false" Type="int" />
-          <Property Name="creationDate" Nullable="false" Type="datetime" />
+          <Property Name="idLobby" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="roomCode" Type="varchar" MaxLength="10" Nullable="false" />
+          <Property Name="idHostPlayer" Type="int" Nullable="false" />
+          <Property Name="idStatusLobby" Type="int" Nullable="false" />
+          <Property Name="creationDate" Type="datetime" Nullable="false" />
           <Property Name="idGamemode" Type="int" />
         </EntityType>
         <EntityType Name="Player">
           <Key>
             <PropertyRef Name="idPlayer" />
           </Key>
-          <Property Name="idPlayer" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="name" MaxLength="25" Type="varchar" />
-          <Property Name="lastName" MaxLength="50" Type="varchar" />
-          <Property Name="nickname" MaxLength="15" Type="varchar" />
-          <Property Name="email" MaxLength="45" Type="varchar" />
-          <Property Name="password" MaxLength="64" Type="varchar" />
-          <Property Name="level" MaxLength="2" Type="varchar" />
-          <Property Name="currentPoints" Nullable="false" Type="int" />
-          <Property Name="pathPhoto" MaxLength="255" Type="varchar" />
-          <Property Name="verificationCode" MaxLength="6" Type="varchar" />
+          <Property Name="idPlayer" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="name" Type="varchar" MaxLength="25" />
+          <Property Name="lastName" Type="varchar" MaxLength="50" />
+          <Property Name="nickname" Type="varchar" MaxLength="15" />
+          <Property Name="email" Type="varchar" MaxLength="45" />
+          <Property Name="password" Type="varchar" MaxLength="64" />
+          <Property Name="level" Type="varchar" MaxLength="2" />
+          <Property Name="currentPoints" Type="int" Nullable="false" />
+          <Property Name="pathPhoto" Type="varchar" MaxLength="255" />
+          <Property Name="verificationCode" Type="varchar" MaxLength="6" />
           <Property Name="codeExpiryDate" Type="datetime" />
           <Property Name="IdStatus" Type="int" />
         </EntityType>
@@ -65,8 +65,8 @@
           <Key>
             <PropertyRef Name="idSocial" />
           </Key>
-          <Property Name="idSocial" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="userLink" MaxLength="25" Type="varchar" />
+          <Property Name="idSocial" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="userLink" Type="varchar" MaxLength="25" />
           <Property Name="idPlayer" Type="int" />
           <Property Name="idSocialType" Type="int" />
         </EntityType>
@@ -74,33 +74,33 @@
           <Key>
             <PropertyRef Name="idSocialType" />
           </Key>
-          <Property Name="idSocialType" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="type" MaxLength="30" Type="varchar" />
+          <Property Name="idSocialType" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="type" Type="varchar" MaxLength="30" />
         </EntityType>
         <EntityType Name="Status">
           <Key>
             <PropertyRef Name="idStatus" />
           </Key>
-          <Property Name="idStatus" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="Status" MaxLength="10" Type="varchar" />
+          <Property Name="idStatus" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Status" Type="varchar" MaxLength="10" />
         </EntityType>
         <EntityType Name="StatusLobby">
           <Key>
             <PropertyRef Name="idStatusLobby" />
           </Key>
-          <Property Name="idStatusLobby" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="statusName" Nullable="false" MaxLength="20" Type="varchar" />
+          <Property Name="idStatusLobby" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="statusName" Type="varchar" MaxLength="20" Nullable="false" />
         </EntityType>
         <EntityType Name="StatusType">
           <Key>
             <PropertyRef Name="Id" />
           </Key>
-          <Property Name="Id" Nullable="false" StoreGeneratedPattern="Identity" Type="int" />
-          <Property Name="Name" Nullable="false" MaxLength="50" Type="nvarchar" />
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Name" Type="nvarchar" MaxLength="50" Nullable="false" />
         </EntityType>
         <Association Name="FK_Friendship_Destino">
-          <End Type="Self.Player" Multiplicity="0..1" Role="Player" />
-          <End Type="Self.Friendship" Multiplicity="*" Role="Friendship" />
+          <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
+          <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Player">
               <PropertyRef Name="idPlayer" />
@@ -111,8 +111,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Friendship_Origen">
-          <End Type="Self.Player" Multiplicity="0..1" Role="Player" />
-          <End Type="Self.Friendship" Multiplicity="*" Role="Friendship" />
+          <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
+          <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Player">
               <PropertyRef Name="idPlayer" />
@@ -123,8 +123,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Friendship_Status">
-          <End Type="Self.Status" Multiplicity="0..1" Role="Status" />
-          <End Type="Self.Friendship" Multiplicity="*" Role="Friendship" />
+          <End Role="Status" Type="Self.Status" Multiplicity="0..1" />
+          <End Role="Friendship" Type="Self.Friendship" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Status">
               <PropertyRef Name="idStatus" />
@@ -135,8 +135,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Game_Gamemode">
-          <End Type="Self.Gamemode" Multiplicity="0..1" Role="Gamemode" />
-          <End Type="Self.Game" Multiplicity="*" Role="Game" />
+          <End Role="Gamemode" Type="Self.Gamemode" Multiplicity="0..1" />
+          <End Role="Game" Type="Self.Game" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Gamemode">
               <PropertyRef Name="idGamemode" />
@@ -147,8 +147,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Game_Player">
-          <End Type="Self.Player" Multiplicity="0..1" Role="Player" />
-          <End Type="Self.Game" Multiplicity="*" Role="Game" />
+          <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
+          <End Role="Game" Type="Self.Game" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Player">
               <PropertyRef Name="idPlayer" />
@@ -159,8 +159,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Lobby_Gamemode">
-          <End Type="Self.Gamemode" Multiplicity="0..1" Role="Gamemode" />
-          <End Type="Self.Lobby" Multiplicity="*" Role="Lobby" />
+          <End Role="Gamemode" Type="Self.Gamemode" Multiplicity="0..1" />
+          <End Role="Lobby" Type="Self.Lobby" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Gamemode">
               <PropertyRef Name="idGamemode" />
@@ -171,8 +171,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Lobby_HostPlayer">
-          <End Type="Self.Player" Multiplicity="1" Role="Player" />
-          <End Type="Self.Lobby" Multiplicity="*" Role="Lobby" />
+          <End Role="Player" Type="Self.Player" Multiplicity="1" />
+          <End Role="Lobby" Type="Self.Lobby" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Player">
               <PropertyRef Name="idPlayer" />
@@ -183,8 +183,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Lobby_Status">
-          <End Type="Self.StatusLobby" Multiplicity="1" Role="StatusLobby" />
-          <End Type="Self.Lobby" Multiplicity="*" Role="Lobby" />
+          <End Role="StatusLobby" Type="Self.StatusLobby" Multiplicity="1" />
+          <End Role="Lobby" Type="Self.Lobby" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="StatusLobby">
               <PropertyRef Name="idStatusLobby" />
@@ -195,8 +195,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Player_StatusType">
-          <End Type="Self.StatusType" Multiplicity="0..1" Role="StatusType" />
-          <End Type="Self.Player" Multiplicity="*" Role="Player" />
+          <End Role="StatusType" Type="Self.StatusType" Multiplicity="0..1" />
+          <End Role="Player" Type="Self.Player" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="StatusType">
               <PropertyRef Name="Id" />
@@ -207,8 +207,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Social_Player">
-          <End Type="Self.Player" Multiplicity="0..1" Role="Player" />
-          <End Type="Self.Social" Multiplicity="*" Role="Social" />
+          <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
+          <End Role="Social" Type="Self.Social" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Player">
               <PropertyRef Name="idPlayer" />
@@ -219,8 +219,8 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Social_SocialType">
-          <End Type="Self.SocialType" Multiplicity="0..1" Role="SocialType" />
-          <End Type="Self.Social" Multiplicity="*" Role="Social" />
+          <End Role="SocialType" Type="Self.SocialType" Multiplicity="0..1" />
+          <End Role="Social" Type="Self.Social" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="SocialType">
               <PropertyRef Name="idSocialType" />
@@ -242,48 +242,48 @@
           <EntitySet Name="StatusLobby" EntityType="Self.StatusLobby" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="StatusType" EntityType="Self.StatusType" Schema="dbo" store:Type="Tables" />
           <AssociationSet Name="FK_Friendship_Destino" Association="Self.FK_Friendship_Destino">
-            <End EntitySet="Player" Role="Player" />
-            <End EntitySet="Friendship" Role="Friendship" />
+            <End Role="Player" EntitySet="Player" />
+            <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
           <AssociationSet Name="FK_Friendship_Origen" Association="Self.FK_Friendship_Origen">
-            <End EntitySet="Player" Role="Player" />
-            <End EntitySet="Friendship" Role="Friendship" />
+            <End Role="Player" EntitySet="Player" />
+            <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
           <AssociationSet Name="FK_Friendship_Status" Association="Self.FK_Friendship_Status">
-            <End EntitySet="Status" Role="Status" />
-            <End EntitySet="Friendship" Role="Friendship" />
+            <End Role="Status" EntitySet="Status" />
+            <End Role="Friendship" EntitySet="Friendship" />
           </AssociationSet>
           <AssociationSet Name="FK_Game_Gamemode" Association="Self.FK_Game_Gamemode">
-            <End EntitySet="Gamemode" Role="Gamemode" />
-            <End EntitySet="Game" Role="Game" />
+            <End Role="Gamemode" EntitySet="Gamemode" />
+            <End Role="Game" EntitySet="Game" />
           </AssociationSet>
           <AssociationSet Name="FK_Game_Player" Association="Self.FK_Game_Player">
-            <End EntitySet="Player" Role="Player" />
-            <End EntitySet="Game" Role="Game" />
+            <End Role="Player" EntitySet="Player" />
+            <End Role="Game" EntitySet="Game" />
           </AssociationSet>
           <AssociationSet Name="FK_Lobby_Gamemode" Association="Self.FK_Lobby_Gamemode">
-            <End EntitySet="Gamemode" Role="Gamemode" />
-            <End EntitySet="Lobby" Role="Lobby" />
+            <End Role="Gamemode" EntitySet="Gamemode" />
+            <End Role="Lobby" EntitySet="Lobby" />
           </AssociationSet>
           <AssociationSet Name="FK_Lobby_HostPlayer" Association="Self.FK_Lobby_HostPlayer">
-            <End EntitySet="Player" Role="Player" />
-            <End EntitySet="Lobby" Role="Lobby" />
+            <End Role="Player" EntitySet="Player" />
+            <End Role="Lobby" EntitySet="Lobby" />
           </AssociationSet>
           <AssociationSet Name="FK_Lobby_Status" Association="Self.FK_Lobby_Status">
-            <End EntitySet="StatusLobby" Role="StatusLobby" />
-            <End EntitySet="Lobby" Role="Lobby" />
+            <End Role="StatusLobby" EntitySet="StatusLobby" />
+            <End Role="Lobby" EntitySet="Lobby" />
           </AssociationSet>
           <AssociationSet Name="FK_Player_StatusType" Association="Self.FK_Player_StatusType">
-            <End EntitySet="StatusType" Role="StatusType" />
-            <End EntitySet="Player" Role="Player" />
+            <End Role="StatusType" EntitySet="StatusType" />
+            <End Role="Player" EntitySet="Player" />
           </AssociationSet>
           <AssociationSet Name="FK_Social_Player" Association="Self.FK_Social_Player">
-            <End EntitySet="Player" Role="Player" />
-            <End EntitySet="Social" Role="Social" />
+            <End Role="Player" EntitySet="Player" />
+            <End Role="Social" EntitySet="Social" />
           </AssociationSet>
           <AssociationSet Name="FK_Social_SocialType" Association="Self.FK_Social_SocialType">
-            <End EntitySet="SocialType" Role="SocialType" />
-            <End EntitySet="Social" Role="Social" />
+            <End Role="SocialType" EntitySet="SocialType" />
+            <End Role="Social" EntitySet="Social" />
           </AssociationSet>
         </EntityContainer>
       </Schema></edmx:StorageModels>
@@ -308,8 +308,8 @@
           </Key>
           <Property Name="idGame" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="rival" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
-          <Property Name="gameTime" Type="String" MaxLength="5" FixedLength="false" Unicode="false" />
-          <Property Name="result" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
+          <Property Name="gameTime" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
+          <Property Name="result" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
           <Property Name="score" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
           <Property Name="idPlayer" Type="Int32" />
           <Property Name="idGamemode" Type="Int32" />

@@ -16,5 +16,20 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public bool IsDraw { get; set; }
+
+        [DataMember]
+        public int GamemodeId { get; set; }
+
+        [DataMember]
+        public int Player1Id { get; set; }
+
+        [DataMember]
+        public string Player1Name { get; set; }
+
+        [DataMember]
+        public int Player2Id { get; set; }
+
+        [DataMember]
+        public string Player2Name { get; set; }
     }
 }

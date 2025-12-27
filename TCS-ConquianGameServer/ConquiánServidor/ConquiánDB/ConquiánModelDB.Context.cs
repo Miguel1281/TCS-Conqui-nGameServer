@@ -32,7 +32,6 @@ namespace ConquiánServidor.ConquiánDB
             return envConnection;
         }
 
-
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             throw new UnintentionalCodeFirstException();

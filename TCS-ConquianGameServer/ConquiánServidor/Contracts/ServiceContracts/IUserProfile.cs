@@ -30,5 +30,9 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
         Task UpdateProfilePictureAsync(int idPlayer, string newPath);
+
+        [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
+        Task<List<GameHistoryDto>> GetPlayerGameHistoryAsync(int idPlayer);
     }
 }

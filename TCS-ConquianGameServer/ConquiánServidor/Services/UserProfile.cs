@@ -185,5 +185,30 @@ namespace ConquiánServidor.Services
                 throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
+
+        public async Task<List<GameHistoryDto>> GetPlayerGameHistoryAsync(int idPlayer)
+        {
+            try
+            {
+                return await userProfileLogic.GetPlayerGameHistoryAsync(idPlayer);
+            }
+            catch (BusinessLogicException ex)
+            {
+                var fault = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
+            }
+            catch (Exception ex) when (ex is SqlException || ex is EntityException)
+            {
+                Logger.Error(ex, "Database error getting player game history");
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_UNAVAILABLE_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_ERROR_REASON));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Unexpected error getting player game history");
+                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_ERROR_REASON));
+            }
+        }
     }
 }

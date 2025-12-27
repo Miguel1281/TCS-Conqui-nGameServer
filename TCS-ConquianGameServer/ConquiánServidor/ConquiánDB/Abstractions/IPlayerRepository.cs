@@ -1,4 +1,5 @@
 ﻿using ConquiánServidor.ConquiánDB;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.DataAccess.Abstractions
@@ -14,5 +15,6 @@ namespace ConquiánServidor.DataAccess.Abstractions
         Task<int> SaveChangesAsync();
         Task<bool> DeletePlayerAsync(Player playerToDelete);
         Task UpdatePlayerPointsAsync(int playerId, int pointsToAdd);
+        Task<List<Game>> GetPlayerGamesAsync(int idPlayer);
     }
 }

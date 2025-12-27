@@ -1,6 +1,7 @@
 ﻿using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.DataAccess.Abstractions;
 using System;
+using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
@@ -74,6 +75,15 @@ namespace ConquiánServidor.DataAccess.Repositories
 
                 await context.SaveChangesAsync();
             }
+        }
+
+        public async Task<List<Game>> GetPlayerGamesAsync(int idPlayer)
+        {
+            return await context.Game
+                .Include("Gamemode")
+                .Where(g => g.idPlayer == idPlayer)
+                .OrderByDescending(g => g.idGame)
+                .ToListAsync();
         }
     }
 

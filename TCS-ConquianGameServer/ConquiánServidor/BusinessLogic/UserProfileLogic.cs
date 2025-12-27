@@ -156,5 +156,30 @@ namespace ConquiánServidor.BusinessLogic
 
             Logger.Info($"Profile picture updated successfully for Player ID: {idPlayer}");
         }
+
+        public async Task<List<GameHistoryDto>> GetPlayerGameHistoryAsync(int idPlayer)
+        {
+            Logger.Info($"Fetching game history for Player ID: {idPlayer}");
+
+            var playerExists = await playerRepository.GetPlayerByIdAsync(idPlayer);
+            if (playerExists == null)
+            {
+                Logger.Warn($"History lookup failed: Player ID {idPlayer} not found.");
+                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
+            }
+
+            var games = await playerRepository.GetPlayerGamesAsync(idPlayer);
+
+            Logger.Info($"Game history retrieved for Player ID: {idPlayer}. Count: {games.Count}");
+
+            return games.Select(g => new GameHistoryDto
+            {
+                OpponentName = g.rival ?? "Uknown",
+                ResultStatus = g.result ?? "Finished",
+                PointsEarned = int.TryParse(g.score, out int points) ? points : 0,
+                GameTime = g.gameTime,
+                GameMode = g.Gamemode != null ? g.Gamemode.gamemode1 : "Classic game"
+            }).ToList();
+        }
     }
 }

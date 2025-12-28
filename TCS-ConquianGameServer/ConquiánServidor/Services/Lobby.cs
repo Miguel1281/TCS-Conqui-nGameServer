@@ -8,6 +8,7 @@ using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
+using ConquiánServidor.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -203,14 +204,21 @@ namespace ConquiánServidor.Services
             {
                 if (chatHistories.ContainsKey(roomCode) && lobbyCallbacks.ContainsKey(roomCode))
                 {
+
+                    if (!string.IsNullOrEmpty(message.Message))
+                    {
+                        message.Message = ProfanityFilter.CensorMessage(message.Message);
+                    }
+
                     message.Timestamp = DateTime.UtcNow;
                     chatHistories[roomCode].Add(message);
+
                     NotifyPlayersInLobby(roomCode, null, (cb) => cb.MessageReceived(message));
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Error enviando mensaje de chat.");
+                Logger.Error(ex, "Error sending chat message.");
             }
             return Task.CompletedTask;
         }

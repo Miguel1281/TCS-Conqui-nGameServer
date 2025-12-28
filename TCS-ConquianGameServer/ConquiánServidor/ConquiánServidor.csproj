@@ -237,6 +237,7 @@
     <Compile Include="Utilities\Email\Templates\RecoveryEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
     <Compile Include="Utilities\PasswordHasher.cs" />
+    <Compile Include="Utilities\ProfanityFilter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

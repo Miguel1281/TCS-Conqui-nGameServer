@@ -4,6 +4,7 @@ using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
 using NLog;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -161,24 +162,48 @@ namespace ConquiánServidor.BusinessLogic
         {
             Logger.Info($"Fetching game history for Player ID: {idPlayer}");
 
-            var playerExists = await playerRepository.GetPlayerByIdAsync(idPlayer);
-            if (playerExists == null)
-            {
-                Logger.Warn($"History lookup failed: Player ID {idPlayer} not found.");
-                throw new BusinessLogicException(ServiceErrorType.UserNotFound);
-            }
-
             var games = await playerRepository.GetPlayerGamesAsync(idPlayer);
 
             Logger.Info($"Game history retrieved for Player ID: {idPlayer}. Count: {games.Count}");
 
-            return games.Select(g => new GameHistoryDto
+            return games.Select(g =>
             {
-                OpponentName = g.rival ?? "Uknown",
-                ResultStatus = g.result ?? "Finished",
-                PointsEarned = int.TryParse(g.score, out int points) ? points : 0,
-                GameTime = g.gameTime,
-                GameMode = g.Gamemode != null ? g.Gamemode.gamemode1 : "Classic game"
+                var myStats = g.GamePlayer.FirstOrDefault(gp => gp.idPlayer == idPlayer);
+                var rivalStats = g.GamePlayer.FirstOrDefault(gp => gp.idPlayer != idPlayer);
+
+                string opponentName = rivalStats?.Player?.nickname ?? "Unknown";
+                string myName = myStats?.Player?.nickname ?? "Player";
+
+                int myScore = myStats?.score ?? 0;
+
+                string resultString = "Draw";
+                int pointsDisplay = 0;
+                if (myStats != null)
+                {
+                    if (myStats.isWinner)
+                    {
+                        resultString = "Victory";
+                        pointsDisplay = 25;
+                    }
+                    else if (rivalStats != null && rivalStats.isWinner)
+                    {
+                        resultString = "Defeat";
+                        pointsDisplay = 0;
+                    }
+                }
+
+                TimeSpan t = TimeSpan.FromSeconds(g.gameTime);
+                string timeFormatted = string.Format("{0:D2}:{1:D2}", (int)t.TotalMinutes, t.Seconds);
+
+                return new GameHistoryDto
+                {
+                    PlayerName = myName,
+                    OpponentName = opponentName,
+                    ResultStatus = resultString,
+                    PointsEarned = pointsDisplay,
+                    GameTime = timeFormatted,
+                    GameMode = g.Gamemode != null ? g.Gamemode.gamemode1 : "Classic"
+                };
             }).ToList();
         }
     }

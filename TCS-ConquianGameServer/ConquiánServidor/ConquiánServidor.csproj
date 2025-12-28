@@ -148,6 +148,9 @@
     <Compile Include="ConquiánDB\Gamemode.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="ConquiánDB\GamePlayer.cs">
+      <DependentUpon>ConquiánModelDB.tt</DependentUpon>
+    </Compile>
     <Compile Include="ConquiánDB\Lobby.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>

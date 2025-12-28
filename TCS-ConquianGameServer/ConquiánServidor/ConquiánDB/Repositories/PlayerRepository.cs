@@ -81,7 +81,9 @@ namespace ConquiánServidor.DataAccess.Repositories
         {
             return await context.Game
                 .Include("Gamemode")
-                .Where(g => g.idPlayer == idPlayer)
+                .Include("GamePlayer")  
+                .Include("GamePlayer.Player") 
+                .Where(g => g.GamePlayer.Any(gp => gp.idPlayer == idPlayer))
                 .OrderByDescending(g => g.idGame)
                 .ToListAsync();
         }

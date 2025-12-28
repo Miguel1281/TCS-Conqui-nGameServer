@@ -14,15 +14,19 @@ namespace ConquiánServidor.ConquiánDB
     
     public partial class Game
     {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
+        public Game()
+        {
+            this.GamePlayer = new HashSet<GamePlayer>();
+        }
+    
         public int idGame { get; set; }
-        public string rival { get; set; }
-        public string gameTime { get; set; }
-        public string result { get; set; }
-        public string score { get; set; }
-        public Nullable<int> idPlayer { get; set; }
-        public Nullable<int> idGamemode { get; set; }
+        public int gameTime { get; set; }
+        public Nullable<System.DateTime> datePlayed { get; set; }
+        public int idGamemode { get; set; }
     
         public virtual Gamemode Gamemode { get; set; }
-        public virtual Player Player { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<GamePlayer> GamePlayer { get; set; }
     }
 }

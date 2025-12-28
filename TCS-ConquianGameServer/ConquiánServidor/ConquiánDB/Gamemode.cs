@@ -17,16 +17,16 @@ namespace ConquiánServidor.ConquiánDB
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         public Gamemode()
         {
-            this.Game = new HashSet<Game>();
             this.Lobby = new HashSet<Lobby>();
+            this.Game = new HashSet<Game>();
         }
     
         public int idGamemode { get; set; }
         public string gamemode1 { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Game> Game { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Lobby> Lobby { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<Game> Game { get; set; }
     }
 }

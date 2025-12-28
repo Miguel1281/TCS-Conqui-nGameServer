@@ -19,12 +19,9 @@
             <PropertyRef Name="idGame" />
           </Key>
           <Property Name="idGame" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="rival" Type="varchar" MaxLength="15" />
-          <Property Name="gameTime" Type="varchar" MaxLength="20" />
-          <Property Name="result" Type="varchar" MaxLength="20" />
-          <Property Name="score" Type="varchar" MaxLength="4" />
-          <Property Name="idPlayer" Type="int" />
-          <Property Name="idGamemode" Type="int" />
+          <Property Name="gameTime" Type="int" Nullable="false" />
+          <Property Name="datePlayed" Type="datetime" />
+          <Property Name="idGamemode" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="Gamemode">
           <Key>
@@ -32,6 +29,16 @@
           </Key>
           <Property Name="idGamemode" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="gamemode" Type="varchar" MaxLength="45" />
+        </EntityType>
+        <EntityType Name="GamePlayer">
+          <Key>
+            <PropertyRef Name="idGamePlayer" />
+          </Key>
+          <Property Name="idGamePlayer" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="idGame" Type="int" Nullable="false" />
+          <Property Name="idPlayer" Type="int" Nullable="false" />
+          <Property Name="score" Type="int" Nullable="false" />
+          <Property Name="isWinner" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="Lobby">
           <Key>
@@ -135,7 +142,7 @@
           </ReferentialConstraint>
         </Association>
         <Association Name="FK_Game_Gamemode">
-          <End Role="Gamemode" Type="Self.Gamemode" Multiplicity="0..1" />
+          <End Role="Gamemode" Type="Self.Gamemode" Multiplicity="1" />
           <End Role="Game" Type="Self.Game" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Gamemode">
@@ -146,14 +153,28 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Game_Player">
-          <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
-          <End Role="Game" Type="Self.Game" Multiplicity="*" />
+        <Association Name="FK_GamePlayer_Game">
+          <End Role="Game" Type="Self.Game" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Role="GamePlayer" Type="Self.GamePlayer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Game">
+              <PropertyRef Name="idGame" />
+            </Principal>
+            <Dependent Role="GamePlayer">
+              <PropertyRef Name="idGame" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_GamePlayer_Player">
+          <End Role="Player" Type="Self.Player" Multiplicity="1" />
+          <End Role="GamePlayer" Type="Self.GamePlayer" Multiplicity="*" />
           <ReferentialConstraint>
             <Principal Role="Player">
               <PropertyRef Name="idPlayer" />
             </Principal>
-            <Dependent Role="Game">
+            <Dependent Role="GamePlayer">
               <PropertyRef Name="idPlayer" />
             </Dependent>
           </ReferentialConstraint>
@@ -234,6 +255,7 @@
           <EntitySet Name="Friendship" EntityType="Self.Friendship" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Game" EntityType="Self.Game" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Gamemode" EntityType="Self.Gamemode" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="GamePlayer" EntityType="Self.GamePlayer" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Lobby" EntityType="Self.Lobby" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Player" EntityType="Self.Player" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Social" EntityType="Self.Social" Schema="dbo" store:Type="Tables" />
@@ -257,9 +279,13 @@
             <End Role="Gamemode" EntitySet="Gamemode" />
             <End Role="Game" EntitySet="Game" />
           </AssociationSet>
-          <AssociationSet Name="FK_Game_Player" Association="Self.FK_Game_Player">
-            <End Role="Player" EntitySet="Player" />
+          <AssociationSet Name="FK_GamePlayer_Game" Association="Self.FK_GamePlayer_Game">
             <End Role="Game" EntitySet="Game" />
+            <End Role="GamePlayer" EntitySet="GamePlayer" />
+          </AssociationSet>
+          <AssociationSet Name="FK_GamePlayer_Player" Association="Self.FK_GamePlayer_Player">
+            <End Role="Player" EntitySet="Player" />
+            <End Role="GamePlayer" EntitySet="GamePlayer" />
           </AssociationSet>
           <AssociationSet Name="FK_Lobby_Gamemode" Association="Self.FK_Lobby_Gamemode">
             <End Role="Gamemode" EntitySet="Gamemode" />
@@ -302,28 +328,14 @@
           <NavigationProperty Name="Player1" Relationship="Self.FK_Friendship_Origen" FromRole="Friendship" ToRole="Player" />
           <NavigationProperty Name="Status" Relationship="Self.FK_Friendship_Status" FromRole="Friendship" ToRole="Status" />
         </EntityType>
-        <EntityType Name="Game">
-          <Key>
-            <PropertyRef Name="idGame" />
-          </Key>
-          <Property Name="idGame" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="rival" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
-          <Property Name="gameTime" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
-          <Property Name="result" Type="String" MaxLength="20" FixedLength="false" Unicode="false" />
-          <Property Name="score" Type="String" MaxLength="4" FixedLength="false" Unicode="false" />
-          <Property Name="idPlayer" Type="Int32" />
-          <Property Name="idGamemode" Type="Int32" />
-          <NavigationProperty Name="Gamemode" Relationship="Self.FK_Game_Gamemode" FromRole="Game" ToRole="Gamemode" />
-          <NavigationProperty Name="Player" Relationship="Self.FK_Game_Player" FromRole="Game" ToRole="Player" />
-        </EntityType>
         <EntityType Name="Gamemode">
           <Key>
             <PropertyRef Name="idGamemode" />
           </Key>
           <Property Name="idGamemode" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
           <Property Name="gamemode1" Type="String" MaxLength="45" FixedLength="false" Unicode="false" />
-          <NavigationProperty Name="Game" Relationship="Self.FK_Game_Gamemode" FromRole="Gamemode" ToRole="Game" />
           <NavigationProperty Name="Lobby" Relationship="ConquiánDBModel.FK_Lobby_Gamemode" FromRole="Gamemode" ToRole="Lobby" />
+          <NavigationProperty Name="Game" Relationship="ConquiánDBModel.FK_Game_Gamemode" FromRole="Gamemode" ToRole="Game" />
         </EntityType>
         <EntityType Name="Lobby">
           <Key>
@@ -356,11 +368,11 @@
           <Property Name="codeExpiryDate" Type="DateTime" Precision="3" />
           <NavigationProperty Name="Friendship" Relationship="Self.FK_Friendship_Destino" FromRole="Player" ToRole="Friendship" />
           <NavigationProperty Name="Friendship1" Relationship="Self.FK_Friendship_Origen" FromRole="Player" ToRole="Friendship" />
-          <NavigationProperty Name="Game" Relationship="Self.FK_Game_Player" FromRole="Player" ToRole="Game" />
           <NavigationProperty Name="Lobby" Relationship="Self.FK_Lobby_HostPlayer" FromRole="Player" ToRole="Lobby" />
           <NavigationProperty Name="Social" Relationship="Self.FK_Social_Player" FromRole="Player" ToRole="Social" />
           <Property Name="IdStatus" Type="Int32" />
           <NavigationProperty Name="StatusType" Relationship="ConquiánDBModel.FK_Player_StatusType" FromRole="Player" ToRole="StatusType" />
+          <NavigationProperty Name="GamePlayer" Relationship="ConquiánDBModel.FK_GamePlayer_Player" FromRole="Player" ToRole="GamePlayer" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
@@ -433,30 +445,6 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
-        <Association Name="FK_Game_Gamemode">
-          <End Role="Gamemode" Type="Self.Gamemode" Multiplicity="0..1" />
-          <End Role="Game" Type="Self.Game" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Gamemode">
-              <PropertyRef Name="idGamemode" />
-            </Principal>
-            <Dependent Role="Game">
-              <PropertyRef Name="idGamemode" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
-        <Association Name="FK_Game_Player">
-          <End Role="Player" Type="Self.Player" Multiplicity="0..1" />
-          <End Role="Game" Type="Self.Game" Multiplicity="*" />
-          <ReferentialConstraint>
-            <Principal Role="Player">
-              <PropertyRef Name="idPlayer" />
-            </Principal>
-            <Dependent Role="Game">
-              <PropertyRef Name="idPlayer" />
-            </Dependent>
-          </ReferentialConstraint>
-        </Association>
         <Association Name="FK_Lobby_HostPlayer">
           <End Role="Player" Type="Self.Player" Multiplicity="1" />
           <End Role="Lobby" Type="Self.Lobby" Multiplicity="*" />
@@ -507,7 +495,6 @@
         </Association>
         <EntityContainer Name="ConquiánDBEntities" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Friendship" EntityType="Self.Friendship" />
-          <EntitySet Name="Game" EntityType="Self.Game" />
           <EntitySet Name="Gamemode" EntityType="Self.Gamemode" />
           <EntitySet Name="Lobby" EntityType="Self.Lobby" />
           <EntitySet Name="Player" EntityType="Self.Player" />
@@ -526,14 +513,6 @@
           <AssociationSet Name="FK_Friendship_Status" Association="Self.FK_Friendship_Status">
             <End Role="Status" EntitySet="Status" />
             <End Role="Friendship" EntitySet="Friendship" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Game_Gamemode" Association="Self.FK_Game_Gamemode">
-            <End Role="Gamemode" EntitySet="Gamemode" />
-            <End Role="Game" EntitySet="Game" />
-          </AssociationSet>
-          <AssociationSet Name="FK_Game_Player" Association="Self.FK_Game_Player">
-            <End Role="Player" EntitySet="Player" />
-            <End Role="Game" EntitySet="Game" />
           </AssociationSet>
           <AssociationSet Name="FK_Lobby_HostPlayer" Association="Self.FK_Lobby_HostPlayer">
             <End Role="Player" EntitySet="Player" />
@@ -559,6 +538,20 @@
           <AssociationSet Name="FK_Lobby_Gamemode" Association="ConquiánDBModel.FK_Lobby_Gamemode">
             <End Role="Gamemode" EntitySet="Gamemode" />
             <End Role="Lobby" EntitySet="Lobby" />
+          </AssociationSet>
+          <EntitySet Name="Game" EntityType="ConquiánDBModel.Game" />
+          <EntitySet Name="GamePlayer" EntityType="ConquiánDBModel.GamePlayer" />
+          <AssociationSet Name="FK_Game_Gamemode" Association="ConquiánDBModel.FK_Game_Gamemode">
+            <End Role="Gamemode" EntitySet="Gamemode" />
+            <End Role="Game" EntitySet="Game" />
+          </AssociationSet>
+          <AssociationSet Name="FK_GamePlayer_Game" Association="ConquiánDBModel.FK_GamePlayer_Game">
+            <End Role="Game" EntitySet="Game" />
+            <End Role="GamePlayer" EntitySet="GamePlayer" />
+          </AssociationSet>
+          <AssociationSet Name="FK_GamePlayer_Player" Association="ConquiánDBModel.FK_GamePlayer_Player">
+            <End Role="Player" EntitySet="Player" />
+            <End Role="GamePlayer" EntitySet="GamePlayer" />
           </AssociationSet>
         </EntityContainer>
         <EntityType Name="StatusType">
@@ -593,6 +586,67 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="Game">
+          <Key>
+            <PropertyRef Name="idGame" />
+          </Key>
+          <Property Name="idGame" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="gameTime" Type="Int32" Nullable="false" />
+          <Property Name="datePlayed" Type="DateTime" Precision="3" />
+          <Property Name="idGamemode" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Gamemode" Relationship="ConquiánDBModel.FK_Game_Gamemode" FromRole="Game" ToRole="Gamemode" />
+          <NavigationProperty Name="GamePlayer" Relationship="ConquiánDBModel.FK_GamePlayer_Game" FromRole="Game" ToRole="GamePlayer" />
+        </EntityType>
+        <EntityType Name="GamePlayer">
+          <Key>
+            <PropertyRef Name="idGamePlayer" />
+          </Key>
+          <Property Name="idGamePlayer" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="idGame" Type="Int32" Nullable="false" />
+          <Property Name="idPlayer" Type="Int32" Nullable="false" />
+          <Property Name="score" Type="Int32" Nullable="false" />
+          <Property Name="isWinner" Type="Boolean" Nullable="false" />
+          <NavigationProperty Name="Game" Relationship="ConquiánDBModel.FK_GamePlayer_Game" FromRole="GamePlayer" ToRole="Game" />
+          <NavigationProperty Name="Player" Relationship="ConquiánDBModel.FK_GamePlayer_Player" FromRole="GamePlayer" ToRole="Player" />
+        </EntityType>
+        <Association Name="FK_Game_Gamemode">
+          <End Type="ConquiánDBModel.Gamemode" Role="Gamemode" Multiplicity="1" />
+          <End Type="ConquiánDBModel.Game" Role="Game" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Gamemode">
+              <PropertyRef Name="idGamemode" />
+            </Principal>
+            <Dependent Role="Game">
+              <PropertyRef Name="idGamemode" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_GamePlayer_Game">
+          <End Type="ConquiánDBModel.Game" Role="Game" Multiplicity="1">
+            <OnDelete Action="Cascade" />
+          </End>
+          <End Type="ConquiánDBModel.GamePlayer" Role="GamePlayer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Game">
+              <PropertyRef Name="idGame" />
+            </Principal>
+            <Dependent Role="GamePlayer">
+              <PropertyRef Name="idGame" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK_GamePlayer_Player">
+          <End Type="ConquiánDBModel.Player" Role="Player" Multiplicity="1" />
+          <End Type="ConquiánDBModel.GamePlayer" Role="GamePlayer" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Player">
+              <PropertyRef Name="idPlayer" />
+            </Principal>
+            <Dependent Role="GamePlayer">
+              <PropertyRef Name="idPlayer" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -606,19 +660,6 @@
                 <ScalarProperty Name="idOrigen" ColumnName="idOrigen" />
                 <ScalarProperty Name="idDestino" ColumnName="idDestino" />
                 <ScalarProperty Name="idStatus" ColumnName="idStatus" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Game">
-            <EntityTypeMapping TypeName="ConquiánDBModel.Game">
-              <MappingFragment StoreEntitySet="Game">
-                <ScalarProperty Name="idGame" ColumnName="idGame" />
-                <ScalarProperty Name="rival" ColumnName="rival" />
-                <ScalarProperty Name="gameTime" ColumnName="gameTime" />
-                <ScalarProperty Name="result" ColumnName="result" />
-                <ScalarProperty Name="score" ColumnName="score" />
-                <ScalarProperty Name="idPlayer" ColumnName="idPlayer" />
-                <ScalarProperty Name="idGamemode" ColumnName="idGamemode" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -699,6 +740,27 @@
               <MappingFragment StoreEntitySet="StatusType">
                 <ScalarProperty Name="Name" ColumnName="Name" />
                 <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Game">
+            <EntityTypeMapping TypeName="ConquiánDBModel.Game">
+              <MappingFragment StoreEntitySet="Game">
+                <ScalarProperty Name="idGamemode" ColumnName="idGamemode" />
+                <ScalarProperty Name="datePlayed" ColumnName="datePlayed" />
+                <ScalarProperty Name="gameTime" ColumnName="gameTime" />
+                <ScalarProperty Name="idGame" ColumnName="idGame" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="GamePlayer">
+            <EntityTypeMapping TypeName="ConquiánDBModel.GamePlayer">
+              <MappingFragment StoreEntitySet="GamePlayer">
+                <ScalarProperty Name="isWinner" ColumnName="isWinner" />
+                <ScalarProperty Name="score" ColumnName="score" />
+                <ScalarProperty Name="idPlayer" ColumnName="idPlayer" />
+                <ScalarProperty Name="idGame" ColumnName="idGame" />
+                <ScalarProperty Name="idGamePlayer" ColumnName="idGamePlayer" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

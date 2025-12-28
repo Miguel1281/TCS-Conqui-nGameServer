@@ -12,7 +12,7 @@ namespace ConquiánServidor.Contracts.DataContracts
         public int LoserId { get; set; }
 
         [DataMember]
-        public int PointsWon { get; set; } 
+        public int PointsWon { get; set; }
 
         [DataMember]
         public bool IsDraw { get; set; }
@@ -27,9 +27,18 @@ namespace ConquiánServidor.Contracts.DataContracts
         public string Player1Name { get; set; }
 
         [DataMember]
+        public int Player1Score { get; set; }
+
+        [DataMember]
         public int Player2Id { get; set; }
 
         [DataMember]
         public string Player2Name { get; set; }
+
+        [DataMember]
+        public int Player2Score { get; set; }
+
+        [DataMember]
+        public int DurationSeconds { get; set; }
     }
 }

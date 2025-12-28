@@ -419,6 +419,12 @@ namespace ConquiánServidor.BusinessLogic.Game
             var p1 = Players.Count > 0 ? Players[PLAYER_1_INDEX] : null;
             var p2 = Players.Count > 1 ? Players[PLAYER_2_INDEX] : null;
 
+            int duration = GetInitialTimeInSeconds() - remainingSeconds;
+            if (duration < 0) duration = 0;
+
+            int p1Score = (p1 != null && PlayerMelds.ContainsKey(p1.idPlayer)) ? PlayerMelds[p1.idPlayer].Count : 0;
+            int p2Score = (p2 != null && PlayerMelds.ContainsKey(p2.idPlayer)) ? PlayerMelds[p2.idPlayer].Count : 0;
+
             var result = new GameResultDto
             {
                 WinnerId = winnerId,
@@ -426,10 +432,16 @@ namespace ConquiánServidor.BusinessLogic.Game
                 IsDraw = isDraw,
                 PointsWon = isDraw ? POINTS_FOR_DRAW : POINTS_FOR_WIN,
                 GamemodeId = GamemodeId,
+
                 Player1Id = p1?.idPlayer ?? -1,
                 Player1Name = p1?.nickname ?? "Unknown",
+                Player1Score = p1Score,
+
                 Player2Id = p2?.idPlayer ?? -1,
-                Player2Name = p2?.nickname ?? "Unknown"
+                Player2Name = p2?.nickname ?? "Unknown",
+                Player2Score = p2Score,
+
+                DurationSeconds = duration
             };
 
             OnGameFinished?.Invoke(result);
@@ -438,6 +450,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             Logger.Info($"Game {RoomCode} ended. Winner: {winnerId}. Draw: {isDraw}");
         }
+
         private void NotifyOpponent(int actingPlayerId, Action<IGameCallback> action)
         {
             int opponentId = playerCallbacks.Keys.FirstOrDefault(id => id != actingPlayerId);

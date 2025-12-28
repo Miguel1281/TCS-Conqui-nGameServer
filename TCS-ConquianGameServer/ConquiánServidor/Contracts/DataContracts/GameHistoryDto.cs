@@ -9,6 +9,9 @@ namespace ConquiánServidor.Contracts.DataContracts
         public string OpponentName { get; set; }
 
         [DataMember]
+        public string PlayerName { get; set; }
+
+        [DataMember]
         public string ResultStatus { get; set; }
 
         [DataMember]

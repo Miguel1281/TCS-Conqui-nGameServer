@@ -19,9 +19,9 @@ namespace ConquiánServidor.ConquiánDB
         {
             this.Friendship = new HashSet<Friendship>();
             this.Friendship1 = new HashSet<Friendship>();
-            this.Game = new HashSet<Game>();
             this.Lobby = new HashSet<Lobby>();
             this.Social = new HashSet<Social>();
+            this.GamePlayer = new HashSet<GamePlayer>();
         }
     
         public int idPlayer { get; set; }
@@ -42,11 +42,11 @@ namespace ConquiánServidor.ConquiánDB
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Friendship> Friendship1 { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Game> Game { get; set; }
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Lobby> Lobby { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Social> Social { get; set; }
         public virtual StatusType StatusType { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
+        public virtual ICollection<GamePlayer> GamePlayer { get; set; }
     }
 }

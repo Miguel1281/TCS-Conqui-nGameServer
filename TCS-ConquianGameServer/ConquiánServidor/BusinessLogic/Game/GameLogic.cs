@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Timers;
 
 namespace ConquiánServidor.BusinessLogic.Game
@@ -29,6 +30,9 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private const int PLAYER_1_INDEX = 0;
         private const int PLAYER_2_INDEX = 1;
+
+        private const string AFK_REASON_SELF = "AFKGameEndedSelf";
+        private const string AFK_REASON_RIVAL = "AFKGameEndedRival";
 
         private static readonly string[] DECK_SUITS = { "Oros", "Copas", "Espadas", "Bastos" };
         private static readonly int[] DECK_RANKS = { 1, 2, 3, 4, 5, 6, 7, 10, 11, 12 };
@@ -650,6 +654,25 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 BroadcastDiscardUpdate();
             }
+        }
+
+        public void ProcessAFK(int afkPlayerId)
+        {
+            int rivalId = Players.FirstOrDefault(p => p.idPlayer != afkPlayerId)?.idPlayer ?? 0;
+
+            if (playerCallbacks.TryGetValue(afkPlayerId, out var afkCallback))
+            {
+                Task.Run(() => afkCallback.NotifyGameEndedByAFK(AFK_REASON_SELF));
+            }
+
+            if (rivalId != 0 && playerCallbacks.TryGetValue(rivalId, out var rivalCallback))
+            {
+                Task.Run(() => rivalCallback.NotifyGameEndedByAFK(AFK_REASON_RIVAL));
+            }
+
+            Logger.Info($"Game ended in Room {RoomCode} due to inactivity of Player {afkPlayerId}.");
+
+            StopGame();
         }
     }
 }

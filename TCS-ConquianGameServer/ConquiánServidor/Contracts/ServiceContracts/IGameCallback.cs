@@ -28,5 +28,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void NotifyGameEnded(GameResultDto result);
+
+        [OperationContract(IsOneWay = true)]
+        void NotifyGameEndedByAFK(string reasonKey);
     }
 }

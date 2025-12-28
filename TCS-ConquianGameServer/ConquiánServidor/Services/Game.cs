@@ -329,5 +329,21 @@ namespace ConquiánServidor.Services
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
             }
         }
+
+        public void ReportAFK(string roomCode, int playerId)
+        {
+            try
+            {
+                var game = this.gameSessionManager.GetGame(roomCode);
+                if (game != null)
+                {
+                    game.ProcessAFK(playerId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error reporting AFK for player {playerId} in room {roomCode}");
+            }
+        }
     }
 }

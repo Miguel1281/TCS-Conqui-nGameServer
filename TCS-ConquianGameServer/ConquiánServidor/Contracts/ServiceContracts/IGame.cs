@@ -31,5 +31,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
         Task SwapDrawnCardAsync(string roomCode, int playerId, string cardIdToDiscard);
+
+        [OperationContract(IsOneWay = true)]
+        void ReportAFK(string roomCode, int playerId);
     }
 }

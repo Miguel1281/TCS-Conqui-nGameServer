@@ -434,7 +434,8 @@ namespace ConquiánServidor.BusinessLogic.Game
                 WinnerId = winnerId,
                 LoserId = loserId,
                 IsDraw = isDraw,
-                PointsWon = isDraw ? POINTS_FOR_DRAW : POINTS_FOR_WIN,
+                PointsWon = 0,
+                RoomCode = this.RoomCode,
                 GamemodeId = GamemodeId,
 
                 Player1Id = p1?.idPlayer ?? -1,
@@ -450,9 +451,13 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             OnGameFinished?.Invoke(result);
 
-            Broadcast((callback) => callback.NotifyGameEnded(result));
-
             Logger.Info($"Game {RoomCode} ended. Winner: {winnerId}. Draw: {isDraw}");
+        }
+
+        public void BroadcastGameResult(GameResultDto result)
+        {
+            Broadcast((callback) => callback.NotifyGameEnded(result));
+            Logger.Info($"Broadcasted final game result for Room {RoomCode}. Points: {result.PointsWon}");
         }
 
         private void NotifyOpponent(int actingPlayerId, Action<IGameCallback> action)

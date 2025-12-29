@@ -40,5 +40,8 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public int DurationSeconds { get; set; }
+
+        [DataMember]
+        public string RoomCode { get; set; }
     }
 }

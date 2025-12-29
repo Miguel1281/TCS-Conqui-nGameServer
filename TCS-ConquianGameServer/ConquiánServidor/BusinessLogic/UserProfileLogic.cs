@@ -35,6 +35,15 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
+            int nextLevelTarget = await playerRepository.GetNextLevelThresholdAsync(dbPlayer.idLevel);
+
+            if (nextLevelTarget == -1)
+            {
+                nextLevelTarget = dbPlayer.currentPoints;
+            }
+
+            string rankName = dbPlayer.LevelRules?.RankName ?? "Unknown";
+
             Logger.Info($"Profile retrieved successfully for Player ID: {idPlayer}");
 
             return new PlayerDto
@@ -47,6 +56,8 @@ namespace ConquiánServidor.BusinessLogic
                 idLevel = dbPlayer.idLevel,
                 pathPhoto = dbPlayer.pathPhoto,
                 currentPoints = dbPlayer.currentPoints,
+                PointsToNextLevel = nextLevelTarget,
+                RankName = rankName
             };
         }
 
@@ -178,17 +189,23 @@ namespace ConquiánServidor.BusinessLogic
 
                 string resultString = "Draw";
                 int pointsDisplay = 0;
+
                 if (myStats != null)
                 {
                     if (myStats.isWinner)
                     {
                         resultString = "Victory";
-                        pointsDisplay = 25;
+                        pointsDisplay = myScore;
                     }
                     else if (rivalStats != null && rivalStats.isWinner)
                     {
                         resultString = "Defeat";
                         pointsDisplay = 0;
+                    }
+                    else
+                    {
+                        resultString = "Draw";
+                        pointsDisplay = myScore;
                     }
                 }
 

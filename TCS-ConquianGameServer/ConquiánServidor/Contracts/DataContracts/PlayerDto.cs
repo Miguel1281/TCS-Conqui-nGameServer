@@ -39,5 +39,11 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public int? idStatus { get; set; }
+
+        [DataMember]
+        public int PointsToNextLevel { get; set; }
+
+        [DataMember]
+        public string RankName { get; set; }
     }
 }

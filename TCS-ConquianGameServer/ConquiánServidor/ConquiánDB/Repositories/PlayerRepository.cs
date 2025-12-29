@@ -11,6 +11,7 @@ namespace ConquiánServidor.DataAccess.Repositories
     public class PlayerRepository : IPlayerRepository
     {
         private readonly ConquiánDBEntities context;
+        private static readonly Random random = new Random();
 
         public PlayerRepository(ConquiánDBEntities context)
         {
@@ -35,7 +36,9 @@ namespace ConquiánServidor.DataAccess.Repositories
         public async Task<Player> GetPlayerByIdAsync(int idPlayer)
         {
             context.Configuration.LazyLoadingEnabled = false;
-            return await context.Player.FirstOrDefaultAsync(p => p.idPlayer == idPlayer);
+            return await context.Player
+                .Include(p => p.LevelRules)
+                .FirstOrDefaultAsync(p => p.idPlayer == idPlayer);
         }
         public async Task<Player> GetPlayerByNicknameAsync(string nickname)
         {
@@ -64,17 +67,50 @@ namespace ConquiánServidor.DataAccess.Repositories
             return result > 0;
         }
 
-        public async Task UpdatePlayerPointsAsync(int playerId, int pointsToAdd)
+        public async Task<int> UpdatePlayerPointsAsync(int playerId)
         {
-            var player = await context.Player.FindAsync(playerId);
-            if (player != null)
+            int earnedPoints = 0;
+
+            var player = await context.Player
+                .Include(p => p.LevelRules)
+                .FirstOrDefaultAsync(p => p.idPlayer == playerId);
+
+            if (player != null && player.LevelRules != null)
             {
-                player.currentPoints += pointsToAdd;
-                int newLevel = (player.currentPoints / 100) + 1;
-                player.idLevel = newLevel;
+                int minReward = player.LevelRules.MinPointsReward;
+                int maxReward = player.LevelRules.MaxPointsReward;
+                earnedPoints = random.Next(minReward, maxReward + 1);
+
+                player.currentPoints += earnedPoints;
+
+                while (true)
+                {
+                    var nextLevelRule = await context.LevelRules
+                        .FirstOrDefaultAsync(lr => lr.LevelNumber == player.idLevel + 1);
+
+                    if (nextLevelRule == null || player.currentPoints < nextLevelRule.PointsRequired)
+                    {
+                        break;
+                    }
+
+                    player.idLevel = nextLevelRule.LevelNumber;
+                    player.LevelRules = nextLevelRule;
+                }
 
                 await context.SaveChangesAsync();
             }
+
+            return earnedPoints;
+        }
+
+        public async Task<int> GetNextLevelThresholdAsync(int currentLevelId)
+        {
+            var nextLevel = await context.LevelRules
+                            .Where(lr => lr.LevelNumber == currentLevelId + 1)
+                            .Select(lr => (int?)lr.PointsRequired)
+                            .FirstOrDefaultAsync();
+
+            return nextLevel ?? -1;
         }
 
         public async Task<List<Game>> GetPlayerGamesAsync(int idPlayer)

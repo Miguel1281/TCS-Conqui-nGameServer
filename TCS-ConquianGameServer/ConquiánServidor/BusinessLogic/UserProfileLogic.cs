@@ -44,7 +44,7 @@ namespace ConquiánServidor.BusinessLogic
                 lastName = dbPlayer.lastName,
                 nickname = dbPlayer.nickname,
                 email = dbPlayer.email,
-                level = dbPlayer.level,
+                idLevel = dbPlayer.idLevel,
                 pathPhoto = dbPlayer.pathPhoto,
                 currentPoints = dbPlayer.currentPoints,
             };

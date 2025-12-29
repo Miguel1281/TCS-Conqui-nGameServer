@@ -19,7 +19,7 @@ namespace ConquiánServidor.BusinessLogic
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private const int VERIFICATION_CODE_EXPIRY_MINUTES = 10;
-        private const string INITIAL_PLAYER_LEVEL = "1";
+        private const int INITIAL_PLAYER_LEVEL = 1;
         private const int INITIAL_PLAYER_POINTS = 0;
 
         private readonly IPlayerRepository playerRepository;
@@ -116,7 +116,7 @@ namespace ConquiánServidor.BusinessLogic
             playerToUpdate.pathPhoto = finalPlayerData.pathPhoto;
             playerToUpdate.verificationCode = null;
             playerToUpdate.codeExpiryDate = null;
-            playerToUpdate.level = INITIAL_PLAYER_LEVEL;
+            playerToUpdate.idLevel = INITIAL_PLAYER_LEVEL;
             playerToUpdate.currentPoints = INITIAL_PLAYER_POINTS;
 
             await playerRepository.SaveChangesAsync();

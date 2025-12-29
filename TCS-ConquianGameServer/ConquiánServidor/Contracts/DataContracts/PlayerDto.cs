@@ -29,7 +29,7 @@ namespace ConquiánServidor.Contracts.DataContracts
         public string email { get; set; }
 
         [DataMember]
-        public string level { get; set; }
+        public int idLevel { get; set; }
 
         [DataMember]
         public int currentPoints { get; set; }

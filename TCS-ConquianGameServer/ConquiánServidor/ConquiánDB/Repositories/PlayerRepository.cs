@@ -71,7 +71,7 @@ namespace ConquiánServidor.DataAccess.Repositories
             {
                 player.currentPoints += pointsToAdd;
                 int newLevel = (player.currentPoints / 100) + 1;
-                player.level = newLevel.ToString();
+                player.idLevel = newLevel;
 
                 await context.SaveChangesAsync();
             }

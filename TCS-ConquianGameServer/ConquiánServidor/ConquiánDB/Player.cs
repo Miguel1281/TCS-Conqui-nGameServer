@@ -30,12 +30,12 @@ namespace ConquiánServidor.ConquiánDB
         public string nickname { get; set; }
         public string email { get; set; }
         public string password { get; set; }
-        public string level { get; set; }
         public int currentPoints { get; set; }
         public string pathPhoto { get; set; }
         public string verificationCode { get; set; }
         public Nullable<System.DateTime> codeExpiryDate { get; set; }
         public Nullable<int> IdStatus { get; set; }
+        public int idLevel { get; set; }
     
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<Friendship> Friendship { get; set; }
@@ -48,5 +48,6 @@ namespace ConquiánServidor.ConquiánDB
         public virtual StatusType StatusType { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
         public virtual ICollection<GamePlayer> GamePlayer { get; set; }
+        public virtual LevelRules LevelRules { get; set; }
     }
 }

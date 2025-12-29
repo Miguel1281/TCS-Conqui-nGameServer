@@ -31,6 +31,7 @@ namespace ConquiánServidor.ConquiánDB
 
             return envConnection;
         }
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             throw new UnintentionalCodeFirstException();
@@ -47,5 +48,6 @@ namespace ConquiánServidor.ConquiánDB
         public virtual DbSet<StatusType> StatusType { get; set; }
         public virtual DbSet<Game> Game { get; set; }
         public virtual DbSet<GamePlayer> GamePlayer { get; set; }
+        public virtual DbSet<LevelRules> LevelRules { get; set; }
     }
 }

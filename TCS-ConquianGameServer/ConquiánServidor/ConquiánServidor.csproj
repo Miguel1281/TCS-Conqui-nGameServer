@@ -151,6 +151,9 @@
     <Compile Include="ConquiánDB\GamePlayer.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>
+    <Compile Include="ConquiánDB\LevelRules.cs">
+      <DependentUpon>ConquiánModelDB.tt</DependentUpon>
+    </Compile>
     <Compile Include="ConquiánDB\Lobby.cs">
       <DependentUpon>ConquiánModelDB.tt</DependentUpon>
     </Compile>

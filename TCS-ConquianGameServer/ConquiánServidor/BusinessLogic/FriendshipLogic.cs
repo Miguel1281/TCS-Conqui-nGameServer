@@ -44,7 +44,7 @@ namespace ConquiánServidor.BusinessLogic
                     nickname = p.nickname,
                     pathPhoto = p.pathPhoto,
                     idStatus = isOnline ? (int)PlayerStatus.Online : (int)PlayerStatus.Offline,
-                    level = p.level
+                    idLevel = p.idLevel
                 });
             }
 

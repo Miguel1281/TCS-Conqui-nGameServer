@@ -28,6 +28,8 @@
         <AssociationConnector Association="ConquiánDBModel.FK_Game_Gamemode" />
         <AssociationConnector Association="ConquiánDBModel.FK_GamePlayer_Game" />
         <AssociationConnector Association="ConquiánDBModel.FK_GamePlayer_Player" />
+        <EntityTypeShape EntityType="ConquiánDBModel.LevelRules" Width="1.5" PointX="3" PointY="0.875" />
+        <AssociationConnector Association="ConquiánDBModel.FK_Player_LevelRules" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

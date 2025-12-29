@@ -40,6 +40,16 @@
           <Property Name="score" Type="int" Nullable="false" />
           <Property Name="isWinner" Type="bit" Nullable="false" />
         </EntityType>
+        <EntityType Name="LevelRules">
+          <Key>
+            <PropertyRef Name="LevelNumber" />
+          </Key>
+          <Property Name="LevelNumber" Type="int" Nullable="false" />
+          <Property Name="RankName" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="MinPointsReward" Type="int" Nullable="false" />
+          <Property Name="MaxPointsReward" Type="int" Nullable="false" />
+          <Property Name="PointsRequired" Type="int" Nullable="false" />
+        </EntityType>
         <EntityType Name="Lobby">
           <Key>
             <PropertyRef Name="idLobby" />
@@ -61,12 +71,12 @@
           <Property Name="nickname" Type="varchar" MaxLength="15" />
           <Property Name="email" Type="varchar" MaxLength="45" />
           <Property Name="password" Type="varchar" MaxLength="64" />
-          <Property Name="level" Type="varchar" MaxLength="2" />
           <Property Name="currentPoints" Type="int" Nullable="false" />
           <Property Name="pathPhoto" Type="varchar" MaxLength="255" />
           <Property Name="verificationCode" Type="varchar" MaxLength="6" />
           <Property Name="codeExpiryDate" Type="datetime" />
           <Property Name="IdStatus" Type="int" />
+          <Property Name="idLevel" Type="int" Nullable="false" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
@@ -215,6 +225,18 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <Association Name="FK_Player_LevelRules">
+          <End Role="LevelRules" Type="Self.LevelRules" Multiplicity="1" />
+          <End Role="Player" Type="Self.Player" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="LevelRules">
+              <PropertyRef Name="LevelNumber" />
+            </Principal>
+            <Dependent Role="Player">
+              <PropertyRef Name="idLevel" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
         <Association Name="FK_Player_StatusType">
           <End Role="StatusType" Type="Self.StatusType" Multiplicity="0..1" />
           <End Role="Player" Type="Self.Player" Multiplicity="*" />
@@ -256,6 +278,7 @@
           <EntitySet Name="Game" EntityType="Self.Game" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Gamemode" EntityType="Self.Gamemode" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="GamePlayer" EntityType="Self.GamePlayer" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="LevelRules" EntityType="Self.LevelRules" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Lobby" EntityType="Self.Lobby" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Player" EntityType="Self.Player" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Social" EntityType="Self.Social" Schema="dbo" store:Type="Tables" />
@@ -298,6 +321,10 @@
           <AssociationSet Name="FK_Lobby_Status" Association="Self.FK_Lobby_Status">
             <End Role="StatusLobby" EntitySet="StatusLobby" />
             <End Role="Lobby" EntitySet="Lobby" />
+          </AssociationSet>
+          <AssociationSet Name="FK_Player_LevelRules" Association="Self.FK_Player_LevelRules">
+            <End Role="LevelRules" EntitySet="LevelRules" />
+            <End Role="Player" EntitySet="Player" />
           </AssociationSet>
           <AssociationSet Name="FK_Player_StatusType" Association="Self.FK_Player_StatusType">
             <End Role="StatusType" EntitySet="StatusType" />
@@ -361,7 +388,6 @@
           <Property Name="nickname" Type="String" MaxLength="15" FixedLength="false" Unicode="false" />
           <Property Name="email" Type="String" MaxLength="45" FixedLength="false" Unicode="false" />
           <Property Name="password" Type="String" MaxLength="64" FixedLength="false" Unicode="false" />
-          <Property Name="level" Type="String" MaxLength="2" FixedLength="false" Unicode="false" />
           <Property Name="currentPoints" Type="Int32" Nullable="false" />
           <Property Name="pathPhoto" Type="String" MaxLength="255" FixedLength="false" Unicode="false" />
           <Property Name="verificationCode" Type="String" MaxLength="6" FixedLength="false" Unicode="false" />
@@ -373,6 +399,8 @@
           <Property Name="IdStatus" Type="Int32" />
           <NavigationProperty Name="StatusType" Relationship="ConquiánDBModel.FK_Player_StatusType" FromRole="Player" ToRole="StatusType" />
           <NavigationProperty Name="GamePlayer" Relationship="ConquiánDBModel.FK_GamePlayer_Player" FromRole="Player" ToRole="GamePlayer" />
+          <Property Name="idLevel" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="LevelRules" Relationship="ConquiánDBModel.FK_Player_LevelRules" FromRole="Player" ToRole="LevelRules" />
         </EntityType>
         <EntityType Name="Social">
           <Key>
@@ -553,6 +581,11 @@
             <End Role="Player" EntitySet="Player" />
             <End Role="GamePlayer" EntitySet="GamePlayer" />
           </AssociationSet>
+          <EntitySet Name="LevelRules" EntityType="ConquiánDBModel.LevelRules" />
+          <AssociationSet Name="FK_Player_LevelRules" Association="ConquiánDBModel.FK_Player_LevelRules">
+            <End Role="LevelRules" EntitySet="LevelRules" />
+            <End Role="Player" EntitySet="Player" />
+          </AssociationSet>
         </EntityContainer>
         <EntityType Name="StatusType">
           <Key>
@@ -647,6 +680,29 @@
             </Dependent>
           </ReferentialConstraint>
         </Association>
+        <EntityType Name="LevelRules">
+          <Key>
+            <PropertyRef Name="LevelNumber" />
+          </Key>
+          <Property Name="LevelNumber" Type="Int32" Nullable="false" />
+          <Property Name="RankName" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="MinPointsReward" Type="Int32" Nullable="false" />
+          <Property Name="MaxPointsReward" Type="Int32" Nullable="false" />
+          <Property Name="PointsRequired" Type="Int32" Nullable="false" />
+          <NavigationProperty Name="Player" Relationship="ConquiánDBModel.FK_Player_LevelRules" FromRole="LevelRules" ToRole="Player" />
+        </EntityType>
+        <Association Name="FK_Player_LevelRules">
+          <End Type="ConquiánDBModel.LevelRules" Role="LevelRules" Multiplicity="1" />
+          <End Type="ConquiánDBModel.Player" Role="Player" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="LevelRules">
+              <PropertyRef Name="LevelNumber" />
+            </Principal>
+            <Dependent Role="Player">
+              <PropertyRef Name="idLevel" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
       </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -686,6 +742,7 @@
           <EntitySetMapping Name="Player">
             <EntityTypeMapping TypeName="ConquiánDBModel.Player">
               <MappingFragment StoreEntitySet="Player">
+                <ScalarProperty Name="idLevel" ColumnName="idLevel" />
                 <ScalarProperty Name="IdStatus" ColumnName="IdStatus" />
                 <ScalarProperty Name="idPlayer" ColumnName="idPlayer" />
                 <ScalarProperty Name="name" ColumnName="name" />
@@ -693,7 +750,6 @@
                 <ScalarProperty Name="nickname" ColumnName="nickname" />
                 <ScalarProperty Name="email" ColumnName="email" />
                 <ScalarProperty Name="password" ColumnName="password" />
-                <ScalarProperty Name="level" ColumnName="level" />
                 <ScalarProperty Name="currentPoints" ColumnName="currentPoints" />
                 <ScalarProperty Name="pathPhoto" ColumnName="pathPhoto" />
                 <ScalarProperty Name="verificationCode" ColumnName="verificationCode" />
@@ -761,6 +817,17 @@
                 <ScalarProperty Name="idPlayer" ColumnName="idPlayer" />
                 <ScalarProperty Name="idGame" ColumnName="idGame" />
                 <ScalarProperty Name="idGamePlayer" ColumnName="idGamePlayer" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="LevelRules">
+            <EntityTypeMapping TypeName="ConquiánDBModel.LevelRules">
+              <MappingFragment StoreEntitySet="LevelRules">
+                <ScalarProperty Name="PointsRequired" ColumnName="PointsRequired" />
+                <ScalarProperty Name="MaxPointsReward" ColumnName="MaxPointsReward" />
+                <ScalarProperty Name="MinPointsReward" ColumnName="MinPointsReward" />
+                <ScalarProperty Name="RankName" ColumnName="RankName" />
+                <ScalarProperty Name="LevelNumber" ColumnName="LevelNumber" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

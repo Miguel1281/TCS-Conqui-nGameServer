@@ -9,5 +9,6 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
         void Subscribe(int idPlayer, IPresenceCallback callback);
         void Unsubscribe(int idPlayer);
         Task NotifyStatusChange(int changedPlayerId, int newStatusId);
+        void ReceivePing(int idPlayer);
     }
 }

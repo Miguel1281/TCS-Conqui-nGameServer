@@ -165,6 +165,7 @@ namespace ConquiánServidor.BusinessLogic
             if (playerToVerify == null)
             {
                 playerToVerify = new Player();
+                playerToVerify.idLevel = INITIAL_PLAYER_LEVEL; 
                 playerRepository.AddPlayer(playerToVerify);
             }
 

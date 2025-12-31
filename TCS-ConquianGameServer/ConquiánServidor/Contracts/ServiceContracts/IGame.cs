@@ -26,6 +26,7 @@ namespace ConquiánServidor.Contracts.ServiceContracts
         void LeaveGame(string roomCode, int playerId);
 
         [OperationContract]
+        [FaultContract(typeof(ServiceFaultDto))]
         Task PassTurnAsync(string roomCode, int playerId);
 
         [OperationContract]

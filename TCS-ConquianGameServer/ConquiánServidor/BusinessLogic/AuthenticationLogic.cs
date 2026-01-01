@@ -2,7 +2,7 @@
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.BusinessLogic.Validation;
 using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.Contracts;
+using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
@@ -51,10 +51,7 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.SessionActive);
             }
 
-            playerFromDb.IdStatus = (int)PlayerStatus.Online;
-
-            await playerRepository.SaveChangesAsync();
-            await this.presenceManager.NotifyStatusChange(playerFromDb.idPlayer, 1);
+            await this.presenceManager.NotifyStatusChange(playerFromDb.idPlayer, (int)PlayerStatus.Online);
 
             Logger.Info($"Authentication successful for Player ID: {playerFromDb.idPlayer}");
 
@@ -63,20 +60,17 @@ namespace ConquiánServidor.BusinessLogic
                 idPlayer = playerFromDb.idPlayer,
                 nickname = playerFromDb.nickname,
                 pathPhoto = playerFromDb.pathPhoto,
+                Status = PlayerStatus.Online
             };
         }
 
         public async Task SignOutPlayerAsync(int idPlayer)
         {
             Logger.Info($"Sign out attempt for Player ID: {idPlayer}");
-            var playerFromDb = await playerRepository.GetPlayerByIdAsync(idPlayer);
-            if (playerFromDb != null)
-            {
-                playerFromDb.IdStatus = 2;
-                await playerRepository.SaveChangesAsync();
-                await this.presenceManager.NotifyStatusChange(idPlayer, 2);
-                Logger.Info($"Sign out successful for Player ID: {idPlayer}");
-            }
+
+            await this.presenceManager.NotifyStatusChange(idPlayer, (int)PlayerStatus.Offline);
+
+            Logger.Info($"Sign out notification sent for Player ID: {idPlayer}");
         }
 
         public async Task RegisterPlayerAsync(PlayerDto finalPlayerData)

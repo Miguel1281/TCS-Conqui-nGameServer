@@ -1,6 +1,7 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
 using NLog;
@@ -16,11 +17,13 @@ namespace ConquiánServidor.BusinessLogic
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IPlayerRepository playerRepository;
         private readonly ISocialRepository socialRepository;
+        private readonly IPresenceManager presenceManager;
 
-        public UserProfileLogic(IPlayerRepository playerRepository, ISocialRepository socialRepository)
+        public UserProfileLogic(IPlayerRepository playerRepository, ISocialRepository socialRepository, IPresenceManager presenceManager)
         {
             this.playerRepository = playerRepository;
             this.socialRepository = socialRepository;
+            this.presenceManager = presenceManager;
         }
 
         public async Task<PlayerDto> GetPlayerByIdAsync(int idPlayer)
@@ -44,6 +47,8 @@ namespace ConquiánServidor.BusinessLogic
 
             string rankName = dbPlayer.LevelRules?.RankName ?? "Unknown";
 
+            bool isOnline = this.presenceManager.IsPlayerOnline(dbPlayer.idPlayer);
+
             Logger.Info($"Profile retrieved successfully for Player ID: {idPlayer}");
 
             return new PlayerDto
@@ -57,7 +62,8 @@ namespace ConquiánServidor.BusinessLogic
                 pathPhoto = dbPlayer.pathPhoto,
                 currentPoints = dbPlayer.currentPoints,
                 PointsToNextLevel = nextLevelTarget,
-                RankName = rankName
+                RankName = rankName,
+                Status = isOnline ? PlayerStatus.Online : PlayerStatus.Offline
             };
         }
 

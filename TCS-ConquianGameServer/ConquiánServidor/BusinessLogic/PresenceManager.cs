@@ -1,6 +1,7 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.Contracts.ServiceContracts;
 using NLog;
 using System;
@@ -89,7 +90,7 @@ namespace ConquiánServidor.BusinessLogic
 
                 Task.Run(async () =>
                 {
-                    int offlineStatusId = 2; 
+                    int offlineStatusId = (int)PlayerStatus.Offline;
                     await NotifyStatusChange(playerId, offlineStatusId);
                 });
             }

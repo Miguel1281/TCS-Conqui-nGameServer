@@ -20,8 +20,6 @@
         <AssociationConnector Association="ConquiánDBModel.FK_Lobby_Status" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Social_Player" ManuallyRouted="false" />
         <AssociationConnector Association="ConquiánDBModel.FK_Social_SocialType" ManuallyRouted="false" />
-        <EntityTypeShape EntityType="ConquiánDBModel.StatusType" Width="1.5" PointX="3" PointY="8" />
-        <AssociationConnector Association="ConquiánDBModel.FK_Player_StatusType" />
         <AssociationConnector Association="ConquiánDBModel.FK_Lobby_Gamemode" />
         <EntityTypeShape EntityType="ConquiánDBModel.Game" Width="1.5" PointX="10.5" PointY="7.625" />
         <EntityTypeShape EntityType="ConquiánDBModel.GamePlayer" Width="1.5" PointX="12.75" PointY="5.5" />

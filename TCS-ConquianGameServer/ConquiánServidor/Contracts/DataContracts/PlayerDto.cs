@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using ConquiánServidor.Contracts.Enums;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ConquiánServidor.Contracts.DataContracts
 {
@@ -38,7 +34,7 @@ namespace ConquiánServidor.Contracts.DataContracts
         public string pathPhoto { get; set; }
 
         [DataMember]
-        public int? idStatus { get; set; }
+        public PlayerStatus Status { get; set; }
 
         [DataMember]
         public int PointsToNextLevel { get; set; }

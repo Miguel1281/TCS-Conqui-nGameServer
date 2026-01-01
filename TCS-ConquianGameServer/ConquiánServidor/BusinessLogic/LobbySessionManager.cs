@@ -1,9 +1,10 @@
-﻿using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.BusinessLogic.Interfaces;
+using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.Enums;
+using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
-using System;
-using ConquiánServidor.BusinessLogic.Interfaces;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -98,7 +99,8 @@ namespace ConquiánServidor.BusinessLogic
                 {
                     idPlayer = guestId,
                     nickname = nickname,
-                    pathPhoto = "/Resources/imageProfile/default.JPG"
+                    pathPhoto = "/Resources/imageProfile/default.JPG",
+                    Status = PlayerStatus.Online
                 };
 
                 session.Players.Add(guestPlayer);

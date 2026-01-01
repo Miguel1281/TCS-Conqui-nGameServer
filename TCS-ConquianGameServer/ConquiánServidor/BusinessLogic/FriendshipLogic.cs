@@ -1,12 +1,10 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.Contracts;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.DataAccess.Abstractions;
 using NLog;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -43,7 +41,7 @@ namespace ConquiánServidor.BusinessLogic
                     idPlayer = p.idPlayer,
                     nickname = p.nickname,
                     pathPhoto = p.pathPhoto,
-                    idStatus = isOnline ? (int)PlayerStatus.Online : (int)PlayerStatus.Offline,
+                    Status = isOnline ? PlayerStatus.Online : PlayerStatus.Offline,
                     idLevel = p.idLevel
                 });
             }
@@ -79,13 +77,16 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
+            bool isOnline = this.presenceManager.IsPlayerOnline(player.idPlayer);
+
             Logger.Info($"Player search successful. Found Player ID: {player.idPlayer}");
 
             return new PlayerDto
             {
                 idPlayer = player.idPlayer,
                 nickname = player.nickname,
-                pathPhoto = player.pathPhoto
+                pathPhoto = player.pathPhoto,
+                Status = isOnline ? PlayerStatus.Online : PlayerStatus.Offline
             };
         }
 

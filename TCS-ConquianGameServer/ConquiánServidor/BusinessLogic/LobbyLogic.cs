@@ -1,13 +1,11 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
-using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.DataAccess.Abstractions;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -111,7 +109,8 @@ namespace ConquiánServidor.BusinessLogic
             {
                 idPlayer = hostPlayerEntity.idPlayer,
                 nickname = hostPlayerEntity.nickname,
-                pathPhoto = hostPlayerEntity.pathPhoto
+                pathPhoto = hostPlayerEntity.pathPhoto,
+                Status = PlayerStatus.Online
             };
 
             sessionManager.CreateLobby(newRoomCode, hostPlayerDto);
@@ -149,7 +148,8 @@ namespace ConquiánServidor.BusinessLogic
             {
                 idPlayer = playerToJoinEntity.idPlayer,
                 nickname = playerToJoinEntity.nickname,
-                pathPhoto = playerToJoinEntity.pathPhoto
+                pathPhoto = playerToJoinEntity.pathPhoto,
+                Status = PlayerStatus.Online
             };
 
             try

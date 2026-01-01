@@ -10,5 +10,7 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
         void Unsubscribe(int idPlayer);
         Task NotifyStatusChange(int changedPlayerId, int newStatusId);
         void ReceivePing(int idPlayer);
+        void NotifyNewFriendRequest(int targetUserId);
+        void NotifyFriendListUpdate(int targetUserId);
     }
 }

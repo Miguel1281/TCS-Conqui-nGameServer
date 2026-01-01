@@ -110,6 +110,7 @@ namespace ConquiánServidor.BusinessLogic
 
             friendshipRepository.AddFriendship(newRequest);
             await friendshipRepository.SaveChangesAsync();
+            presenceManager.NotifyNewFriendRequest(idFriend);
 
             Logger.Info($"Friend request sent successfully: Player ID {idPlayer} -> Target ID {idFriend}");
         }
@@ -126,6 +127,9 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.NotFound);
             }
 
+            int senderId = request.idOrigen ?? 0;
+            int receiverId = request.idDestino ?? 0;
+
             if (newStatus == (int)FriendshipStatus.Accepted)
             {
                 request.idStatus = (int)FriendshipStatus.Accepted;
@@ -136,6 +140,10 @@ namespace ConquiánServidor.BusinessLogic
             }
 
             await friendshipRepository.SaveChangesAsync();
+
+            presenceManager.NotifyFriendListUpdate(senderId);
+            presenceManager.NotifyFriendListUpdate(receiverId);
+
             Logger.Info($"Friend request status updated successfully for Friendship ID: {idFriendship}");
         }
 
@@ -153,6 +161,9 @@ namespace ConquiánServidor.BusinessLogic
 
             friendshipRepository.RemoveFriendship(friendship);
             await friendshipRepository.SaveChangesAsync();
+
+            presenceManager.NotifyFriendListUpdate(idPlayer);
+            presenceManager.NotifyFriendListUpdate(idFriend);
 
             Logger.Info($"Friend deleted successfully: Player ID {idPlayer} and Friend ID {idFriend}");
         }

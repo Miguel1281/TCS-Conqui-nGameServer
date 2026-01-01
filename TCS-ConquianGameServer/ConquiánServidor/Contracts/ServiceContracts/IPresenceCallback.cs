@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceModel;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ServiceModel;
 
 namespace ConquiánServidor.Contracts.ServiceContracts
 {
@@ -12,5 +7,11 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     {
         [OperationContract(IsOneWay = true)]
         void OnFriendStatusChanged(int friendId, int newStatusId);
+
+        [OperationContract(IsOneWay = true)]
+        void OnFriendRequestReceived();
+
+        [OperationContract(IsOneWay = true)]
+        void OnFriendListUpdated();
     }
 }

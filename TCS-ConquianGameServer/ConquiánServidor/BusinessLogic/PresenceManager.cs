@@ -147,5 +147,41 @@ namespace ConquiánServidor.BusinessLogic
                 }
             }
         }
-    } 
+
+        public void NotifyNewFriendRequest(int targetUserId)
+        {
+            lock (lockObj)
+            {
+                if (onlineSubscribers.TryGetValue(targetUserId, out IPresenceCallback callback))
+                {
+                    try
+                    {
+                        callback.OnFriendRequestReceived();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, $"Error notificando solicitud a {targetUserId}");
+                    }
+                }
+            }
+        }
+
+        public void NotifyFriendListUpdate(int targetUserId)
+        {
+            lock (lockObj)
+            {
+                if (onlineSubscribers.TryGetValue(targetUserId, out IPresenceCallback callback))
+                {
+                    try
+                    {
+                        callback.OnFriendListUpdated();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, $"Error notificando actualización de lista a {targetUserId}");
+                    }
+                }
+            }
+        }
+    }
 } 

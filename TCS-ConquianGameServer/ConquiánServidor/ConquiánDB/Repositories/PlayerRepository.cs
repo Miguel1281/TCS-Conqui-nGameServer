@@ -42,7 +42,11 @@ namespace ConquiánServidor.DataAccess.Repositories
         }
         public async Task<Player> GetPlayerByNicknameAsync(string nickname)
         {
-            return await context.Player.FirstOrDefaultAsync(p => p.nickname == nickname);
+            context.Configuration.LazyLoadingEnabled = false;
+
+            return await context.Player
+                .Include(p => p.LevelRules) 
+                .FirstOrDefaultAsync(p => p.nickname == nickname);
         }
 
         public async Task<Player> GetPlayerForVerificationAsync(string email)

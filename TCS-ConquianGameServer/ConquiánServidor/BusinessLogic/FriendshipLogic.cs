@@ -81,11 +81,15 @@ namespace ConquiánServidor.BusinessLogic
 
             Logger.Info($"Player search successful. Found Player ID: {player.idPlayer}");
 
+            string rankName = player.LevelRules?.RankName ?? "Unknown";
+
             return new PlayerDto
             {
                 idPlayer = player.idPlayer,
                 nickname = player.nickname,
                 pathPhoto = player.pathPhoto,
+                idLevel = player.idLevel,
+                RankName = rankName,
                 Status = isOnline ? PlayerStatus.Online : PlayerStatus.Offline
             };
         }

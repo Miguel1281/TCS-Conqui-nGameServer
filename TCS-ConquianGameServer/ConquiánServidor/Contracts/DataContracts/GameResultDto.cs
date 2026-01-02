@@ -43,5 +43,11 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public string RoomCode { get; set; }
+
+        [DataMember]
+        public string Player1PathPhoto { get; set; }
+
+        [DataMember]
+        public string Player2PathPhoto { get; set; }
     }
 }

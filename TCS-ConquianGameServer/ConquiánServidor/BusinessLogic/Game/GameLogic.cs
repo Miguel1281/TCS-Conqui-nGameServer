@@ -442,10 +442,12 @@ namespace ConquiánServidor.BusinessLogic.Game
                 Player1Id = p1?.idPlayer ?? -1,
                 Player1Name = p1?.nickname ?? "Unknown",
                 Player1Score = p1Score,
+                Player1PathPhoto = p1?.pathPhoto, 
 
                 Player2Id = p2?.idPlayer ?? -1,
                 Player2Name = p2?.nickname ?? "Unknown",
                 Player2Score = p2Score,
+                Player2PathPhoto = p2?.pathPhoto, 
 
                 DurationSeconds = duration
             };

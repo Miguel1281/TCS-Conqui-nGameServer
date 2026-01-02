@@ -12,5 +12,6 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
         void ReceivePing(int idPlayer);
         void NotifyNewFriendRequest(int targetUserId);
         void NotifyFriendListUpdate(int targetUserId);
+        bool IsPlayerInGame(int playerId); 
     }
 }

@@ -5,6 +5,7 @@ using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
@@ -29,6 +30,7 @@ namespace ConquiánServidor.Services
             new ConcurrentDictionary<string, List<MessageDto>>();
 
         private readonly ILobbyLogic lobbyLogic;
+        private readonly IPresenceManager presenceManager;
 
         private const string LOGIC_ERROR_MESSAGE = "Logic Error";
         private const string INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
@@ -39,11 +41,14 @@ namespace ConquiánServidor.Services
         public Lobby()
         {
             Bootstrapper.Init();
-            this.lobbyLogic = Bootstrapper.Container.Resolve<ILobbyLogic>();        }
+            this.lobbyLogic = Bootstrapper.Container.Resolve<ILobbyLogic>();
+            this.presenceManager = Bootstrapper.Container.Resolve<IPresenceManager>();
+        }
 
-        public Lobby(ILobbyLogic lobbyLogic)
+        public Lobby(ILobbyLogic lobbyLogic, IPresenceManager presenceManager)
         {
             this.lobbyLogic = lobbyLogic;
+            this.presenceManager = presenceManager;
         }
 
         public async Task<LobbyDto> GetLobbyStateAsync(string roomCode)
@@ -80,6 +85,7 @@ namespace ConquiánServidor.Services
                 {
                     chatHistories.TryAdd(newRoomCode, new List<MessageDto>());
                     lobbyCallbacks.TryAdd(newRoomCode, new ConcurrentDictionary<int, ILobbyCallback>());
+                    await presenceManager.NotifyStatusChange(idHostPlayer, (int)PlayerStatus.InLobby);
                 }
                 return newRoomCode;
             }
@@ -113,6 +119,7 @@ namespace ConquiánServidor.Services
 
                 lobbyCallbacks[roomCode][idPlayer] = callback;
 
+                await presenceManager.NotifyStatusChange(idPlayer, (int)PlayerStatus.InLobby);
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return true;
             }
@@ -171,6 +178,7 @@ namespace ConquiánServidor.Services
             try
             {
                 bool isHost = lobbyLogic.LeaveLobbyAsync(roomCode, idPlayer).Result;
+                Task.Run(() => presenceManager.NotifyStatusChange(idPlayer, (int)PlayerStatus.Online));
 
                 if (isHost)
                 {
@@ -248,6 +256,13 @@ namespace ConquiánServidor.Services
             try
             {
                 await lobbyLogic.StartGameAsync(roomCode);
+                if (lobbyCallbacks.TryGetValue(roomCode, out var participants))
+                {
+                    foreach (var playerId in participants.Keys)
+                    {
+                        await presenceManager.NotifyStatusChange(playerId, (int)PlayerStatus.InGame);
+                    }
+                }
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGameStarting());
             }
             catch (BusinessLogicException ex)
@@ -300,6 +315,7 @@ namespace ConquiánServidor.Services
             try
             {
                 await lobbyLogic.KickPlayerAsync(roomCode, idRequestingPlayer, idPlayerToKick);
+                await presenceManager.NotifyStatusChange(idPlayerToKick, (int)PlayerStatus.Online);
 
                 if (lobbyCallbacks.TryGetValue(roomCode, out var roomCallbacks) &&
                     roomCallbacks.TryRemove(idPlayerToKick, out var kickedClientCallback))

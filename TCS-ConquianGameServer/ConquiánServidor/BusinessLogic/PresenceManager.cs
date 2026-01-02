@@ -19,6 +19,7 @@ namespace ConquiánServidor.BusinessLogic
 
         private readonly Dictionary<int, IPresenceCallback> onlineSubscribers = new Dictionary<int, IPresenceCallback>();
         private readonly ConcurrentDictionary<int, DateTime> lastHeartbeats = new ConcurrentDictionary<int, DateTime>();
+        private readonly ConcurrentDictionary<int, PlayerStatus> playerStatuses = new ConcurrentDictionary<int, PlayerStatus>();
 
         private readonly object lockObj = new object();
         private readonly ILifetimeScope lifetimeScope;
@@ -54,6 +55,7 @@ namespace ConquiánServidor.BusinessLogic
             }
 
             lastHeartbeats.AddOrUpdate(idPlayer, DateTime.UtcNow, (key, oldVal) => DateTime.UtcNow);
+            playerStatuses.AddOrUpdate(idPlayer, PlayerStatus.Online, (key, oldVal) => PlayerStatus.Online);
         }
 
         public void Unsubscribe(int idPlayer)
@@ -64,6 +66,7 @@ namespace ConquiánServidor.BusinessLogic
             }
 
             lastHeartbeats.TryRemove(idPlayer, out _);
+            playerStatuses.TryRemove(idPlayer, out _); 
         }
 
         public void ReceivePing(int idPlayer)
@@ -99,6 +102,8 @@ namespace ConquiánServidor.BusinessLogic
         public virtual async Task NotifyStatusChange(int changedPlayerId, int newStatusId)
         {
             List<PlayerDto> friends;
+            var newStatus = (PlayerStatus)newStatusId;
+            playerStatuses.AddOrUpdate(changedPlayerId, newStatus, (key, oldVal) => newStatus);
             try
             {
                 using (var scope = this.lifetimeScope.BeginLifetimeScope())
@@ -161,7 +166,7 @@ namespace ConquiánServidor.BusinessLogic
                     }
                     catch (Exception ex)
                     {
-                        Logger.Error(ex, $"Error notificando solicitud a {targetUserId}");
+                        Logger.Error(ex, $"Error notifying request to {targetUserId}");
                     }
                 }
             }
@@ -179,10 +184,18 @@ namespace ConquiánServidor.BusinessLogic
                     }
                     catch (Exception ex)
                     {
-                        Logger.Error(ex, $"Error notificando actualización de lista a {targetUserId}");
+                        Logger.Error(ex, $"Error notifying list update to {targetUserId}");
                     }
                 }
             }
+        }
+        public bool IsPlayerInGame(int playerId)
+        {
+            if (playerStatuses.TryGetValue(playerId, out PlayerStatus status))
+            {
+                return status == PlayerStatus.InGame;
+            }
+            return false;
         }
     }
 } 

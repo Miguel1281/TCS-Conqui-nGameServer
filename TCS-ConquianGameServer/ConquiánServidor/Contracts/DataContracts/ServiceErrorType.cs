@@ -125,5 +125,8 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [EnumMember]
         RegisteredMail = 39,
+
+        [EnumMember]
+        UserInGame = 40,
     }
 }

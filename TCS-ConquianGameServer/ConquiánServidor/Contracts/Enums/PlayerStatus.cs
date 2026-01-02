@@ -10,5 +10,11 @@ namespace ConquiánServidor.Contracts.Enums
 
         [EnumMember]
         Offline = 2,
+
+        [EnumMember]
+        InGame = 3,
+
+        [EnumMember]
+        InLobby = 4,
     }
 }

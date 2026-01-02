@@ -17,8 +17,10 @@ namespace ConquiánServidor.BusinessLogic
         private readonly ConcurrentDictionary<int, IInvitationCallback> onlinePlayers =
             new ConcurrentDictionary<int, IInvitationCallback>();
 
-        public InvitationManager()
+        private readonly IPresenceManager presenceManager;
+        public InvitationManager(IPresenceManager presenceManager)
         {
+            this.presenceManager = presenceManager;
         }
 
         public void Subscribe(int idPlayer, IInvitationCallback callback)
@@ -38,6 +40,13 @@ namespace ConquiánServidor.BusinessLogic
         public async Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
         {
             Logger.Info($"Invitation attempt: Sender ID {idSender} -> Receiver ID {idReceiver} for Room Code: {roomCode}");
+
+            if (presenceManager.IsPlayerInGame(idReceiver))
+            {
+                Logger.Warn($"Invitation blocked: Receiver ID {idReceiver} is currently IN GAME.");
+
+                throw new BusinessLogicException(ServiceErrorType.UserInGame);
+            }
 
             if (onlinePlayers.TryGetValue(idReceiver, out IInvitationCallback receiverCallback))
             {

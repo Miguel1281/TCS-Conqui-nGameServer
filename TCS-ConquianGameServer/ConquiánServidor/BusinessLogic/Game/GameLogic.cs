@@ -180,6 +180,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void ChangeTurn()
         {
+            hasHostPassedInitialDiscard = true;
             mustDiscardToFinishTurn = false; 
             var currentPlayerIndex = Players.FindIndex(p => p.idPlayer == currentTurnPlayerId);
             var nextPlayerIndex = (currentPlayerIndex + 1) % Players.Count;

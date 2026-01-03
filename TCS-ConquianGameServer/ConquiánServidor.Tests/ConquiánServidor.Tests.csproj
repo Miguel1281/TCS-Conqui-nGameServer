@@ -55,7 +55,7 @@
     <PackageReference Include="coverlet.collector" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AuthenticationLogicTest.cs" />
+    <Compile Include="BusinessLogic\AuthenticationLogicTest.cs" />
     <Compile Include="SignUpServerValidatorTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\EmailServiceTest.cs" />

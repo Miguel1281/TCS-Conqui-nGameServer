@@ -24,16 +24,16 @@ namespace ConquiánServidor.Utilities.Email
         {
             Logger.Info($"Initiating email transmission. Subject: {template.Subject}");
 
+            string fromMail = Environment.GetEnvironmentVariable("CONQUIAN_EMAIL_USER");
+            string fromPassword = Environment.GetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD");
+
+            if (string.IsNullOrEmpty(fromMail) || string.IsNullOrEmpty(fromPassword))
+            {
+                throw new ConfigurationErrorsException("Email credentials are missing");
+            }
+
             try
             {
-                string fromMail = Environment.GetEnvironmentVariable("CONQUIAN_EMAIL_USER");
-                string fromPassword = Environment.GetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD");
-
-                if (string.IsNullOrEmpty(fromMail) || string.IsNullOrEmpty(fromPassword))
-                {
-                    throw new ConfigurationErrorsException("Email credentials are missing");
-                }
-
                 MailMessage message = new MailMessage();
                 message.From = new MailAddress(fromMail);
                 message.To.Add(new MailAddress(toEmail));

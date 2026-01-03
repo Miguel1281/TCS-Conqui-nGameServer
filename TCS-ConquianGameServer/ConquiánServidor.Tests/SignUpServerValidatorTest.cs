@@ -3,7 +3,7 @@ using Xunit;
 
 namespace ConquiánServidor.Tests
 {
-    public class SignUpServerValidatorTests
+    public class SignUpServerValidatorTest
     {
         [Fact]
         public void ValidateName_ShouldReturnEmpty_WhenNameIsSimple()

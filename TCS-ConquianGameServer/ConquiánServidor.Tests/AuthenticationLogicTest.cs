@@ -11,13 +11,13 @@ using Xunit;
 
 namespace ConquiánServidor.Tests
 {
-    public class AuthenticationLogicTests
+    public class AuthenticationLogicTest
     {
         private readonly Mock<IPlayerRepository> mockPlayerRepository;
         private readonly AuthenticationLogic authLogic;
         private readonly Mock<IEmailService> mockEmailService;
         private readonly Mock<PresenceManager> mockPresenceManager;
-        public AuthenticationLogicTests()
+        public AuthenticationLogicTest()
         {
             mockPlayerRepository = new Mock<IPlayerRepository>();
             mockEmailService = new Mock<IEmailService>();

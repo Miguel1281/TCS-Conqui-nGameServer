@@ -1,11 +1,9 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
-using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Properties.Langs;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;
@@ -22,17 +20,17 @@ namespace ConquiánServidor.Services
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IEmailService emailService;
         private readonly ILobbyRepository lobbyRepository;
-        private readonly GuestInvitationManager guestInvitationManager;
+        private readonly IGuestInvitationManager guestInvitationManager;
 
         public GuestInvitation()
         {
             Bootstrapper.Init();
             this.emailService = Bootstrapper.Container.Resolve<IEmailService>();
             this.lobbyRepository = Bootstrapper.Container.Resolve<ILobbyRepository>();
-            this.guestInvitationManager = Bootstrapper.Container.Resolve<GuestInvitationManager>();
+            this.guestInvitationManager = Bootstrapper.Container.Resolve<IGuestInvitationManager>();
         }
 
-        public GuestInvitation(IEmailService emailService, ILobbyRepository lobbyRepository, GuestInvitationManager guestInvitationManager)
+        public GuestInvitation(IEmailService emailService, ILobbyRepository lobbyRepository, IGuestInvitationManager guestInvitationManager)
         {
             Bootstrapper.Init();
             this.emailService = emailService;

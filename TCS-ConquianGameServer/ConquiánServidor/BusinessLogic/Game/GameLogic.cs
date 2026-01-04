@@ -16,8 +16,8 @@ namespace ConquiánServidor.BusinessLogic.Game
     {
         private const int GAMEMODE_CLASSIC = 1;
 
-        private const int TIMER_INTERVAL_MS = 1000; 
-        private const int TIME_LIMIT_SHORT_SECONDS = 600; 
+        private const int TIMER_INTERVAL_MS = 1000;
+        private const int TIME_LIMIT_SHORT_SECONDS = 600;
         private const int TIME_LIMIT_LONG_SECONDS = 1200;
 
         private const int HAND_SIZE_CLASSIC = 6;
@@ -46,9 +46,11 @@ namespace ConquiánServidor.BusinessLogic.Game
         private int remainingSeconds;
         private int currentTurnPlayerId;
         private bool mustDiscardToFinishTurn;
-        private int? playerReviewingDiscardId; 
-        private bool hasHostPassedInitialDiscard; 
-        private bool isCardDrawnFromDeck; 
+        private int? playerReviewingDiscardId;
+        private bool hasHostPassedInitialDiscard;
+        private bool isCardDrawnFromDeck;
+        private bool isGameEnded = false;
+        private readonly object endLock = new object();
 
         private readonly ConcurrentDictionary<int, IGameCallback> playerCallbacks;
         public List<PlayerDto> Players { get; private set; }
@@ -74,7 +76,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             hasHostPassedInitialDiscard = false;
             isCardDrawnFromDeck = false;
-            mustDiscardToFinishTurn = false; 
+            mustDiscardToFinishTurn = false;
 
             PlayerHands = new Dictionary<int, List<Card>>();
             PlayerMelds = new Dictionary<int, List<List<Card>>>();
@@ -172,7 +174,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 Logger.Info($"Game timeout reached for Room Code: {RoomCode}. Stopping game.");
                 StopGame();
-                DetermineWinnerByPoints(); 
+                DetermineWinnerByPoints();
             }
 
             BroadcastTime(remainingSeconds, 0, currentTurnPlayerId);
@@ -181,7 +183,7 @@ namespace ConquiánServidor.BusinessLogic.Game
         private void ChangeTurn()
         {
             hasHostPassedInitialDiscard = true;
-            mustDiscardToFinishTurn = false; 
+            mustDiscardToFinishTurn = false;
             var currentPlayerIndex = Players.FindIndex(p => p.idPlayer == currentTurnPlayerId);
             var nextPlayerIndex = (currentPlayerIndex + 1) % Players.Count;
             currentTurnPlayerId = Players[nextPlayerIndex].idPlayer;
@@ -199,8 +201,11 @@ namespace ConquiánServidor.BusinessLogic.Game
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error(ex, $"Failed to broadcast time update to Player ID {kvp.Key} in Room Code: {RoomCode}. Removing callback.");
+                    Logger.Error(ex, $"Failed to broadcast time update to Player ID {kvp.Key}. Detecting disconnection.");
+
                     playerCallbacks.TryRemove(kvp.Key, out _);
+
+                    Task.Run(() => ProcessAFK(kvp.Key));
                 }
             }
         }
@@ -290,8 +295,8 @@ namespace ConquiánServidor.BusinessLogic.Game
             if (!hasHostPassedInitialDiscard && playerId == Players[0].idPlayer && playerReviewingDiscardId == playerId)
             {
                 hasHostPassedInitialDiscard = true;
-                ChangeTurn(); 
-                playerReviewingDiscardId = currentTurnPlayerId; 
+                ChangeTurn();
+                playerReviewingDiscardId = currentTurnPlayerId;
                 Logger.Info($"Host passed initial discard. Now Rival (ID {currentTurnPlayerId}) reviews it.");
                 return;
             }
@@ -300,7 +305,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 if (hasHostPassedInitialDiscard)
                 {
-                    playerReviewingDiscardId = null; 
+                    playerReviewingDiscardId = null;
                     return;
                 }
 
@@ -339,10 +344,10 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             var card = StockPile[0];
             StockPile.RemoveAt(0);
-            DiscardPile.Add(card); 
+            DiscardPile.Add(card);
 
-            isCardDrawnFromDeck = true; 
-            playerReviewingDiscardId = playerId; 
+            isCardDrawnFromDeck = true;
+            playerReviewingDiscardId = playerId;
 
             var cardDto = new CardDto
             {
@@ -386,7 +391,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             Logger.Info($"Player ID {playerId} discarded a card in Room {RoomCode}");
 
             ChangeTurn();
-        }   
+        }
 
         private void DetermineWinnerByPoints()
         {
@@ -413,6 +418,13 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void FinishGame(int winnerId, bool isDraw)
         {
+
+            lock (endLock)
+            {
+                if (isGameEnded) return;
+                isGameEnded = true;
+            }
+
             StopGame();
 
             int loserId = -1;
@@ -442,12 +454,12 @@ namespace ConquiánServidor.BusinessLogic.Game
                 Player1Id = p1?.idPlayer ?? -1,
                 Player1Name = p1?.nickname ?? "Unknown",
                 Player1Score = p1Score,
-                Player1PathPhoto = p1?.pathPhoto, 
+                Player1PathPhoto = p1?.pathPhoto,
 
                 Player2Id = p2?.idPlayer ?? -1,
                 Player2Name = p2?.nickname ?? "Unknown",
                 Player2Score = p2Score,
-                Player2PathPhoto = p2?.pathPhoto, 
+                Player2PathPhoto = p2?.pathPhoto,
 
                 DurationSeconds = duration
             };
@@ -477,6 +489,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 {
                     Logger.Error(ex, $"Failed to notify opponent ID {opponentId} in Room {RoomCode}. Removing callback.");
                     playerCallbacks.TryRemove(opponentId, out _);
+                    Task.Run(() => ProcessAFK(opponentId));
                 }
             }
         }
@@ -492,6 +505,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 catch (Exception ex)
                 {
                     Logger.Error(ex, $"Broadcast failed for Player ID {kvp.Key} in Room {RoomCode}.");
+                    Task.Run(() => ProcessAFK(kvp.Key));
                 }
             }
         }
@@ -666,21 +680,35 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public void ProcessAFK(int afkPlayerId)
         {
+            lock (endLock)
+            {
+                if (isGameEnded) return;
+                isGameEnded = true;
+            }
+
+            StopGame();
+
+            Logger.Info($"Game ended in Room {RoomCode} due to inactivity of Player {afkPlayerId}.");
+
             int rivalId = Players.FirstOrDefault(p => p.idPlayer != afkPlayerId)?.idPlayer ?? 0;
 
             if (playerCallbacks.TryGetValue(afkPlayerId, out var afkCallback))
             {
-                Task.Run(() => afkCallback.NotifyGameEndedByAFK(AFK_REASON_SELF));
+                Task.Run(() =>
+                {
+                    try { afkCallback.NotifyGameEndedByAFK(AFK_REASON_SELF); }
+                    catch { }
+                });
             }
 
             if (rivalId != 0 && playerCallbacks.TryGetValue(rivalId, out var rivalCallback))
             {
-                Task.Run(() => rivalCallback.NotifyGameEndedByAFK(AFK_REASON_RIVAL));
+                Task.Run(() =>
+                {
+                    try { rivalCallback.NotifyGameEndedByAFK(AFK_REASON_RIVAL); }
+                    catch (Exception ex) { Logger.Error(ex, "Error notifying rival about AFK."); }
+                });
             }
-
-            Logger.Info($"Game ended in Room {RoomCode} due to inactivity of Player {afkPlayerId}.");
-
-            StopGame();
         }
     }
 }

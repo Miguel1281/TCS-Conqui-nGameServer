@@ -1,14 +1,9 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
-using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.ConquiánDB.Repositories;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities;
 using System;
 using System.Collections.Concurrent;
@@ -119,6 +114,12 @@ namespace ConquiánServidor.Services
 
                 lobbyCallbacks[roomCode][idPlayer] = callback;
 
+                if (callback is ICommunicationObject communicationObject)
+                {
+                    communicationObject.Closed += (sender, args) => HandleClientDisconnect(roomCode, idPlayer);
+                    communicationObject.Faulted += (sender, args) => HandleClientDisconnect(roomCode, idPlayer);
+                }
+
                 await presenceManager.NotifyStatusChange(idPlayer, (int)PlayerStatus.InLobby);
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return true;
@@ -157,6 +158,13 @@ namespace ConquiánServidor.Services
                 }
 
                 lobbyCallbacks[roomCode][playerDto.idPlayer] = callback;
+
+                if (callback is ICommunicationObject communicationObject)
+                {
+                    communicationObject.Closed += (sender, args) => HandleClientDisconnect(roomCode, playerDto.idPlayer);
+                    communicationObject.Faulted += (sender, args) => HandleClientDisconnect(roomCode, playerDto.idPlayer);
+                }
+
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.PlayerJoined(playerDto));
                 return playerDto;
             }
@@ -342,6 +350,19 @@ namespace ConquiánServidor.Services
                 Logger.Error(ex, $"Error kicking player {idPlayerToKick} from room {roomCode}");
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
+            }
+        }
+
+        private void HandleClientDisconnect(string roomCode, int idPlayer)
+        {
+            try
+            {
+                Logger.Info($"Detectada desconexión abrupta (Closed/Faulted) del jugador {idPlayer} en sala {roomCode}");
+                LeaveAndUnsubscribe(roomCode, idPlayer);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error manejando desconexión abrupta del jugador {idPlayer}");
             }
         }
     }

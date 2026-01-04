@@ -128,5 +128,8 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [EnumMember]
         UserInGame = 40,
+
+        [EnumMember]
+        PlayerBanned = 41
     }
 }

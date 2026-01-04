@@ -9,11 +9,39 @@ namespace ConquiánServidor.Utilities
     {
         private static readonly HashSet<string> Blacklist = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "puta", "puto", "pendejo", "pendeja", "mierda", "verga", "chinga", "chingar",
-            "cabron", "cabrona", "zorra", "estupido", "idiota", "maricon", "culero", "pinche",
-            "mamon", "mamona", "imbecil", "joto", "vergas", 
-            "fuck", "shit", "bitch", "asshole", "dick", "pussy", "bastard", "whore",
-            "cunt", "nigger", "faggot", "slut", "motherfucker", "cock"
+            "puta", "puto", "putos", "putas",
+            "pendejo", "pendeja", "pendejos", "pendejas",
+            "mierda", "mierdas",
+            "verga", "vergas", "vergazo",
+            "chinga", "chingar", "chingada", "chingado", "chingados", "chingadas", "chingatumadre",
+            "cabron", "cabrona", "cabrones", "cabronas",
+            "zorra", "zorro",
+            "estupido", "estupida", "estupidos", "estupidas",
+            "idiota", "idiotas",
+            "maricon", "marica", "maricones",
+            "culero", "culeros", "culo",
+            "pinche", "pinches",
+            "mamon", "mamona", "mamones", "mamonas",
+            "imbecil", "imbeciles",
+            "joto", "jotos",
+            "bastardo", "bastarda",
+            "pito", "coño", "cagada", "cagar", "tarado", "tarada", "malparido", "malparida",
+            "soplapollas", "gilipollas", "capullo",
+
+            "fuck", "fucking", "fucked", "fucker",
+            "shit", "bullshit",
+            "bitch", "bitches",
+            "asshole", "ass",
+            "dick", "cock",
+            "pussy",
+            "bastard",
+            "whore",
+            "cunt",
+            "nigger", "nigga",
+            "faggot", "fag",
+            "slut",
+            "motherfucker",
+            "douchebag", "wanker"
         };
 
         private static string pattern;

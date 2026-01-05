@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class AuthenticationLogic:IAuthenticationLogic
+    public class AuthenticationLogic : IAuthenticationLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
@@ -159,7 +159,7 @@ namespace ConquiánServidor.BusinessLogic
             if (playerToVerify == null)
             {
                 playerToVerify = new Player();
-                playerToVerify.idLevel = INITIAL_PLAYER_LEVEL; 
+                playerToVerify.idLevel = INITIAL_PLAYER_LEVEL;
                 playerRepository.AddPlayer(playerToVerify);
             }
 

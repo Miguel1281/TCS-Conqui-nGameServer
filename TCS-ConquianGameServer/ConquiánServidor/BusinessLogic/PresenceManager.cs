@@ -9,7 +9,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Timers; 
+using System.Timers;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -41,6 +41,14 @@ namespace ConquiánServidor.BusinessLogic
 
         public virtual bool IsPlayerOnline(int idPlayer)
         {
+            if (playerStatuses.TryGetValue(idPlayer, out PlayerStatus status))
+            {
+                if (status == PlayerStatus.Online || status == PlayerStatus.InGame)
+                {
+                    return true;
+                }
+            }
+
             lock (lockObj)
             {
                 return onlineSubscribers.ContainsKey(idPlayer);
@@ -66,7 +74,7 @@ namespace ConquiánServidor.BusinessLogic
             }
 
             lastHeartbeats.TryRemove(idPlayer, out _);
-            playerStatuses.TryRemove(idPlayer, out _); 
+            playerStatuses.TryRemove(idPlayer, out _);
         }
 
         public void ReceivePing(int idPlayer)
@@ -103,7 +111,15 @@ namespace ConquiánServidor.BusinessLogic
         {
             List<PlayerDto> friends;
             var newStatus = (PlayerStatus)newStatusId;
-            playerStatuses.AddOrUpdate(changedPlayerId, newStatus, (key, oldVal) => newStatus);
+            if (newStatus == PlayerStatus.Offline)
+            {
+                playerStatuses.TryRemove(changedPlayerId, out _);
+            }
+            else
+            {
+                playerStatuses.AddOrUpdate(changedPlayerId, newStatus, (key, oldVal) => newStatus);
+            }
+
             try
             {
                 using (var scope = this.lifetimeScope.BeginLifetimeScope())
@@ -198,4 +214,4 @@ namespace ConquiánServidor.BusinessLogic
             return false;
         }
     }
-} 
+}

@@ -9,5 +9,6 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
         void CreateGame(string roomCode, int gamemodeId, List<PlayerDto> players);
         ConquianGame GetGame(string roomCode);
         void RemoveGame(string roomCode);
+        void CheckAndClearActiveSessions(int playerId);
     }
 }

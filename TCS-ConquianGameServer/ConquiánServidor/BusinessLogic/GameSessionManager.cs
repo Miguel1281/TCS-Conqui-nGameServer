@@ -7,14 +7,14 @@ using System.Collections.Generic;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class GameSessionManager:IGameSessionManager
+    public class GameSessionManager : IGameSessionManager
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private readonly ConcurrentDictionary<string, ConquianGame> games =
             new ConcurrentDictionary<string, ConquianGame>();
 
-        public GameSessionManager() 
+        public GameSessionManager()
         {
         }
 
@@ -53,6 +53,35 @@ namespace ConquiánServidor.BusinessLogic
             else
             {
                 Logger.Warn($"Attempt to remove game session failed: Room Code {roomCode} not found.");
+            }
+        }
+
+        public void CheckAndClearActiveSessions(int playerId)
+        {
+            foreach (var gameEntry in games)
+            {
+                var roomCode = gameEntry.Key;
+                var gameInstance = gameEntry.Value;
+
+                bool isPlayerInGame = gameInstance.Players.Exists(p => p.idPlayer == playerId);
+
+                if (isPlayerInGame)
+                {
+                    Logger.Info($"Orphan session detected for Player {playerId} in Room {roomCode}. Terminating game.");
+
+                    try
+                    {
+                        gameInstance.NotifyGameEndedByAbandonment(playerId);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Logger.Error(ex, $"Error notifying abandonment in room {roomCode}");
+                    }
+
+                    RemoveGame(roomCode);
+
+                    break;
+                }
             }
         }
     }

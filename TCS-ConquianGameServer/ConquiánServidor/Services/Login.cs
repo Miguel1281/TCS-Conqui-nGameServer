@@ -1,13 +1,8 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
-using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories;
-using ConquiánServidor.Utilities.Email;
 using NLog;
 using System;
 using System.Data.Entity.Core;
@@ -22,23 +17,40 @@ namespace ConquiánServidor.Services
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private readonly IAuthenticationLogic authenticationLogic;
+        private readonly IGameSessionManager gameSessionManager;
 
         public Login()
         {
             Bootstrapper.Init();
             this.authenticationLogic = Bootstrapper.Container.Resolve<IAuthenticationLogic>();
+            this.gameSessionManager = Bootstrapper.Container.Resolve<IGameSessionManager>();
         }
 
-        public Login(IAuthenticationLogic authenticationLogic)
+        public Login(IAuthenticationLogic authenticationLogic, IGameSessionManager gameSessionManager)
         {
             this.authenticationLogic = authenticationLogic;
+            this.gameSessionManager = gameSessionManager;
         }
 
         public async Task<PlayerDto> AuthenticatePlayerAsync(string email, string password)
         {
             try
             {
-                return await authenticationLogic.AuthenticatePlayerAsync(email, password);
+                var player = await authenticationLogic.AuthenticatePlayerAsync(email, password);
+
+                if (player != null)
+                {
+                    try
+                    {
+                        gameSessionManager.CheckAndClearActiveSessions(player.idPlayer);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, $"Error cleaning active sessions for player {player.idPlayer}");
+                    }
+                }
+
+                return player;
             }
             catch (BusinessLogicException ex)
             {
@@ -69,7 +81,7 @@ namespace ConquiánServidor.Services
                 var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal Server Error");
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Error"));
             }
-        }    
+        }
 
         public async Task SignOutPlayerAsync(int idPlayer)
         {

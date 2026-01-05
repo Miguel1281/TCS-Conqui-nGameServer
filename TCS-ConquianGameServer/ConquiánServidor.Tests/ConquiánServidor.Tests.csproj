@@ -50,17 +50,29 @@
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
       <Version>6.1.2</Version>
     </PackageReference>
-    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="System.ServiceModel.Primitives">
+      <Version>10.0.652802</Version>
+    </PackageReference>
+    <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
     <PackageReference Include="coverlet.collector" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BusinessLogic\AuthenticationLogicTest.cs" />
+    <Compile Include="BusinessLogic\ConquianGameTest.cs" />
+    <Compile Include="BusinessLogic\FriendshipLogicTests.cs" />
+    <Compile Include="BusinessLogic\GuestInvitationManagerTest.cs" />
+    <Compile Include="BusinessLogic\InvitationManagerTests.cs" />
+    <Compile Include="BusinessLogic\LobbyLogicTest.cs" />
+    <Compile Include="BusinessLogic\LobbySessionManagerTests.cs" />
+    <Compile Include="BusinessLogic\PresenceManagerTest.cs" />
+    <Compile Include="BusinessLogic\UserProfileLogicTest.cs" />
     <Compile Include="SignUpServerValidatorTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\EmailServiceTest.cs" />
     <Compile Include="Utilities\PasswordHasherTest.cs" />
     <Compile Include="Utilities\ProfanityFilterTest.cs" />
+    <Compile Include="Validation\GameValidatorTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ConquiánServidor\ConquiánServidor.csproj">
@@ -68,6 +80,7 @@
       <Name>ConquiánServidor</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

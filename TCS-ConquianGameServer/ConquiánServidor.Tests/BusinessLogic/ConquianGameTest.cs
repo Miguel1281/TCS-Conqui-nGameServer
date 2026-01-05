@@ -1,0 +1,234 @@
+﻿using Xunit;
+using Moq;
+using ConquiánServidor.BusinessLogic.Game;
+using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.ServiceContracts;
+using ConquiánServidor.BusinessLogic.Exceptions;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System;
+
+namespace ConquiánServidor.Tests.BusinessLogic.Game
+{
+    public class ConquianGameTest
+    {
+        private readonly Mock<IGameCallback> mockCallback1;
+        private readonly Mock<IGameCallback> mockCallback2;
+        private readonly List<PlayerDto> players;
+        private const string ROOM_CODE = "TEST1";
+        private const int GAMEMODE_CLASSIC = 1;
+
+        public ConquianGameTest()
+        {
+            mockCallback1 = new Mock<IGameCallback>();
+            mockCallback2 = new Mock<IGameCallback>();
+            players = new List<PlayerDto>
+            {
+                new PlayerDto { idPlayer = 1, nickname = "Player1", pathPhoto = "photo1" },
+                new PlayerDto { idPlayer = 2, nickname = "Player2", pathPhoto = "photo2" }
+            };
+        }
+
+        private ConquianGame CreateGame()
+        {
+            var game = new ConquianGame(ROOM_CODE, GAMEMODE_CLASSIC, players);
+            game.RegisterPlayerCallback(1, mockCallback1.Object);
+            game.RegisterPlayerCallback(2, mockCallback2.Object);
+            return game;
+        }
+
+        private void TransitionToDrawPhase(ConquianGame game)
+        {
+            int p1 = players[0].idPlayer;
+            game.PassTurn(p1);
+
+            int p2 = players[1].idPlayer;
+            game.PassTurn(p2);
+        }
+
+        [Fact]
+        public void Constructor_Initialization_DealsCorrectCards()
+        {
+            var game = CreateGame();
+
+            Assert.Equal(6, game.PlayerHands[1].Count);
+            Assert.Equal(6, game.PlayerHands[2].Count);
+            Assert.Single(game.DiscardPile);
+        }
+
+        [Fact]
+        public void DrawFromDeck_NotTurnOwner_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            int notTurnPlayer = players.First(p => p.idPlayer != turnPlayer).idPlayer;
+
+            Assert.Throws<BusinessLogicException>(() => game.DrawFromDeck(notTurnPlayer));
+        }
+
+        [Fact]
+        public void DrawFromDeck_AlreadyDrawn_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+
+            game.DrawFromDeck(turnPlayer);
+
+            Assert.Throws<BusinessLogicException>(() => game.DrawFromDeck(turnPlayer));
+        }
+
+        [Fact]
+        public void DrawFromDeck_DeckEmpty_FinishesGame()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+
+            while (game.StockPile.Count > 0)
+            {
+                game.StockPile.RemoveAt(0);
+            }
+
+            bool gameFinished = false;
+            game.OnGameFinished += (result) => gameFinished = true;
+
+            Assert.Throws<BusinessLogicException>(() => game.DrawFromDeck(turnPlayer));
+            Assert.True(gameFinished);
+        }
+
+        [Fact]
+        public void DiscardCard_NotTurnOwner_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            int notTurnPlayer = 2;
+            var card = game.PlayerHands[notTurnPlayer].First();
+
+            Assert.Throws<BusinessLogicException>(() => game.DiscardCard(notTurnPlayer, card.Id));
+        }
+
+        [Fact]
+        public void DiscardCard_CardNotInHand_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            string fakeCardId = "invalid_id";
+
+            Assert.Throws<BusinessLogicException>(() => game.DiscardCard(turnPlayer, fakeCardId));
+        }
+
+        [Fact]
+        public void DiscardCard_Success_ChangesTurn()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            game.DrawFromDeck(turnPlayer);
+
+            var card = game.PlayerHands[turnPlayer].First();
+            int initialTurn = turnPlayer;
+
+            game.DiscardCard(turnPlayer, card.Id);
+
+            Assert.NotEqual(initialTurn, game.GetCurrentTurnPlayerId());
+            Assert.Contains(game.DiscardPile, c => c.Id == card.Id);
+        }
+
+        [Fact]
+        public void ProcessPlayerMove_InvalidMeld_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+
+            var cardIds = new List<string> { game.PlayerHands[turnPlayer].First().Id };
+
+            Assert.Throws<BusinessLogicException>(() => game.ProcessPlayerMove(turnPlayer, cardIds));
+        }
+
+        [Fact]
+        public void ProcessPlayerMove_NotYourTurn_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            int notTurnPlayer = 2;
+            var cardIds = game.PlayerHands[notTurnPlayer].Take(3).Select(c => c.Id).ToList();
+
+            Assert.Throws<BusinessLogicException>(() => game.ProcessPlayerMove(notTurnPlayer, cardIds));
+        }
+
+        [Fact]
+        public void SwapDrawnCard_NotDrawnFromDeck_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            var cardToDiscard = game.PlayerHands[turnPlayer].First();
+
+            Assert.Throws<BusinessLogicException>(() => game.SwapDrawnCard(turnPlayer, cardToDiscard.Id));
+        }
+
+        [Fact]
+        public void SwapDrawnCard_CardNotInHand_ThrowsBusinessLogicException()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+
+            game.DrawFromDeck(turnPlayer);
+
+            Assert.Throws<BusinessLogicException>(() => game.SwapDrawnCard(turnPlayer, "fake_id"));
+        }
+
+        [Fact]
+        public void PassTurn_HostPassesInitialDiscard_TurnsDoesNotChangeImmediately()
+        {
+            var game = CreateGame();
+            int hostId = 1;
+
+            game.PassTurn(hostId);
+
+            Assert.Equal(2, game.GetCurrentTurnPlayerId());
+        }
+
+        [Fact]
+        public void PassTurn_NotTurnOwner_DoesNothing()
+        {
+            var game = CreateGame();
+            int notTurnPlayer = 2;
+            int currentTurn = game.GetCurrentTurnPlayerId();
+
+            game.PassTurn(notTurnPlayer);
+
+            Assert.Equal(currentTurn, game.GetCurrentTurnPlayerId());
+        }
+
+        [Fact]
+        public void NotifyGameEndedByAbandonment_CallsCallback()
+        {
+            var game = CreateGame();
+            int leaverId = 1;
+
+            game.NotifyGameEndedByAbandonment(leaverId);
+
+            mockCallback2.Verify(c => c.OnOpponentLeft(), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessAFK_EndsGameAndNotifies()
+        {
+            var game = CreateGame();
+            int afkPlayerId = 1;
+
+            game.ProcessAFK(afkPlayerId);
+
+            await Task.Delay(200);
+
+            mockCallback2.Verify(c => c.NotifyGameEndedByAFK(It.IsAny<string>()), Times.AtLeastOnce);
+        }
+    }
+}

@@ -3,6 +3,7 @@ using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
+using System.Data.Entity.Infrastructure;
 using ConquiánServidor.DataAccess.Abstractions;
 using NLog;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic
 {
-    public class FriendshipLogic:IFriendshipLogic
+    public class FriendshipLogic : IFriendshipLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IFriendshipRepository friendshipRepository;
@@ -30,6 +31,7 @@ namespace ConquiánServidor.BusinessLogic
             Logger.Info($"Fetching friends list for Player ID: {idPlayer}");
 
             var friends = await friendshipRepository.GetFriendsAsync(idPlayer);
+            var uniqueFriends = friends.GroupBy(p => p.idPlayer).Select(g => g.First()).ToList();
             var friendDtos = new List<PlayerDto>();
 
             foreach (var p in friends)
@@ -113,11 +115,19 @@ namespace ConquiánServidor.BusinessLogic
                 idStatus = (int)FriendshipStatus.Pending
             };
 
-            friendshipRepository.AddFriendship(newRequest);
-            await friendshipRepository.SaveChangesAsync();
-            presenceManager.NotifyNewFriendRequest(idFriend);
+            try
+            {
+                friendshipRepository.AddFriendship(newRequest);
+                await friendshipRepository.SaveChangesAsync();
 
-            Logger.Info($"Friend request sent successfully: Player ID {idPlayer} -> Target ID {idFriend}");
+                presenceManager.NotifyNewFriendRequest(idFriend);
+                Logger.Info($"Friend request sent successfully: Player ID {idPlayer} -> Target ID {idFriend}");
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.Warn($"Concurrency error handling friend request: {ex.Message}");
+                throw new BusinessLogicException(ServiceErrorType.ExistingRequest);
+            }
         }
 
         public async Task UpdateFriendRequestStatusAsync(int idFriendship, int newStatus)
@@ -129,7 +139,7 @@ namespace ConquiánServidor.BusinessLogic
             if (request == null)
             {
                 Logger.Warn($"Update friend request failed: Friendship ID {idFriendship} not found.");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                return;
             }
 
             int senderId = request.idOrigen ?? 0;
@@ -137,19 +147,43 @@ namespace ConquiánServidor.BusinessLogic
 
             if (newStatus == (int)FriendshipStatus.Accepted)
             {
-                request.idStatus = (int)FriendshipStatus.Accepted;
+                var existingAccepted = await friendshipRepository.GetAcceptedFriendshipAsync(senderId, receiverId);
+
+                if (existingAccepted != null)
+                {
+                    Logger.Info("Friendship already established via another request. Deleting duplicate pending request.");
+                    friendshipRepository.RemoveFriendship(request);
+                }
+                else
+                {
+                    request.idStatus = (int)FriendshipStatus.Accepted;
+
+                    var mutualRequest = await friendshipRepository.GetPendingRequestAsync(receiverId, senderId);
+                    if (mutualRequest != null)
+                    {
+                        Logger.Info($"Found mutual pending request ID {mutualRequest.idFriendship}. Removing it to prevent duplicates.");
+                        friendshipRepository.RemoveFriendship(mutualRequest);
+                    }
+                }
             }
             else
             {
                 friendshipRepository.RemoveFriendship(request);
             }
 
-            await friendshipRepository.SaveChangesAsync();
+            try
+            {
+                await friendshipRepository.SaveChangesAsync();
 
-            presenceManager.NotifyFriendListUpdate(senderId);
-            presenceManager.NotifyFriendListUpdate(receiverId);
+                presenceManager.NotifyFriendListUpdate(senderId);
+                presenceManager.NotifyFriendListUpdate(receiverId);
 
-            Logger.Info($"Friend request status updated successfully for Friendship ID: {idFriendship}");
+                Logger.Info($"Friend request status updated successfully for Friendship ID: {idFriendship}");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                Logger.Warn("Concurrency exception handled during UpdateFriendRequestStatus.");
+            }
         }
 
         public async Task DeleteFriendAsync(int idPlayer, int idFriend)
@@ -160,17 +194,24 @@ namespace ConquiánServidor.BusinessLogic
 
             if (friendship == null)
             {
-                Logger.Warn($"Friend deletion failed: Friendship not found between Player ID {idPlayer} and Friend ID {idFriend}");
-                throw new BusinessLogicException(ServiceErrorType.NotFound);
+                Logger.Info($"Friendship between {idPlayer} and {idFriend} already deleted or not found. Treating as success.");
+                return;
             }
 
-            friendshipRepository.RemoveFriendship(friendship);
-            await friendshipRepository.SaveChangesAsync();
+            try
+            {
+                friendshipRepository.RemoveFriendship(friendship);
+                await friendshipRepository.SaveChangesAsync();
 
-            presenceManager.NotifyFriendListUpdate(idPlayer);
-            presenceManager.NotifyFriendListUpdate(idFriend);
+                presenceManager.NotifyFriendListUpdate(idPlayer);
+                presenceManager.NotifyFriendListUpdate(idFriend);
 
-            Logger.Info($"Friend deleted successfully: Player ID {idPlayer} and Friend ID {idFriend}");
+                Logger.Info($"Friend deleted successfully: Player ID {idPlayer} and Friend ID {idFriend}");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                Logger.Warn("Concurrency exception ignored during friend deletion - record already deleted.");
+            }
         }
     }
 }

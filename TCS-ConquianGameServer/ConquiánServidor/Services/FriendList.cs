@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.Services
 {
-    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple)]
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerCall, ConcurrencyMode = ConcurrencyMode.Multiple)]
     public class FriendList : IFriendList
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
@@ -26,7 +26,7 @@ namespace ConquiánServidor.Services
         private const string DATA_ACCESS_ERROR_MESSAGE = "Data Access Error";
         private const string DATABASE_UNAVAILABLE_REASON = "Database Unavailable";
 
-  public FriendList()
+        public FriendList()
         {
             Bootstrapper.Init();
             this.friendshipLogic = Bootstrapper.Container.Resolve<IFriendshipLogic>();

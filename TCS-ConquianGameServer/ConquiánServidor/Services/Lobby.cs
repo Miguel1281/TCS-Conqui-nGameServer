@@ -286,7 +286,7 @@ namespace ConquiánServidor.Services
             }
         }
 
-        private static void NotifyPlayersInLobby(string roomCode, int? idPlayerToExclude, Action<ILobbyCallback> action)
+        private void NotifyPlayersInLobby(string roomCode, int? idPlayerToExclude, Action<ILobbyCallback> action)
         {
             if (!lobbyCallbacks.TryGetValue(roomCode, out var callbacks))
             {
@@ -302,6 +302,15 @@ namespace ConquiánServidor.Services
                     continue;
                 }
 
+                if (entry.Value is ICommunicationObject commObj)
+                {
+                    if (commObj.State == CommunicationState.Closed || commObj.State == CommunicationState.Faulted)
+                    {
+                        disconnectedPlayers.Add(entry.Key);
+                        continue;
+                    }
+                }
+
                 try
                 {
                     action(entry.Value);
@@ -315,6 +324,7 @@ namespace ConquiánServidor.Services
             foreach (var id in disconnectedPlayers)
             {
                 callbacks.TryRemove(id, out _);
+                HandleClientDisconnect(roomCode, id);
             }
         }
 

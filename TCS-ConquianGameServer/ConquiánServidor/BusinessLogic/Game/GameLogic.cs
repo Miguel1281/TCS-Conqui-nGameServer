@@ -664,17 +664,16 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             Logger.Info($"Player ID {playerId} successfully melded cards in Room {RoomCode}");
 
+            bool gameEnded = CheckWinCondition(playerId);
+
             if (usingDiscardCard)
             {
                 BroadcastDiscardUpdate();
-                mustDiscardToFinishTurn = true;
-            }
 
-            bool gameEnded = CheckWinCondition(playerId);
-
-            if (!gameEnded && usingDiscardCard)
-            {
-                BroadcastDiscardUpdate();
+                if (!gameEnded)
+                {
+                    mustDiscardToFinishTurn = true;
+                }
             }
         }
 

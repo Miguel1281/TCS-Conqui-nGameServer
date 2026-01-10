@@ -12,5 +12,6 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
         void RemoveLobby(string roomCode);
         void SetGamemode(string roomCode, int idGamemode);
         void BanPlayer(string roomCode, int idPlayer);
+        string GetLobbyCodeForPlayer(int idPlayer);
     }
 }

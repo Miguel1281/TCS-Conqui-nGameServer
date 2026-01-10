@@ -170,5 +170,20 @@ namespace ConquiánServidor.BusinessLogic
                 }
             }
         }
+
+        public string GetLobbyCodeForPlayer(int idPlayer)
+        {
+            foreach (var session in activeLobbies.Values)
+            {
+                lock (session)
+                {
+                    if (session.Players.Any(p => p.idPlayer == idPlayer))
+                    {
+                        return session.RoomCode;
+                    }
+                }
+            }
+            return null;
+        }
     }
 }

@@ -26,6 +26,19 @@ namespace ConquiánServidor.Services
             var callback = OperationContext.Current.GetCallbackChannel<IPresenceCallback>();
             if (callback != null)
             {
+
+                ICommunicationObject channel = (ICommunicationObject)callback;
+
+                channel.Closed += (sender, e) =>
+                {
+                    presenceManager.DisconnectUser(idPlayer);
+                };
+
+                channel.Faulted += (sender, e) =>
+                {
+                    presenceManager.DisconnectUser(idPlayer);
+                };
+
                 presenceManager.Subscribe(idPlayer, callback);
             }
         }

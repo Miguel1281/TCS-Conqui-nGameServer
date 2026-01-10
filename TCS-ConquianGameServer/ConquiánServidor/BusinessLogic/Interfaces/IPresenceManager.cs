@@ -11,6 +11,7 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
         Task NotifyStatusChange(int changedPlayerId, int newStatusId);
         void NotifyNewFriendRequest(int targetUserId);
         void NotifyFriendListUpdate(int targetUserId);
-        bool IsPlayerInGame(int playerId); 
+        bool IsPlayerInGame(int playerId);
+        void DisconnectUser(int idPlayer);
     }
 }

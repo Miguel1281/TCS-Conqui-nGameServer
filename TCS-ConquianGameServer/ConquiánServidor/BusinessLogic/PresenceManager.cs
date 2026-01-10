@@ -9,7 +9,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Timers;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -18,7 +17,6 @@ namespace ConquiánServidor.BusinessLogic
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
         private readonly Dictionary<int, IPresenceCallback> onlineSubscribers = new Dictionary<int, IPresenceCallback>();
-        private readonly ConcurrentDictionary<int, DateTime> lastHeartbeats = new ConcurrentDictionary<int, DateTime>();
         private readonly ConcurrentDictionary<int, PlayerStatus> playerStatuses = new ConcurrentDictionary<int, PlayerStatus>();
 
         private readonly object lockObj = new object();
@@ -27,6 +25,51 @@ namespace ConquiánServidor.BusinessLogic
         public PresenceManager(ILifetimeScope scope)
         {
             this.lifetimeScope = scope;
+        }
+
+        public async void DisconnectUser(int idPlayer)
+        {
+            Logger.Info($"Detectada desconexión del jugador {idPlayer}. Limpiando sesión...");
+
+            Unsubscribe(idPlayer);
+
+            await NotifyStatusChange(idPlayer, (int)PlayerStatus.Offline);
+
+            try
+            {
+                using (var scope = this.lifetimeScope.BeginLifetimeScope())
+                {
+                    var lobbyLogic = scope.Resolve<ILobbyLogic>();
+                    var lobbySessionManager = scope.Resolve<ILobbySessionManager>();
+                    var gameSessionManager = scope.Resolve<IGameSessionManager>();
+
+                    try
+                    {
+                        string roomCode = lobbySessionManager.GetLobbyCodeForPlayer(idPlayer);
+                        if (!string.IsNullOrEmpty(roomCode))
+                        {
+                            await lobbyLogic.LeaveLobbyAsync(roomCode, idPlayer);
+                        }
+                    }
+                    catch (Exception exLobby)
+                    {
+                        Logger.Error($"Error sacando del lobby al jugador {idPlayer}: {exLobby.Message}");
+                    }
+
+                    try
+                    {
+                        gameSessionManager.CheckAndClearActiveSessions(idPlayer);
+                    }
+                    catch (Exception exGame)
+                    {
+                        Logger.Error($"Error sacando de la partida al jugador {idPlayer}: {exGame.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Error general limpiando sesión del jugador {idPlayer}");
+            }
         }
 
         public virtual bool IsPlayerOnline(int idPlayer)

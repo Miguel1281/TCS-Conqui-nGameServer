@@ -24,19 +24,9 @@ namespace ConquiánServidor.BusinessLogic
         private readonly object lockObj = new object();
         private readonly ILifetimeScope lifetimeScope;
 
-        private readonly System.Timers.Timer heartbeatChecker;
-
-        private const int HEARTBEAT_TIMEOUT_SECONDS = 15;
-        private const int CHECK_INTERVAL_MS = 5000;
-
         public PresenceManager(ILifetimeScope scope)
         {
             this.lifetimeScope = scope;
-
-            heartbeatChecker = new System.Timers.Timer(CHECK_INTERVAL_MS);
-            heartbeatChecker.Elapsed += CheckInactiveUsers;
-            heartbeatChecker.AutoReset = true;
-            heartbeatChecker.Start();
         }
 
         public virtual bool IsPlayerOnline(int idPlayer)
@@ -62,7 +52,6 @@ namespace ConquiánServidor.BusinessLogic
                 onlineSubscribers[idPlayer] = callback;
             }
 
-            lastHeartbeats.AddOrUpdate(idPlayer, DateTime.UtcNow, (key, oldVal) => DateTime.UtcNow);
             playerStatuses.AddOrUpdate(idPlayer, PlayerStatus.Online, (key, oldVal) => PlayerStatus.Online);
         }
 
@@ -73,39 +62,9 @@ namespace ConquiánServidor.BusinessLogic
                 onlineSubscribers.Remove(idPlayer);
             }
 
-            lastHeartbeats.TryRemove(idPlayer, out _);
             playerStatuses.TryRemove(idPlayer, out _);
         }
 
-        public void ReceivePing(int idPlayer)
-        {
-            if (lastHeartbeats.ContainsKey(idPlayer))
-            {
-                lastHeartbeats[idPlayer] = DateTime.UtcNow;
-            }
-        }
-
-        private void CheckInactiveUsers(object sender, ElapsedEventArgs e)
-        {
-            var now = DateTime.UtcNow;
-            var timeoutLimit = TimeSpan.FromSeconds(HEARTBEAT_TIMEOUT_SECONDS);
-
-            var inactivePlayers = lastHeartbeats.Where(kvp => (now - kvp.Value) > timeoutLimit).ToList();
-
-            foreach (var entry in inactivePlayers)
-            {
-                int playerId = entry.Key;
-                Logger.Warn($"Heartbeat timeout for Player {playerId}. Disconnecting forcingly.");
-
-                Unsubscribe(playerId);
-
-                Task.Run(async () =>
-                {
-                    int offlineStatusId = (int)PlayerStatus.Offline;
-                    await NotifyStatusChange(playerId, offlineStatusId);
-                });
-            }
-        }
 
         public virtual async Task NotifyStatusChange(int changedPlayerId, int newStatusId)
         {
@@ -165,7 +124,6 @@ namespace ConquiánServidor.BusinessLogic
                 foreach (var deadId in deadSubscribers.Distinct())
                 {
                     onlineSubscribers.Remove(deadId);
-                    lastHeartbeats.TryRemove(deadId, out _);
                 }
             }
         }

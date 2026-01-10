@@ -34,10 +34,5 @@ namespace ConquiánServidor.Services
         {
             presenceManager.Unsubscribe(idPlayer);
         }
-
-        public void Ping(int idPlayer)
-        {
-            presenceManager.ReceivePing(idPlayer);
-        }
     }
 }

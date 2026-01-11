@@ -302,8 +302,6 @@ namespace ConquiánServidor.Services
                 return;
             }
 
-            List<int> disconnectedPlayers = new List<int>();
-
             foreach (var entry in callbacks)
             {
                 if (idPlayerToExclude.HasValue && entry.Key == idPlayerToExclude.Value)
@@ -311,29 +309,29 @@ namespace ConquiánServidor.Services
                     continue;
                 }
 
-                if (entry.Value is ICommunicationObject commObj)
+                int playerId = entry.Key;
+                ILobbyCallback callback = entry.Value;
+
+                Task.Run(() =>
                 {
-                    if (commObj.State == CommunicationState.Closed || commObj.State == CommunicationState.Faulted)
+                    try
                     {
-                        disconnectedPlayers.Add(entry.Key);
-                        continue;
+                        if (callback is ICommunicationObject commObj)
+                        {
+                            if (commObj.State == CommunicationState.Closed || commObj.State == CommunicationState.Faulted)
+                            {
+                                HandleClientDisconnect(roomCode, playerId);
+                                return;
+                            }
+                        }
+
+                        action(callback);
                     }
-                }
-
-                try
-                {
-                    action(entry.Value);
-                }
-                catch (Exception)
-                {
-                    disconnectedPlayers.Add(entry.Key);
-                }
-            }
-
-            foreach (var id in disconnectedPlayers)
-            {
-                callbacks.TryRemove(id, out _);
-                HandleClientDisconnect(roomCode, id);
+                    catch (Exception)
+                    {
+                        HandleClientDisconnect(roomCode, playerId);
+                    }
+                });
             }
         }
 

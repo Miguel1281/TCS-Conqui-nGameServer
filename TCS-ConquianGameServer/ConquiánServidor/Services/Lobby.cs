@@ -304,34 +304,36 @@ namespace ConquiánServidor.Services
 
             foreach (var entry in callbacks)
             {
-                if (idPlayerToExclude.HasValue && entry.Key == idPlayerToExclude.Value)
+                int playerId = entry.Key;
+                ILobbyCallback callback = entry.Value;
+
+                if (idPlayerToExclude.HasValue && playerId == idPlayerToExclude.Value)
                 {
                     continue;
                 }
 
-                int playerId = entry.Key;
-                ILobbyCallback callback = entry.Value;
+                Task.Run(() => ExecuteSafeNotification(roomCode, playerId, callback, action));
+            }
+        }
 
-                Task.Run(() =>
+        private void ExecuteSafeNotification(string roomCode, int playerId, ILobbyCallback callback, Action<ILobbyCallback> action)
+        {
+            try
+            {
+                var commObj = callback as ICommunicationObject;
+
+                if (commObj != null && (commObj.State == CommunicationState.Closed || commObj.State == CommunicationState.Faulted))
                 {
-                    try
-                    {
-                        if (callback is ICommunicationObject commObj)
-                        {
-                            if (commObj.State == CommunicationState.Closed || commObj.State == CommunicationState.Faulted)
-                            {
-                                HandleClientDisconnect(roomCode, playerId);
-                                return;
-                            }
-                        }
+                    HandleClientDisconnect(roomCode, playerId);
+                    return;
+                }
 
-                        action(callback);
-                    }
-                    catch (Exception)
-                    {
-                        HandleClientDisconnect(roomCode, playerId);
-                    }
-                });
+                action(callback);
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, "error during player notification in lobby.");
+                HandleClientDisconnect(roomCode, playerId);
             }
         }
 

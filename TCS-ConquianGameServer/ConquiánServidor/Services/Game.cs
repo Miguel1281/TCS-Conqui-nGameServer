@@ -22,7 +22,7 @@ namespace ConquiánServidor.Services
         private readonly IGameSessionManager gameSessionManager;
         private readonly ILifetimeScope lifetimeScope;
 
-        private const string INTERNAL_SERVER_ERROR_REASON = "Internal server error";
+        private const string INTERNAL_SERVER_ERROR_REASON = "internal server error";
 
         public Game()
         {
@@ -41,11 +41,7 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = this.gameSessionManager.GetGame(roomCode);
-                if (game == null)
-                {
-                    throw new BusinessLogicException(ServiceErrorType.NotFound);
-                }
+                var game = GetGameOrThrow(roomCode);
 
                 game.OnGameFinished -= HandleGameFinished;
                 game.OnGameFinished += HandleGameFinished;
@@ -58,16 +54,9 @@ namespace ConquiánServidor.Services
 
                 return await Task.FromResult(gameState);
             }
-            catch (BusinessLogicException ex)
-            {
-                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Critical error in JoinGameAsync room {roomCode} player {playerId}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
+                throw HandleException(ex, $"critical error in JoinGameAsync room {roomCode} player {playerId}");
             }
         }
 
@@ -75,112 +64,13 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = this.gameSessionManager.GetGame(roomCode);
-                if (game == null)
-                {
-                    throw new InvalidOperationException(Lang.ErrorGameNotFound);
-                }
-
+                var game = GetGameOrThrow(roomCode);
                 game.ProcessPlayerMove(playerId, cardIds.ToList());
-
                 await Task.CompletedTask;
-            }
-            catch (BusinessLogicException ex)
-            {
-                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error in PlayCards for player {playerId} in room {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
-            }
-        }
-
-        private async void HandleGameFinished(GameResultDto result)
-        {
-            using (var scope = this.lifetimeScope.BeginLifetimeScope())
-            {
-                if (!result.IsDraw && result.WinnerId > 0)
-                {
-                    try
-                    {
-                        var playerRepository = scope.Resolve<IPlayerRepository>();
-
-                        int realPoints = await playerRepository.UpdatePlayerPointsAsync(result.WinnerId);
-
-                        result.PointsWon = realPoints;
-                    }
-                    catch (Exception ex)    
-                    {
-                        Logger.Error(ex, "Error updating points in DB (Player might be Guest or not found)");
-                    }
-                }
-
-                try
-                {
-                    var gameRepository = scope.Resolve<IGameRepository>();
-
-                    var newGame = new ConquiánServidor.ConquiánDB.Game
-                    {
-                        gameTime = result.DurationSeconds,
-                        datePlayed = DateTime.Now,
-                        idGamemode = result.GamemodeId,
-                        GamePlayer = new List<ConquiánServidor.ConquiánDB.GamePlayer>()
-                    };
-
-
-                    if (result.Player1Id > 0)
-                    {
-                        int xpToSave = (result.WinnerId == result.Player1Id) ? result.PointsWon : 0;
-
-                        var p1Detail = new ConquiánServidor.ConquiánDB.GamePlayer
-                        {
-                            idPlayer = result.Player1Id,
-                            score = xpToSave,
-                            isWinner = (result.WinnerId == result.Player1Id)
-                        };
-                        newGame.GamePlayer.Add(p1Detail);
-                    }
-
-                    if (result.Player2Id > 0)
-                    {
-                        int xpToSave = (result.WinnerId == result.Player2Id) ? result.PointsWon : 0;
-
-                        var p2Detail = new ConquiánServidor.ConquiánDB.GamePlayer
-                        {
-                            idPlayer = result.Player2Id,
-                            score = xpToSave,
-                            isWinner = (result.WinnerId == result.Player2Id)
-                        };
-                        newGame.GamePlayer.Add(p2Detail);
-                    }
-
-                    await gameRepository.AddGameAsync(newGame);
-                    Logger.Info($"History saved successfully.");
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, "Error saving history logic.");
-                }
-
-                try
-                {
-                    var gameInstance = this.gameSessionManager.GetGame(result.RoomCode);
-                    if (gameInstance != null)
-                    {
-                        gameInstance.BroadcastGameResult(result);
-                    }
-                    else
-                    {
-                        Logger.Warn($"Could not broadcast result. Game session {result.RoomCode} not found.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, "Error broadcasting final result.");
-                }
+                throw HandleException(ex, $"error in PlayCards for player {playerId} in room {roomCode}");
             }
         }
 
@@ -188,26 +78,13 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = this.gameSessionManager.GetGame(roomCode);
-                if (game == null)
-                {
-                    throw new InvalidOperationException(Lang.ErrorGameNotFound);
-                }
-
+                var game = GetGameOrThrow(roomCode);
                 game.DrawFromDeck(playerId);
-
                 await Task.CompletedTask;
-            }
-            catch (BusinessLogicException ex)
-            {
-                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error in DrawFromDeck for player {playerId} in room {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
+                throw HandleException(ex, $"error in DrawFromDeck for player {playerId} in room {roomCode}");
             }
         }
 
@@ -215,26 +92,13 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = this.gameSessionManager.GetGame(roomCode);
-                if (game == null)
-                {
-                    throw new InvalidOperationException(Lang.ErrorGameNotFound);
-                }
-
+                var game = GetGameOrThrow(roomCode);
                 game.PassTurn(playerId);
-
                 await Task.CompletedTask;
-            }
-            catch (BusinessLogicException ex)
-            {
-                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error in PassTurnAsync for player {playerId} in room {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
+                throw HandleException(ex, $"error in PassTurnAsync for player {playerId} in room {roomCode}");
             }
         }
 
@@ -242,69 +106,28 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                var game = this.gameSessionManager.GetGame(roomCode);
-                if (game == null)
-                {
-                    throw new InvalidOperationException(Lang.ErrorGameNotFound);
-                }
-
+                var game = GetGameOrThrow(roomCode);
                 game.DiscardCard(playerId, cardId);
-
                 await Task.CompletedTask;
-            }
-            catch (BusinessLogicException ex)
-            {
-                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error in DiscardCard for player {playerId} in room {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
+                throw HandleException(ex, $"error in DiscardCard for player {playerId} in room {roomCode}");
             }
         }
 
-        private GameStateDto BuildGameStateForPlayer(ConquianGame game, int playerId)
+        public async Task SwapDrawnCardAsync(string roomCode, int playerId, string cardIdToDiscard)
         {
-            var playerHandDto = game.PlayerHands[playerId]
-                .Select(card => new CardDto
-                {
-                    Id = card.Id,
-                    Suit = card.Suit,
-                    Rank = card.Rank,
-                    ImagePath = card.ImagePath
-                }).ToList();
-
-            CardDto topDiscardDto = null;
-            if (game.DiscardPile.Count > 0)
+            try
             {
-                var topDiscardCard = game.DiscardPile[game.DiscardPile.Count - 1];
-
-                topDiscardDto = new CardDto
-                {
-                    Id = topDiscardCard.Id,
-                    Suit = topDiscardCard.Suit,
-                    Rank = topDiscardCard.Rank,
-                    ImagePath = topDiscardCard.ImagePath
-                };
+                var game = GetGameOrThrow(roomCode);
+                game.SwapDrawnCard(playerId, cardIdToDiscard);
+                await Task.CompletedTask;
             }
-
-            var opponentDto = game.Players.First(p => p.idPlayer != playerId);
-
-            int currentTurnPlayerId = game.GetCurrentTurnPlayerId();
-            int opponentCards = game.PlayerHands[opponentDto.idPlayer].Count;
-            int totalSeconds = game.GetInitialTimeInSeconds();
-
-            return new GameStateDto
+            catch (Exception ex)
             {
-                PlayerHand = playerHandDto,
-                TopDiscardCard = topDiscardDto,
-                Opponent = opponentDto,
-                CurrentTurnPlayerId = currentTurnPlayerId,
-                OpponentCardCount = opponentCards,
-                TotalGameSeconds = totalSeconds
-            };
+                throw HandleException(ex, $"error in SwapDrawnCardAsync for player {playerId} in room {roomCode}");
+            }
         }
 
         public void LeaveGame(string roomCode, int playerId)
@@ -315,41 +138,13 @@ namespace ConquiánServidor.Services
                 if (game != null)
                 {
                     game.NotifyGameEndedByAbandonment(playerId);
-
                     this.gameSessionManager.RemoveGame(roomCode);
-                    Logger.Info($"Game {roomCode} ended due to player {playerId} leaving.");
+                    Logger.Info($"game {roomCode} ended due to player {playerId} leaving.");
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error in LeaveGame for room {roomCode}");
-            }
-        }
-
-        public async Task SwapDrawnCardAsync(string roomCode, int playerId, string cardIdToDiscard)
-        {
-            try
-            {
-                var game = this.gameSessionManager.GetGame(roomCode);
-                if (game == null)
-                {
-                    throw new InvalidOperationException(Lang.ErrorGameNotFound);
-                }
-
-                game.SwapDrawnCard(playerId, cardIdToDiscard);
-
-                await Task.CompletedTask;
-            }
-            catch (BusinessLogicException ex)
-            {
-                var faultData = new ServiceFaultDto(ex.ErrorType, ex.Message);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.Message));
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, $"Error in SwapDrawnCardAsync for player {playerId} in room {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
+                Logger.Error(ex, $"error in LeaveGame for room {roomCode}");
             }
         }
 
@@ -365,8 +160,117 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error reporting AFK for player {playerId} in room {roomCode}");
+                Logger.Error(ex, $"error reporting AFK for player {playerId} in room {roomCode}");
             }
+        }
+
+
+        private ConquianGame GetGameOrThrow(string roomCode)
+        {
+            var game = this.gameSessionManager.GetGame(roomCode);
+            if (game == null)
+            {
+                throw new BusinessLogicException(ServiceErrorType.NotFound, Lang.ErrorGameNotFound);
+            }
+            return game;
+        }
+
+        private static Exception HandleException(Exception ex, string logMessage)
+        {
+            if (ex is BusinessLogicException logicEx)
+            {
+                var faultData = new ServiceFaultDto(logicEx.ErrorType, logicEx.Message);
+                return new FaultException<ServiceFaultDto>(faultData, new FaultReason(logicEx.Message));
+            }
+
+            Logger.Error(ex, logMessage);
+            var internalFault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
+            return new FaultException<ServiceFaultDto>(internalFault, new FaultReason(INTERNAL_SERVER_ERROR_REASON));
+        }
+
+        private async void HandleGameFinished(GameResultDto result)
+        {
+            using (var scope = this.lifetimeScope.BeginLifetimeScope())
+            {
+                if (!result.IsDraw && result.WinnerId > 0)
+                {
+                    try
+                    {
+                        var playerRepo = scope.Resolve<IPlayerRepository>();
+                        result.PointsWon = await playerRepo.UpdatePlayerPointsAsync(result.WinnerId);
+                    }
+                    catch (Exception ex) { Logger.Error(ex, "error updating points."); }
+                }
+
+                try
+                {
+                    var gameRepo = scope.Resolve<IGameRepository>();
+                    var dbGame = new ConquiánServidor.ConquiánDB.Game
+                    {
+                        gameTime = result.DurationSeconds,
+                        datePlayed = DateTime.Now,
+                        idGamemode = result.GamemodeId,
+                        GamePlayer = new List<ConquiánServidor.ConquiánDB.GamePlayer>()
+                    };
+
+                    AddPlayerToGame(dbGame, result.Player1Id, result.WinnerId, result.PointsWon);
+                    AddPlayerToGame(dbGame, result.Player2Id, result.WinnerId, result.PointsWon);
+
+                    await gameRepo.AddGameAsync(dbGame);
+                }
+                catch (Exception ex) { Logger.Error(ex, "error saving history."); }
+
+                try
+                {
+                    var instance = this.gameSessionManager.GetGame(result.RoomCode);
+                    instance?.BroadcastGameResult(result);
+                }
+                catch (Exception ex) { Logger.Error(ex, "error broadcasting result."); }
+            }
+        }
+
+        private void AddPlayerToGame(ConquiánServidor.ConquiánDB.Game game, int playerId, int winnerId, int points)
+        {
+            if (playerId <= 0)
+            {
+                return;
+            }
+
+            game.GamePlayer.Add(new ConquiánServidor.ConquiánDB.GamePlayer
+            {
+                idPlayer = playerId,
+                score = (winnerId == playerId) ? points : 0,
+                isWinner = (winnerId == playerId)
+            });
+        }
+
+        private GameStateDto BuildGameStateForPlayer(ConquianGame game, int playerId)
+        {
+            var hand = game.PlayerHands[playerId].Select(c => new CardDto
+            {
+                Id = c.Id,
+                Suit = c.Suit,
+                Rank = c.Rank,
+                ImagePath = c.ImagePath
+            }).ToList();
+
+            CardDto topDiscard = null;
+            if (game.DiscardPile.Count > 0)
+            {
+                var c = game.DiscardPile[game.DiscardPile.Count - 1];
+                topDiscard = new CardDto { Id = c.Id, Suit = c.Suit, Rank = c.Rank, ImagePath = c.ImagePath };
+            }
+
+            var opponent = game.Players.First(p => p.idPlayer != playerId);
+            return new GameStateDto
+            {
+                PlayerHand = hand,
+                TopDiscardCard = topDiscard,
+                Opponent = opponent,
+                CurrentTurnPlayerId = game.GetCurrentTurnPlayerId(),
+                OpponentCardCount = game.PlayerHands[opponent.idPlayer].Count,
+                TotalGameSeconds = game.GetInitialTimeInSeconds()
+            };
         }
     }
 }

@@ -19,12 +19,11 @@ namespace ConquiánServidor.Services
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IFriendshipLogic friendshipLogic;
 
-        private const string LOGIC_ERROR_MESSAGE = "Logic Error";
-        private const string INTERNAL_SERVER_ERROR_MESSAGE = "Internal Server Error";
-        private const string INTERNAL_FAULT_REASON = "Internal Error";
-        private const string DATABASE_ERROR_MESSAGE = "Database Error";
-        private const string DATA_ACCESS_ERROR_MESSAGE = "Data Access Error";
-        private const string DATABASE_UNAVAILABLE_REASON = "Database Unavailable";
+        private const string LOGIC_ERROR_MESSAGE = "logic error";
+        private const string INTERNAL_SERVER_ERROR_MESSAGE = "internal server error";
+        private const string INTERNAL_FAULT_REASON = "internal error";
+        private const string DATABASE_ERROR_MESSAGE = "database error";
+        private const string DATABASE_UNAVAILABLE_REASON = "database unavailable";
 
         public FriendList()
         {
@@ -43,16 +42,9 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetPlayerByNicknameAsync(nickname, idCurrentUser);
             }
-            catch (BusinessLogicException ex)
-            {
-                var fault = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Error getting player by nickname");
-                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_FAULT_REASON));
+                throw HandleException(ex, "error getting player by nickname");
             }
         }
 
@@ -62,23 +54,9 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetFriendsAsync(idPlayer);
             }
-            catch (SqlException ex)
-            {
-                Logger.Error(ex, "SQL Error getting friends list");
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_REASON));
-            }
-            catch (EntityException ex)
-            {
-                Logger.Error(ex, "Entity Framework Error getting friends list");
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATA_ACCESS_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_REASON));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Unexpected error getting friends list");
-                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_FAULT_REASON));
+                throw HandleException(ex, "error getting friends list");
             }
         }
 
@@ -88,23 +66,9 @@ namespace ConquiánServidor.Services
             {
                 return await friendshipLogic.GetFriendRequestsAsync(idPlayer);
             }
-            catch (SqlException ex)
-            {
-                Logger.Error(ex, "SQL Error getting friend requests");
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_REASON));
-            }
-            catch (EntityException ex)
-            {
-                Logger.Error(ex, "Entity Framework Error getting friend requests");
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATA_ACCESS_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_REASON));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Unexpected error getting friend requests");
-                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_FAULT_REASON));
+                throw HandleException(ex, "error getting friend requests");
             }
         }
 
@@ -114,16 +78,9 @@ namespace ConquiánServidor.Services
             {
                 await friendshipLogic.SendFriendRequestAsync(idSender, idReceiver);
             }
-            catch (BusinessLogicException ex)
-            {
-                var fault = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Error sending friend request");
-                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_FAULT_REASON));
+                throw HandleException(ex, "error sending friend request");
             }
         }
 
@@ -133,16 +90,9 @@ namespace ConquiánServidor.Services
             {
                 await friendshipLogic.UpdateFriendRequestStatusAsync(idFriendship, idStatus);
             }
-            catch (BusinessLogicException ex)
-            {
-                var fault = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Error updating friend request status");
-                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_FAULT_REASON));
+                throw HandleException(ex, "error updating friend request status");
             }
         }
 
@@ -152,17 +102,30 @@ namespace ConquiánServidor.Services
             {
                 await friendshipLogic.DeleteFriendAsync(idPlayer, idFriend);
             }
-            catch (BusinessLogicException ex)
-            {
-                var fault = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.ErrorType.ToString()));
-            }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Error deleting friend");
-                var fault = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(INTERNAL_FAULT_REASON));
+                throw HandleException(ex, "error deleting friend");
             }
+        }
+
+        private static Exception HandleException(Exception ex, string logMessage)
+        {
+            if (ex is BusinessLogicException businessEx)
+            {
+                var fault = new ServiceFaultDto(businessEx.ErrorType, LOGIC_ERROR_MESSAGE);
+                return new FaultException<ServiceFaultDto>(fault, new FaultReason(businessEx.ErrorType.ToString()));
+            }
+
+            if (ex is SqlException || ex is EntityException)
+            {
+                Logger.Error(ex, logMessage);
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
+                return new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_REASON));
+            }
+
+            Logger.Error(ex, logMessage);
+            var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+            return new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_FAULT_REASON));
         }
     }
 }

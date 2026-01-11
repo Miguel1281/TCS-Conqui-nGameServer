@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.DataAccess.Repositories
@@ -11,7 +12,6 @@ namespace ConquiánServidor.DataAccess.Repositories
     public class PlayerRepository : IPlayerRepository
     {
         private readonly ConquiánDBEntities context;
-        private static readonly Random random = new Random();
 
         public PlayerRepository(ConquiánDBEntities context)
         {
@@ -83,7 +83,7 @@ namespace ConquiánServidor.DataAccess.Repositories
             {
                 int minReward = player.LevelRules.MinPointsReward;
                 int maxReward = player.LevelRules.MaxPointsReward;
-                earnedPoints = random.Next(minReward, maxReward + 1);
+                earnedPoints = GetNextInt(minReward, maxReward + 1);
 
                 player.currentPoints += earnedPoints;
 
@@ -105,6 +105,17 @@ namespace ConquiánServidor.DataAccess.Repositories
             }
 
             return earnedPoints;
+        }
+
+        private static int GetNextInt(int min, int max)
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] data = new byte[4];
+                rng.GetBytes(data);
+                int value = BitConverter.ToInt32(data, 0) & int.MaxValue;
+                return (value % (max - min)) + min;
+            }
         }
 
         public async Task<int> GetNextLevelThresholdAsync(int currentLevelId)

@@ -44,7 +44,6 @@ namespace ConquiánServidor.Utilities
             "douchebag", "wanker"
         };
 
-        private static string pattern;
         private static Regex regex;
 
         static ProfanityFilter()
@@ -56,15 +55,17 @@ namespace ConquiánServidor.Utilities
         {
 
             var escapedWords = Blacklist.Select(Regex.Escape);
-            pattern = $@"\b({string.Join("|", escapedWords)})\b";
+            string pattern = $@"\b({string.Join("|", escapedWords)})\b";
 
-            regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
+            regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(2));
         }
 
         public static string CensorMessage(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
+            {
                 return message;
+            }
 
             return regex.Replace(message, "*****");
         }

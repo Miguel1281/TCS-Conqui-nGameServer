@@ -31,7 +31,6 @@ namespace ConquiánServidor.BusinessLogic
             Logger.Info($"Fetching friends list for Player ID: {idPlayer}");
 
             var friends = await friendshipRepository.GetFriendsAsync(idPlayer);
-            var uniqueFriends = friends.GroupBy(p => p.idPlayer).Select(g => g.First()).ToList();
             var friendDtos = new List<PlayerDto>();
 
             foreach (var p in friends)
@@ -83,7 +82,7 @@ namespace ConquiánServidor.BusinessLogic
 
             Logger.Info($"Player search successful. Found Player ID: {player.idPlayer}");
 
-            string rankName = player.LevelRules?.RankName ?? "Unknown";
+            string rankName = player.LevelRules?.RankName;
 
             return new PlayerDto
             {
@@ -125,7 +124,7 @@ namespace ConquiánServidor.BusinessLogic
             }
             catch (DbUpdateException ex)
             {
-                Logger.Warn($"Concurrency error handling friend request: {ex.Message}");
+                Logger.Warn(ex, "concurrency error handling friend request");
                 throw new BusinessLogicException(ServiceErrorType.ExistingRequest);
             }
         }
@@ -180,9 +179,9 @@ namespace ConquiánServidor.BusinessLogic
 
                 Logger.Info($"Friend request status updated successfully for Friendship ID: {idFriendship}");
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                Logger.Warn("Concurrency exception handled during UpdateFriendRequestStatus.");
+                Logger.Warn(ex, "Concurrency exception handled during UpdateFriendRequestStatus.");
             }
         }
 
@@ -208,9 +207,9 @@ namespace ConquiánServidor.BusinessLogic
 
                 Logger.Info($"Friend deleted successfully: Player ID {idPlayer} and Friend ID {idFriend}");
             }
-            catch (DbUpdateConcurrencyException)
+            catch (DbUpdateConcurrencyException ex)
             {
-                Logger.Warn("Concurrency exception ignored during friend deletion - record already deleted.");
+                Logger.Warn(ex, "Concurrency exception ignored during friend deletion - record already deleted.");
             }
         }
     }

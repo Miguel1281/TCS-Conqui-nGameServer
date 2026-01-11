@@ -42,10 +42,10 @@ namespace ConquiánServidor.DataAccess.Repositories
                 .FirstOrDefaultAsync(f => (f.idOrigen == idPlayer && f.idDestino == idFriend) || (f.idOrigen == idFriend && f.idDestino == idPlayer));
         }
 
-        public async Task<Friendship> GetPendingRequestAsync(int senderId, int receiverId)
+        public async Task<Friendship> GetPendingRequestAsync(int receiverId, int senderId)
         {
             return await context.Friendship
-                .FirstOrDefaultAsync(f => f.idOrigen == senderId && f.idDestino == receiverId && f.idStatus == 3);
+                .FirstOrDefaultAsync(f => f.idOrigen == receiverId && f.idDestino == senderId && f.idStatus == 3);
         }
 
         public async Task<Friendship> GetAcceptedFriendshipAsync(int idPlayer, int idFriend)

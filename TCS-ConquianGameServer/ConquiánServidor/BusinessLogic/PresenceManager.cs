@@ -29,7 +29,7 @@ namespace ConquiánServidor.BusinessLogic
 
         public async void DisconnectUser(int idPlayer)
         {
-            Logger.Info($"Detectada desconexión del jugador {idPlayer}. Limpiando sesión...");;
+            Logger.Info($"Detectada desconexión del jugador {idPlayer}. Limpiando sesión...");
 
             try
             {
@@ -49,7 +49,7 @@ namespace ConquiánServidor.BusinessLogic
                     }
                     catch (Exception exLobby)
                     {
-                        Logger.Error($"Error sacando del lobby al jugador {idPlayer}: {exLobby.Message}");
+                        Logger.Error(exLobby, $"Error removing the player from the lobby {idPlayer}");
                     }
 
                     try
@@ -58,30 +58,28 @@ namespace ConquiánServidor.BusinessLogic
                     }
                     catch (Exception exGame)
                     {
-                        Logger.Error($"Error sacando de la partida al jugador {idPlayer}: {exGame.Message}");
+                        Logger.Error(exGame, $"Error removing the player from the gamer {idPlayer}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error general limpiando sesión del jugador {idPlayer}");
+                Logger.Error(ex, $"General error clearing player session {idPlayer}");
             }
 
             Unsubscribe(idPlayer);
 
             await NotifyStatusChange(idPlayer, (int)PlayerStatus.Offline);
 
-            Logger.Info($"Jugador {idPlayer} desconectado y marcado como Offline exitosamente.");
+            Logger.Info($"Player {idPlayer} disconnected and successfully marked as Offline.");
         }
 
         public virtual bool IsPlayerOnline(int idPlayer)
         {
-            if (playerStatuses.TryGetValue(idPlayer, out PlayerStatus status))
+            if (playerStatuses.TryGetValue(idPlayer, out PlayerStatus status) &&
+               (status == PlayerStatus.Online || status == PlayerStatus.InGame))
             {
-                if (status == PlayerStatus.Online || status == PlayerStatus.InGame)
-                {
-                    return true;
-                }
+                return true;
             }
 
             lock (lockObj)
@@ -113,58 +111,85 @@ namespace ConquiánServidor.BusinessLogic
 
         public virtual async Task NotifyStatusChange(int changedPlayerId, int newStatusId)
         {
-            var newStatus = (PlayerStatus)newStatusId;
-            if (newStatus == PlayerStatus.Offline)
+            UpdatePlayerStatus(changedPlayerId, (PlayerStatus)newStatusId);
+
+            var friends = await FetchFriendsSafeAsync(changedPlayerId);
+            if (friends == null) return;
+
+            var callbacks = GetActiveCallbacks(friends);
+
+            foreach (var callback in callbacks)
             {
-                playerStatuses.TryRemove(changedPlayerId, out _);
+                NotifySingleFriendSafe(callback, changedPlayerId, newStatusId);
+            }
+        }
+
+        private void UpdatePlayerStatus(int playerId, PlayerStatus status)
+        {
+            if (status == PlayerStatus.Offline)
+            {
+                playerStatuses.TryRemove(playerId, out _);
             }
             else
             {
-                playerStatuses.AddOrUpdate(changedPlayerId, newStatus, (key, oldVal) => newStatus);
+                playerStatuses.AddOrUpdate(playerId, status, (key, oldVal) => status);
             }
+        }
 
-            List<PlayerDto> friends;
+        private async Task<List<PlayerDto>> FetchFriendsSafeAsync(int playerId)
+        {
             try
             {
                 using (var scope = this.lifetimeScope.BeginLifetimeScope())
                 {
                     var friendshipLogic = scope.Resolve<IFriendshipLogic>();
-                    friends = await friendshipLogic.GetFriendsAsync(changedPlayerId);
+                    return await friendshipLogic.GetFriendsAsync(playerId);
                 }
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error fetching friends for presence notification: {ex.Message}");
-                return;
+                Logger.Error(ex, "error fetching friends for presence notification");
+                return null;
             }
+        }
 
-            var callbacksToNotify = new List<IPresenceCallback>();
-            var friendIds = friends.Select(friend => friend.idPlayer);
-
+        private List<IPresenceCallback> GetActiveCallbacks(List<PlayerDto> friends)
+        {
+            var activeCallbacks = new List<IPresenceCallback>();
             lock (lockObj)
             {
-                foreach (var friendId in friendIds)
+                foreach (var friend in friends)
                 {
-                    if (onlineSubscribers.TryGetValue(friendId, out IPresenceCallback callback))
+                    if (onlineSubscribers.TryGetValue(friend.idPlayer, out IPresenceCallback callback))
                     {
-                        callbacksToNotify.Add(callback);
+                        activeCallbacks.Add(callback);
                     }
                 }
-            } 
+            }
+            return activeCallbacks;
+        }
 
-            foreach (var callback in callbacksToNotify)
+        private static void NotifySingleFriendSafe(IPresenceCallback callback, int playerId, int statusId)
+        {
+            try
             {
-                try
+                var commObj = callback as System.ServiceModel.ICommunicationObject;
+                if (commObj != null && commObj.State == System.ServiceModel.CommunicationState.Opened)
                 {
-                    var commObj = callback as System.ServiceModel.ICommunicationObject;
-                    if (commObj != null && commObj.State == System.ServiceModel.CommunicationState.Opened)
-                    {
-                        callback.OnFriendStatusChanged(changedPlayerId, newStatusId);
-                    }
+                    callback.OnFriendStatusChanged(playerId, statusId);
                 }
-                catch (Exception)
-                {
-                }
+            }
+            catch (System.ServiceModel.CommunicationException ex)
+            {
+                Logger.Warn(ex, "communication failure notifying player");
+            }
+            catch (TimeoutException ex)
+            {
+                Logger.Warn(ex, "timeout notifying player");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "unexpected error during status change notification");
             }
         }
 

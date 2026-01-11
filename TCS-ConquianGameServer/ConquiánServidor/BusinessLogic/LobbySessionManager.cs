@@ -4,7 +4,6 @@ using ConquiánServidor.Contracts.Enums;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Threading;
 
 namespace ConquiánServidor.BusinessLogic
 {
@@ -13,6 +12,7 @@ namespace ConquiánServidor.BusinessLogic
         private readonly ConcurrentDictionary<string, LobbySession> activeLobbies;
         private readonly ConcurrentStack<int> availableGuestIds;
         private const int MAX_CONCURRENT_GUESTS = 100;
+        private const string PATH_PHOTO = "/Resources/imageProfile/default.JPG";
 
         public LobbySessionManager()
         {
@@ -31,15 +31,15 @@ namespace ConquiánServidor.BusinessLogic
             return session;
         }
 
-        public LobbySession CreateLobby(string roomCode, PlayerDto hostPlayer)
+        public LobbySession CreateLobby(string roomCode, PlayerDto host)
         {
             var newSession = new LobbySession
             {
                 RoomCode = roomCode,
-                IdHostPlayer = hostPlayer.idPlayer,
+                IdHostPlayer = host.idPlayer,
                 IdGamemode = null
             };
-            newSession.Players.Add(hostPlayer);
+            newSession.Players.Add(host);
 
             activeLobbies[roomCode] = newSession;
             return newSession;
@@ -78,7 +78,11 @@ namespace ConquiánServidor.BusinessLogic
         public PlayerDto AddGuestToLobby(string roomCode)
         {
             var session = GetLobbySession(roomCode);
-            if (session == null) return null;
+
+            if (session == null)
+            {
+                return null;
+            }
 
             if (!availableGuestIds.TryPop(out int guestId))
             {
@@ -99,7 +103,7 @@ namespace ConquiánServidor.BusinessLogic
                 {
                     idPlayer = guestId,
                     nickname = nickname,
-                    pathPhoto = "/Resources/imageProfile/default.JPG",
+                    pathPhoto = PATH_PHOTO,
                     Status = PlayerStatus.Online
                 };
 

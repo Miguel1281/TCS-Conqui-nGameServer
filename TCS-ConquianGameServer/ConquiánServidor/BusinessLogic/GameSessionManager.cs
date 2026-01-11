@@ -11,12 +11,7 @@ namespace ConquiánServidor.BusinessLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private readonly ConcurrentDictionary<string, ConquianGame> games =
-            new ConcurrentDictionary<string, ConquianGame>();
-
-        public GameSessionManager()
-        {
-        }
+        private readonly ConcurrentDictionary<string, ConquianGame> games = new ConcurrentDictionary<string, ConquianGame>();
 
         public void CreateGame(string roomCode, int gamemodeId, List<PlayerDto> players)
         {

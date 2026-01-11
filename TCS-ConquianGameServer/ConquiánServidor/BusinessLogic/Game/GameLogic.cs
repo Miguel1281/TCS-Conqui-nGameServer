@@ -7,6 +7,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Timers;
 
@@ -25,8 +26,6 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private const int MELDS_TO_WIN_CLASSIC = 2;
         private const int MELDS_TO_WIN_EXTENDED = 3;
-        private const int POINTS_FOR_WIN = 25;
-        private const int POINTS_FOR_DRAW = 0;
 
         private const int PLAYER_1_INDEX = 0;
         private const int PLAYER_2_INDEX = 1;
@@ -62,7 +61,6 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public event Action<GameResultDto> OnGameFinished;
 
-        private static readonly Random Rng = new Random();
 
         public ConquianGame(string roomCode, int gamemodeId, List<PlayerDto> players)
         {
@@ -108,13 +106,24 @@ namespace ConquiánServidor.BusinessLogic.Game
             }
         }
 
+        private static int GetSecureRandomInt(int max)
+        {
+            using (var rng = new RNGCryptoServiceProvider())
+            {
+                byte[] data = new byte[4];
+                rng.GetBytes(data);
+                int generatedValue = BitConverter.ToInt32(data, 0) & int.MaxValue;
+                return generatedValue % max;
+            }
+        }
+
         private void ShuffleDeck()
         {
             int n = Deck.Count;
             while (n > 1)
             {
                 n--;
-                int k = Rng.Next(n + 1);
+                int k = GetSecureRandomInt(n + 1);
                 Card value = Deck[k];
                 Deck[k] = Deck[n];
                 Deck[n] = value;
@@ -421,7 +430,11 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             lock (endLock)
             {
-                if (isGameEnded) return;
+                if (isGameEnded)
+                {
+                    return;
+                }
+
                 isGameEnded = true;
             }
 
@@ -452,12 +465,12 @@ namespace ConquiánServidor.BusinessLogic.Game
                 GamemodeId = GamemodeId,
 
                 Player1Id = p1?.idPlayer ?? -1,
-                Player1Name = p1?.nickname ?? "Unknown",
+                Player1Name = p1?.nickname,
                 Player1Score = p1Score,
                 Player1PathPhoto = p1?.pathPhoto,
 
                 Player2Id = p2?.idPlayer ?? -1,
-                Player2Name = p2?.nickname ?? "Unknown",
+                Player2Name = p2?.nickname,
                 Player2Score = p2Score,
                 Player2PathPhoto = p2?.pathPhoto,
 
@@ -681,7 +694,11 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             lock (endLock)
             {
-                if (isGameEnded) return;
+                if (isGameEnded)
+                {
+                    return;
+                }
+
                 isGameEnded = true;
             }
 
@@ -695,8 +712,12 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 Task.Run(() =>
                 {
-                    try { afkCallback.NotifyGameEndedByAFK(AFK_REASON_SELF); }
-                    catch { }
+                    try { 
+                        afkCallback.NotifyGameEndedByAFK(AFK_REASON_SELF); 
+                    }
+                    catch (Exception ex) {
+                        Logger.Error(ex, "Error notifying rival about AFK.");
+                    }
                 });
             }
 
@@ -704,8 +725,12 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 Task.Run(() =>
                 {
-                    try { rivalCallback.NotifyGameEndedByAFK(AFK_REASON_RIVAL); }
-                    catch (Exception ex) { Logger.Error(ex, "Error notifying rival about AFK."); }
+                    try { 
+                        rivalCallback.NotifyGameEndedByAFK(AFK_REASON_RIVAL); 
+                    }
+                    catch (Exception ex) { 
+                        Logger.Error(ex, "Error notifying rival about AFK."); 
+                    }
                 });
             }
         }

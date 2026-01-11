@@ -14,8 +14,7 @@ namespace ConquiánServidor.BusinessLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private readonly ConcurrentDictionary<int, IInvitationCallback> onlinePlayers =
-            new ConcurrentDictionary<int, IInvitationCallback>();
+        private readonly ConcurrentDictionary<int, IInvitationCallback> onlinePlayers = new ConcurrentDictionary<int, IInvitationCallback>();
 
         private readonly IPresenceManager presenceManager;
         public InvitationManager(IPresenceManager presenceManager)

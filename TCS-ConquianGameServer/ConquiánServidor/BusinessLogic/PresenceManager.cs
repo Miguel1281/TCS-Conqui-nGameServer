@@ -29,11 +29,7 @@ namespace ConquiánServidor.BusinessLogic
 
         public async void DisconnectUser(int idPlayer)
         {
-            Logger.Info($"Detectada desconexión del jugador {idPlayer}. Limpiando sesión...");
-
-            Unsubscribe(idPlayer);
-
-            await NotifyStatusChange(idPlayer, (int)PlayerStatus.Offline);
+            Logger.Info($"Detectada desconexión del jugador {idPlayer}. Limpiando sesión...");;
 
             try
             {
@@ -70,6 +66,12 @@ namespace ConquiánServidor.BusinessLogic
             {
                 Logger.Error(ex, $"Error general limpiando sesión del jugador {idPlayer}");
             }
+
+            Unsubscribe(idPlayer);
+
+            await NotifyStatusChange(idPlayer, (int)PlayerStatus.Offline);
+
+            Logger.Info($"Jugador {idPlayer} desconectado y marcado como Offline exitosamente.");
         }
 
         public virtual bool IsPlayerOnline(int idPlayer)
@@ -111,7 +113,6 @@ namespace ConquiánServidor.BusinessLogic
 
         public virtual async Task NotifyStatusChange(int changedPlayerId, int newStatusId)
         {
-            List<PlayerDto> friends;
             var newStatus = (PlayerStatus)newStatusId;
             if (newStatus == PlayerStatus.Offline)
             {
@@ -122,6 +123,7 @@ namespace ConquiánServidor.BusinessLogic
                 playerStatuses.AddOrUpdate(changedPlayerId, newStatus, (key, oldVal) => newStatus);
             }
 
+            List<PlayerDto> friends;
             try
             {
                 using (var scope = this.lifetimeScope.BeginLifetimeScope())
@@ -136,7 +138,7 @@ namespace ConquiánServidor.BusinessLogic
                 return;
             }
 
-            var deadSubscribers = new List<int>();
+            var callbacksToNotify = new List<IPresenceCallback>();
             var friendIds = friends.Select(friend => friend.idPlayer);
 
             lock (lockObj)
@@ -145,64 +147,67 @@ namespace ConquiánServidor.BusinessLogic
                 {
                     if (onlineSubscribers.TryGetValue(friendId, out IPresenceCallback callback))
                     {
-                        try
-                        {
-                            var commObj = callback as System.ServiceModel.ICommunicationObject;
-                            if (commObj != null && commObj.State == System.ServiceModel.CommunicationState.Opened)
-                            {
-                                callback.OnFriendStatusChanged(changedPlayerId, newStatusId);
-                            }
-                            else
-                            {
-                                deadSubscribers.Add(friendId);
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            deadSubscribers.Add(friendId);
-                        }
+                        callbacksToNotify.Add(callback);
                     }
                 }
+            } 
 
-                foreach (var deadId in deadSubscribers.Distinct())
+            foreach (var callback in callbacksToNotify)
+            {
+                try
                 {
-                    onlineSubscribers.Remove(deadId);
+                    var commObj = callback as System.ServiceModel.ICommunicationObject;
+                    if (commObj != null && commObj.State == System.ServiceModel.CommunicationState.Opened)
+                    {
+                        callback.OnFriendStatusChanged(changedPlayerId, newStatusId);
+                    }
+                }
+                catch (Exception)
+                {
                 }
             }
         }
 
         public void NotifyNewFriendRequest(int targetUserId)
         {
+            IPresenceCallback callback = null;
+
             lock (lockObj)
             {
-                if (onlineSubscribers.TryGetValue(targetUserId, out IPresenceCallback callback))
+                onlineSubscribers.TryGetValue(targetUserId, out callback);
+            }
+
+            if (callback != null)
+            {
+                try
                 {
-                    try
-                    {
-                        callback.OnFriendRequestReceived();
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex, $"Error notifying request to {targetUserId}");
-                    }
+                    callback.OnFriendRequestReceived();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, $"Error notifying request to {targetUserId}");
                 }
             }
         }
 
         public void NotifyFriendListUpdate(int targetUserId)
         {
+            IPresenceCallback callback = null;
+
             lock (lockObj)
             {
-                if (onlineSubscribers.TryGetValue(targetUserId, out IPresenceCallback callback))
+                onlineSubscribers.TryGetValue(targetUserId, out callback);
+            }
+
+            if (callback != null)
+            {
+                try
                 {
-                    try
-                    {
-                        callback.OnFriendListUpdated();
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex, $"Error notifying list update to {targetUserId}");
-                    }
+                    callback.OnFriendListUpdated();
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, $"Error notifying list update to {targetUserId}");
                 }
             }
         }

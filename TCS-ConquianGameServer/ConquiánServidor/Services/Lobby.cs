@@ -183,10 +183,19 @@ namespace ConquiánServidor.Services
 
         public void LeaveAndUnsubscribe(string roomCode, int idPlayer)
         {
+            InternalLeaveLobby(roomCode, idPlayer, isDisconnecting: false);
+        }
+
+        private void InternalLeaveLobby(string roomCode, int idPlayer, bool isDisconnecting)
+        {
             try
             {
                 bool isHost = lobbyLogic.LeaveLobbyAsync(roomCode, idPlayer).Result;
-                Task.Run(() => presenceManager.NotifyStatusChange(idPlayer, (int)PlayerStatus.Online));
+
+                if (!isDisconnecting)
+                {
+                    Task.Run(() => presenceManager.NotifyStatusChange(idPlayer, (int)PlayerStatus.Online));
+                }
 
                 if (isHost)
                 {
@@ -368,7 +377,7 @@ namespace ConquiánServidor.Services
             try
             {
                 Logger.Info($"Detectada desconexión abrupta (Closed/Faulted) del jugador {idPlayer} en sala {roomCode}");
-                LeaveAndUnsubscribe(roomCode, idPlayer);
+                InternalLeaveLobby(roomCode, idPlayer, isDisconnecting: true);
             }
             catch (Exception ex)
             {

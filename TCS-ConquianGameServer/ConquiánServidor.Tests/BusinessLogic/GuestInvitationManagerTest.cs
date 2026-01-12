@@ -8,7 +8,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
     public class GuestInvitationManagerTest
     {
         [Fact]
-        public void AddInvitation_NewEmail_StoresInvitation()
+        public void AddInvitation_NewEmail_ReturnsNotNullInvitation()
         {
             var manager = new GuestInvitationManager();
             string email = "test@example.com";
@@ -18,8 +18,44 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var result = manager.GetInvitation(email);
 
             Assert.NotNull(result);
+        }
+
+        [Fact]
+        public void AddInvitation_NewEmail_StoresCorrectEmail()
+        {
+            var manager = new GuestInvitationManager();
+            string email = "test@example.com";
+            string roomCode = "ABCDE";
+
+            manager.AddInvitation(email, roomCode);
+            var result = manager.GetInvitation(email);
+
             Assert.Equal(email, result.Email);
+        }
+
+        [Fact]
+        public void AddInvitation_NewEmail_StoresCorrectRoomCode()
+        {
+            var manager = new GuestInvitationManager();
+            string email = "test@example.com";
+            string roomCode = "ABCDE";
+
+            manager.AddInvitation(email, roomCode);
+            var result = manager.GetInvitation(email);
+
             Assert.Equal(roomCode, result.RoomCode);
+        }
+
+        [Fact]
+        public void AddInvitation_NewEmail_SetsWasUsedToFalse()
+        {
+            var manager = new GuestInvitationManager();
+            string email = "test@example.com";
+            string roomCode = "ABCDE";
+
+            manager.AddInvitation(email, roomCode);
+            var result = manager.GetInvitation(email);
+
             Assert.False(result.WasUsed);
         }
 

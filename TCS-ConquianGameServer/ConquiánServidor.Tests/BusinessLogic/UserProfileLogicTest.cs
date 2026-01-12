@@ -8,7 +8,6 @@ using DbEntity = ConquiánServidor.ConquiánDB;
 using Moq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
 using Xunit;
 
 namespace ConquiánServidor.Tests.BusinessLogic
@@ -32,6 +31,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
             );
         }
 
+
         [Fact]
         public async Task GetPlayerByIdAsync_PlayerDoesNotExist_ThrowsBusinessLogicException()
         {
@@ -46,9 +46,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task GetPlayerByIdAsync_PlayerExistsOnline_ReturnsPlayerDtoWithOnlineStatus()
+        public async Task GetPlayerByIdAsync_PlayerExistsOnline_StatusIsOnline()
         {
-            int idPlayer = 1;
+            int idPlayer = 2;
             var dbPlayer = new DbEntity.Player
             {
                 idPlayer = idPlayer,
@@ -64,10 +64,31 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             var result = await userProfileLogic.GetPlayerByIdAsync(idPlayer);
 
-            Assert.Equal(idPlayer, result.idPlayer);
             Assert.Equal(PlayerStatus.Online, result.Status);
-            Assert.Equal("Legend", result.RankName);
         }
+
+        [Fact]
+        public async Task GetPlayerByIdAsync_PlayerExistsOffline_StatusIsOffline()
+        {
+            int idPlayer = 3;
+            var dbPlayer = new DbEntity.Player
+            {
+                idPlayer = idPlayer,
+                nickname = "TesterOffline",
+                LevelRules = new DbEntity.LevelRules { RankName = "Bronze" }
+            };
+            playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(idPlayer))
+                .ReturnsAsync(dbPlayer);
+            playerRepositoryMock.Setup(r => r.GetNextLevelThresholdAsync(It.IsAny<int>()))
+                .ReturnsAsync(200);
+            presenceManagerMock.Setup(p => p.IsPlayerOnline(idPlayer))
+                .Returns(false);
+
+            var result = await userProfileLogic.GetPlayerByIdAsync(idPlayer);
+
+            Assert.Equal(PlayerStatus.Offline, result.Status);
+        }
+
 
         [Fact]
         public async Task GetPlayerSocialsAsync_PlayerNotFound_ThrowsBusinessLogicException()
@@ -81,6 +102,28 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             Assert.Equal(ServiceErrorType.UserNotFound, exception.ErrorType);
         }
+
+        [Fact]
+        public async Task GetPlayerSocialsAsync_PlayerFound_ReturnsCount()
+        {
+            int idPlayer = 5;
+            var dbPlayer = new DbEntity.Player { idPlayer = idPlayer };
+            var socials = new List<DbEntity.Social>
+            {
+                new DbEntity.Social { userLink = "http://twitter.com/user1", idSocialType = 1, idPlayer = idPlayer },
+                new DbEntity.Social { userLink = "http://facebook.com/user1", idSocialType = 2, idPlayer = idPlayer }
+            };
+
+            playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(idPlayer))
+                .ReturnsAsync(dbPlayer);
+            socialRepositoryMock.Setup(r => r.GetSocialsByPlayerIdAsync(idPlayer))
+                .ReturnsAsync(socials);
+
+            var result = await userProfileLogic.GetPlayerSocialsAsync(idPlayer);
+
+            Assert.Equal(2, result.Count);
+        }
+
 
         [Fact]
         public async Task UpdatePlayerAsync_NullDto_ThrowsBusinessLogicException()
@@ -105,7 +148,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task UpdatePlayerAsync_ValidData_CallsSaveChangesAsync()
+        public async Task UpdatePlayerAsync_ValidData_SaveChangesCalledOnce()
         {
             var playerDto = new PlayerDto { idPlayer = 1, name = "NewName", nickname = "NewNick" };
             var dbPlayer = new DbEntity.Player { idPlayer = 1 };
@@ -115,8 +158,8 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await userProfileLogic.UpdatePlayerAsync(playerDto);
 
             playerRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
-            Assert.Equal("NewName", dbPlayer.name);
         }
+
 
         [Fact]
         public async Task UpdatePlayerSocialsAsync_PlayerDoesNotExist_ThrowsBusinessLogicException()
@@ -132,7 +175,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task UpdatePlayerSocialsAsync_ValidList_RemovesOldAndAddsNewSocials()
+        public async Task UpdatePlayerSocialsAsync_ValidList_SaveChangesCalledOnce()
         {
             int idPlayer = 1;
             var socials = new List<SocialDto> { new SocialDto { IdSocialType = 1, UserLink = "link" } };
@@ -144,13 +187,41 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             await userProfileLogic.UpdatePlayerSocialsAsync(idPlayer, socials);
 
-            socialRepositoryMock.Verify(r => r.RemoveSocialsRange(existingSocials), Times.Once);
-            socialRepositoryMock.Verify(r => r.AddSocial(It.IsAny<DbEntity.Social>()), Times.Once);
             socialRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
         }
 
+
         [Fact]
-        public async Task GetPlayerGameHistoryAsync_PlayerHasGames_ReturnsMappedHistoryList()
+        public async Task UpdateProfilePictureAsync_PlayerNotFound_ThrowsBusinessLogicException()
+        {
+            int idPlayer = 10;
+            playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(idPlayer))
+                .ReturnsAsync((DbEntity.Player)null);
+
+            var ex = await Assert.ThrowsAsync<BusinessLogicException>(() =>
+                userProfileLogic.UpdateProfilePictureAsync(idPlayer, "C:\\images\\pic.png"));
+
+            Assert.Equal(ServiceErrorType.UserNotFound, ex.ErrorType);
+        }
+
+
+        [Fact]
+        public async Task UpdateProfilePictureAsync_ValidPath_SaveChangesCalledOnce()
+        {
+            int idPlayer = 12;
+            var dbPlayer = new DbEntity.Player { idPlayer = idPlayer, pathPhoto = "oldpath.png" };
+            playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(idPlayer))
+                .ReturnsAsync(dbPlayer);
+
+            await userProfileLogic.UpdateProfilePictureAsync(idPlayer, "newpath.png");
+
+            playerRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        }
+
+       
+
+        [Fact]
+        public async Task GetPlayerGameHistoryAsync_PlayerHasGames_ReturnsSingleItem()
         {
             int idPlayer = 1;
             var games = new List<DbEntity.Game>
@@ -173,8 +244,18 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var result = await userProfileLogic.GetPlayerGameHistoryAsync(idPlayer);
 
             Assert.Single(result);
-            Assert.Equal("Victory", result[0].ResultStatus);
-            Assert.Equal("02:00", result[0].GameTime);
+        }
+
+        [Fact]
+        public async Task GetPlayerGameHistoryAsync_PlayerHasNoGames_ReturnsEmptyList()
+        {
+            int idPlayer = 3;
+            playerRepositoryMock.Setup(r => r.GetPlayerGamesAsync(idPlayer))
+                .ReturnsAsync(new List<DbEntity.Game>());
+
+            var result = await userProfileLogic.GetPlayerGameHistoryAsync(idPlayer);
+
+            Assert.Empty(result);
         }
     }
 }

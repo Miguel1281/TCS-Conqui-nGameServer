@@ -40,6 +40,10 @@ namespace ConquiánServidor.Tests.BusinessLogic
             );
         }
 
+        // -------------------------------------------------------------------------
+        // GetLobbyStateAsync
+        // -------------------------------------------------------------------------
+
         [Fact]
         public async Task GetLobbyStateAsync_SessionNotFound_ThrowsBusinessLogicException()
         {
@@ -67,7 +71,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task GetLobbyStateAsync_Success_ReturnsLobbyDto()
+        public async Task GetLobbyStateAsync_Success_ReturnsCorrectRoomCode()
         {
             var session = new LobbySession
             {
@@ -83,9 +87,12 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             var result = await lobbyLogic.GetLobbyStateAsync("CODE1");
 
-            Assert.NotNull(result);
             Assert.Equal("CODE1", result.RoomCode);
         }
+
+        // -------------------------------------------------------------------------
+        // CreateLobbyAsync
+        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task CreateLobbyAsync_HostNotFound_ThrowsBusinessLogicException()
@@ -97,7 +104,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task CreateLobbyAsync_Success_ReturnsRoomCode()
+        public async Task CreateLobbyAsync_Success_ReturnsRoomCodeOfLengthFive()
         {
             var player = new Player { idPlayer = 1, nickname = "Host" };
             playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(1)).ReturnsAsync(player);
@@ -105,10 +112,24 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             var result = await lobbyLogic.CreateLobbyAsync(1);
 
-            Assert.NotNull(result);
             Assert.Equal(5, result.Length);
+        }
+
+        [Fact]
+        public async Task CreateLobbyAsync_Success_AddsLobbyToRepository()
+        {
+            var player = new Player { idPlayer = 1, nickname = "Host" };
+            playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(1)).ReturnsAsync(player);
+            lobbyRepositoryMock.Setup(r => r.DoesRoomCodeExistAsync(It.IsAny<string>())).ReturnsAsync(false);
+
+            await lobbyLogic.CreateLobbyAsync(1);
+
             lobbyRepositoryMock.Verify(r => r.AddLobby(It.IsAny<Lobby>()), Times.Once);
         }
+
+        // -------------------------------------------------------------------------
+        // JoinLobbyAsync
+        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task JoinLobbyAsync_LobbyNotFound_ThrowsBusinessLogicException()
@@ -180,6 +201,10 @@ namespace ConquiánServidor.Tests.BusinessLogic
             Assert.Equal(2, result.idPlayer);
         }
 
+        // -------------------------------------------------------------------------
+        // JoinLobbyAsGuestAsync
+        // -------------------------------------------------------------------------
+
         [Fact]
         public async Task JoinLobbyAsGuestAsync_InviteUsed_ThrowsBusinessLogicException()
         {
@@ -235,6 +260,10 @@ namespace ConquiánServidor.Tests.BusinessLogic
             Assert.Equal(-1, result.idPlayer);
         }
 
+        // -------------------------------------------------------------------------
+        // LeaveLobbyAsync
+        // -------------------------------------------------------------------------
+
         [Fact]
         public async Task LeaveLobbyAsync_LobbyNotFound_ReturnsFalse()
         {
@@ -246,7 +275,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task LeaveLobbyAsync_HostLeaves_ReturnsTrueAndClosesLobby()
+        public async Task LeaveLobbyAsync_HostLeaves_ReturnsTrue()
         {
             var lobby = new Lobby { idHostPlayer = 1, roomCode = "CODE1" };
             lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
@@ -254,9 +283,33 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var result = await lobbyLogic.LeaveLobbyAsync("CODE1", 1);
 
             Assert.True(result);
+        }
+
+        [Fact]
+        public async Task LeaveLobbyAsync_HostLeaves_RemovesLobbyFromSession()
+        {
+            var lobby = new Lobby { idHostPlayer = 1, roomCode = "CODE1" };
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            await lobbyLogic.LeaveLobbyAsync("CODE1", 1);
+
             sessionManagerMock.Verify(m => m.RemoveLobby("CODE1"), Times.Once);
+        }
+
+        [Fact]
+        public async Task LeaveLobbyAsync_HostLeaves_UpdatesLobbyStatusToFinished()
+        {
+            var lobby = new Lobby { idHostPlayer = 1, roomCode = "CODE1" };
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            await lobbyLogic.LeaveLobbyAsync("CODE1", 1);
+
             Assert.Equal((int)LobbyStatus.Finished, lobby.idStatusLobby);
         }
+
+        // -------------------------------------------------------------------------
+        // SelectGamemodeAsync
+        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task SelectGamemodeAsync_LobbyNotFound_ThrowsBusinessLogicException()
@@ -276,6 +329,10 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             sessionManagerMock.Verify(m => m.SetGamemode("CODE1", 1), Times.Once);
         }
+
+        // -------------------------------------------------------------------------
+        // StartGameAsync
+        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task StartGameAsync_SessionNotFound_ThrowsBusinessLogicException()
@@ -315,7 +372,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task StartGameAsync_Success_StartsGame()
+        public async Task StartGameAsync_Success_CreatesGameInSessionManager()
         {
             var p1 = new PlayerDto { idPlayer = 1 };
             var p2 = new PlayerDto { idPlayer = 2 };
@@ -338,8 +395,37 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await lobbyLogic.StartGameAsync("CODE1");
 
             gameSessionManagerMock.Verify(m => m.CreateGame("CODE1", 1, It.IsAny<List<PlayerDto>>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task StartGameAsync_Success_UpdatesLobbyStatusToInGame()
+        {
+            var p1 = new PlayerDto { idPlayer = 1 };
+            var p2 = new PlayerDto { idPlayer = 2 };
+
+            var session = new LobbySession
+            {
+                RoomCode = "CODE1",
+                Players = new List<PlayerDto> { p1, p2 },
+                IdGamemode = 1
+            };
+
+            var lobby = new Lobby { idStatusLobby = (int)LobbyStatus.Waiting };
+
+            sessionManagerMock.Setup(m => m.GetLobbySession("CODE1")).Returns(session);
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            var mockGame = new Mock<ConquiánServidor.BusinessLogic.Game.ConquianGame>("CODE1", 1, new List<PlayerDto> { p1, p2 });
+            gameSessionManagerMock.Setup(m => m.GetGame("CODE1")).Returns(mockGame.Object);
+
+            await lobbyLogic.StartGameAsync("CODE1");
+
             Assert.Equal((int)LobbyStatus.InGame, lobby.idStatusLobby);
         }
+
+        // -------------------------------------------------------------------------
+        // KickPlayerAsync
+        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task KickPlayerAsync_LobbyNotFound_ThrowsBusinessLogicException()
@@ -368,7 +454,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task KickPlayerAsync_Success_BansAndRemovesPlayer()
+        public async Task KickPlayerAsync_Success_BansPlayer()
         {
             var lobby = new Lobby { idHostPlayer = 1 };
             lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
@@ -376,6 +462,16 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await lobbyLogic.KickPlayerAsync("CODE1", 1, 2);
 
             sessionManagerMock.Verify(m => m.BanPlayer("CODE1", 2), Times.Once);
+        }
+
+        [Fact]
+        public async Task KickPlayerAsync_Success_RemovesPlayerFromLobby()
+        {
+            var lobby = new Lobby { idHostPlayer = 1 };
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            await lobbyLogic.KickPlayerAsync("CODE1", 1, 2);
+
             sessionManagerMock.Verify(m => m.RemovePlayerFromLobby("CODE1", 2), Times.Once);
         }
     }

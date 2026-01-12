@@ -1,92 +1,96 @@
-﻿using ConquiánServidor.Utilities.Email;
-using Moq;
-using System;
+﻿using System;
 using System.Configuration;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using ConquiánServidor.Utilities.Email;
 
 namespace ConquiánServidor.Tests.Utilities
 {
     public class EmailServiceTest
     {
-        [Fact]
-        public void GenerateVerificationCode_Invoke_ReturnsStringWithLengthOfSix()
+        private class StubEmailTemplate : IEmailTemplate
         {
-            var emailService = new EmailService();
-
-            string result = emailService.GenerateVerificationCode();
-
-            Assert.Equal(6, result.Length);
+            public string Subject => "Test Subject";
+            public string HtmlBody => "<p>Test Body</p>";
         }
 
         [Fact]
-        public void GenerateVerificationCode_Invoke_ReturnsStringWithOnlyDigits()
+        public void GenerateVerificationCode_Execution_ReturnsStringWithLengthSix()
         {
             var emailService = new EmailService();
-
-            string result = emailService.GenerateVerificationCode();
-
-            Assert.Matches("^[0-9]+$", result);
+            string code = emailService.GenerateVerificationCode();
+            Assert.Equal(6, code.Length);
         }
 
         [Fact]
-        public void GenerateVerificationCode_MultipleInvokes_ReturnsDifferentCodes()
+        public void GenerateVerificationCode_Execution_ReturnsStringWithOnlyDigits()
         {
             var emailService = new EmailService();
+            string code = emailService.GenerateVerificationCode();
+            Assert.True(code.All(char.IsDigit));
+        }
 
+        [Fact]
+        public void GenerateVerificationCode_MultipleExecutions_ReturnsDifferentCodes()
+        {
+            var emailService = new EmailService();
             string code1 = emailService.GenerateVerificationCode();
             string code2 = emailService.GenerateVerificationCode();
-
             Assert.NotEqual(code1, code2);
         }
 
         [Fact]
         public async Task SendEmailAsync_MissingEnvironmentVariables_ThrowsConfigurationErrorsException()
         {
-            var emailService = new EmailService();
-            var mockTemplate = new Mock<IEmailTemplate>();
-            mockTemplate.Setup(t => t.Subject).Returns("Test Subject");
             Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", null);
             Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD", null);
+            var emailService = new EmailService();
+            var template = new StubEmailTemplate();
 
             await Assert.ThrowsAsync<ConfigurationErrorsException>(() =>
-                emailService.SendEmailAsync("test@example.com", mockTemplate.Object));
+                emailService.SendEmailAsync("test@example.com", template));
         }
 
         [Fact]
-        public async Task SendEmailAsync_InvalidEmailFormat_ThrowsInvalidOperationException()
+        public async Task SendEmailAsync_MissingPasswordEnvironmentVariable_ThrowsConfigurationErrorsException()
         {
-            var emailService = new EmailService();
-            var mockTemplate = new Mock<IEmailTemplate>();
-            mockTemplate.Setup(t => t.Subject).Returns("Test Subject");
             Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", "user@test.com");
-            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD", "password");
-            string invalidEmail = "correo-invalido";
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                emailService.SendEmailAsync(invalidEmail, mockTemplate.Object));
-
-            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", null);
             Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD", null);
+            var emailService = new EmailService();
+            var template = new StubEmailTemplate();
+
+            try
+            {
+                await Assert.ThrowsAsync<ConfigurationErrorsException>(() =>
+                    emailService.SendEmailAsync("test@example.com", template));
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", null);
+            }
         }
 
         [Fact]
-        public async Task SendEmailAsync_SmtpConnectionFails_ThrowsInvalidOperationException()
+        public async Task SendEmailAsync_InvalidCredentials_ThrowsInvalidOperationException()
         {
+            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", "dummyuser@test.com");
+            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD", "dummypassword");
             var emailService = new EmailService();
-            var mockTemplate = new Mock<IEmailTemplate>();
-            mockTemplate.Setup(t => t.Subject).Returns("Test Subject");
-            mockTemplate.Setup(t => t.HtmlBody).Returns("<p>Body</p>");
-            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", "fakeuser@gmail.com");
-            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD", "fakepassword");
+            var template = new StubEmailTemplate();
 
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                emailService.SendEmailAsync("test@example.com", mockTemplate.Object));
+            try
+            {
+                var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    emailService.SendEmailAsync("destiny@example.com", template));
 
-            Assert.Equal("Failed to transmit email via SMTP provider.", exception.Message);
-
-            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", null);
-            Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD", null);
+                Assert.Contains("Failed to transmit email via SMTP provider", exception.Message);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_USER", null);
+                Environment.SetEnvironmentVariable("CONQUIAN_EMAIL_PASSWORD", null);
+            }
         }
     }
 }

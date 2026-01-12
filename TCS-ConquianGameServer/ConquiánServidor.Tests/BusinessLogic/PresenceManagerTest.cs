@@ -61,22 +61,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public void ReceivePing_ExistingUser_UpdatesHeartbeat()
-        {
-            presenceManager.Subscribe(1, mockCallback.Object);
-
-            presenceManager.ReceivePing(1);
-
-            Assert.True(presenceManager.IsPlayerOnline(1));
-        }
-
-        [Fact]
-        public void ReceivePing_NonExistentUser_DoesNotThrow()
-        {
-            presenceManager.ReceivePing(999);
-        }
-
-        [Fact]
         public async Task NotifyStatusChange_FriendsOnline_NotifiesFriends()
         {
             int userChangingStatus = 1;

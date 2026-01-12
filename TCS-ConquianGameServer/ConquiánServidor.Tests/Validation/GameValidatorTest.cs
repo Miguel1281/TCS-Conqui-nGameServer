@@ -1,106 +1,109 @@
 ﻿using Xunit;
+using System.Collections.Generic;
 using ConquiánServidor.BusinessLogic.Validation;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.BusinessLogic.Game;
-using System.Collections.Generic;
 
 namespace ConquiánServidor.Tests.BusinessLogic.Validation
 {
     public class GameValidatorTest
     {
         [Fact]
-        public void ValidateTurnOwner_IdsMatch_Void()
+        public void ValidateTurnOwner_IdsMatch_ReturnsVoid()
         {
             GameValidator.ValidateTurnOwner(1, 1);
         }
 
         [Fact]
-        public void ValidateTurnOwner_IdsDoNotMatch_ThrowsBusinessLogicException()
+        public void ValidateTurnOwner_IdsDoNotMatch_ThrowsNotYourTurnException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateTurnOwner(1, 2));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateTurnOwner(1, 2));
+            Assert.Equal(ServiceErrorType.NotYourTurn, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateActionAllowed_MustDiscardFalse_Void()
+        public void ValidateActionAllowed_MustDiscardIsFalse_ReturnsVoid()
         {
             GameValidator.ValidateActionAllowed(false);
         }
 
         [Fact]
-        public void ValidateActionAllowed_MustDiscardTrue_ThrowsBusinessLogicException()
+        public void ValidateActionAllowed_MustDiscardIsTrue_ThrowsMustDiscardToFinishException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateActionAllowed(true));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateActionAllowed(true));
+            Assert.Equal(ServiceErrorType.MustDiscardToFinish, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateMoveInputs_NullList_ThrowsBusinessLogicException()
+        public void ValidateMoveInputs_ValidList_ReturnsVoid()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateMoveInputs(null));
+            var cardIds = new List<string> { "C1", "C2" };
+            GameValidator.ValidateMoveInputs(cardIds);
         }
 
         [Fact]
-        public void ValidateMoveInputs_EmptyList_ThrowsBusinessLogicException()
+        public void ValidateMoveInputs_NullList_ThrowsGameRuleViolationException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateMoveInputs(new List<string>()));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateMoveInputs(null));
+            Assert.Equal(ServiceErrorType.GameRuleViolation, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateMoveInputs_OneCard_ThrowsBusinessLogicException()
+        public void ValidateMoveInputs_ListWithLessThanTwoItems_ThrowsGameRuleViolationException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateMoveInputs(new List<string> { "card1" }));
+            var cardIds = new List<string> { "C1" };
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateMoveInputs(cardIds));
+            Assert.Equal(ServiceErrorType.GameRuleViolation, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateMoveInputs_TwoCards_Void()
-        {
-            GameValidator.ValidateMoveInputs(new List<string> { "card1", "card2" });
-        }
-
-        [Fact]
-        public void ValidateDiscardUsage_PlayerIsReviewing_Void()
+        public void ValidateDiscardUsage_PlayerIsReviewer_ReturnsVoid()
         {
             GameValidator.ValidateDiscardUsage(1, 1, false);
         }
 
         [Fact]
-        public void ValidateDiscardUsage_CardDrawnFromDeck_Void()
+        public void ValidateDiscardUsage_CardDrawnFromDeck_ReturnsVoid()
         {
             GameValidator.ValidateDiscardUsage(1, 2, true);
         }
 
         [Fact]
-        public void ValidateDiscardUsage_NotReviewingAndNotDrawnFromDeck_ThrowsBusinessLogicException()
+        public void ValidateDiscardUsage_PlayerNotReviewerAndNotDrawnFromDeck_ThrowsInvalidCardActionException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDiscardUsage(1, 2, false));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDiscardUsage(1, 2, false));
+            Assert.Equal(ServiceErrorType.InvalidCardAction, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateCardsInHand_CountsMatch_Void()
+        public void ValidateCardsInHand_CountsMatch_ReturnsVoid()
         {
-            GameValidator.ValidateCardsInHand(3, 3);
+            GameValidator.ValidateCardsInHand(9, 9);
         }
 
         [Fact]
-        public void ValidateCardsInHand_CountsDoNotMatch_ThrowsBusinessLogicException()
+        public void ValidateCardsInHand_CountsDoNotMatch_ThrowsGameRuleViolationException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateCardsInHand(3, 4));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateCardsInHand(8, 9));
+            Assert.Equal(ServiceErrorType.GameRuleViolation, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateMeldSize_CountIsThree_Void()
+        public void ValidateMeldSize_CountIsThree_ReturnsVoid()
         {
             GameValidator.ValidateMeldSize(3);
         }
 
         [Fact]
-        public void ValidateMeldSize_CountIsLessThanThree_ThrowsBusinessLogicException()
+        public void ValidateMeldSize_CountLessThanThree_ThrowsInvalidMeldException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateMeldSize(2));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateMeldSize(2));
+            Assert.Equal(ServiceErrorType.InvalidMeld, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateDraw_ValidContext_Void()
+        public void ValidateDraw_ValidContext_ReturnsVoid()
         {
             var context = new DrawValidationContext
             {
@@ -116,7 +119,7 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
         }
 
         [Fact]
-        public void ValidateDraw_WrongTurn_ThrowsBusinessLogicException()
+        public void ValidateDraw_NotTurnOwner_ThrowsNotYourTurnException()
         {
             var context = new DrawValidationContext
             {
@@ -124,11 +127,12 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 CurrentTurnPlayerId = 2
             };
 
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            Assert.Equal(ServiceErrorType.NotYourTurn, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateDraw_AlreadyDrawn_ThrowsBusinessLogicException()
+        public void ValidateDraw_AlreadyDrawn_ThrowsAlreadyDrawnException()
         {
             var context = new DrawValidationContext
             {
@@ -137,11 +141,27 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 IsCardDrawnFromDeck = true
             };
 
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            Assert.Equal(ServiceErrorType.AlreadyDrawn, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateDraw_PendingDiscardAction_ThrowsBusinessLogicException()
+        public void ValidateDraw_MustDiscardToFinish_ThrowsMustDiscardToFinishException()
+        {
+            var context = new DrawValidationContext
+            {
+                PlayerId = 1,
+                CurrentTurnPlayerId = 1,
+                IsCardDrawnFromDeck = false,
+                MustDiscardToFinishTurn = true
+            };
+
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            Assert.Equal(ServiceErrorType.MustDiscardToFinish, exception.ErrorType);
+        }
+
+        [Fact]
+        public void ValidateDraw_PendingDiscardAction_ThrowsPendingDiscardActionException()
         {
             var context = new DrawValidationContext
             {
@@ -149,14 +169,15 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 CurrentTurnPlayerId = 1,
                 IsCardDrawnFromDeck = false,
                 MustDiscardToFinishTurn = false,
-                PlayerReviewingDiscardId = 1
+                PlayerReviewingDiscardId = 2
             };
 
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            Assert.Equal(ServiceErrorType.PendingDiscardAction, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateDraw_StockEmpty_ThrowsBusinessLogicException()
+        public void ValidateDraw_StockEmpty_ThrowsDeckEmptyException()
         {
             var context = new DrawValidationContext
             {
@@ -168,23 +189,34 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 StockCount = 0
             };
 
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDraw(context));
+            Assert.Equal(ServiceErrorType.DeckEmpty, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateDiscard_Valid_Void()
+        public void ValidateDiscard_Valid_ReturnsVoid()
         {
-            GameValidator.ValidateDiscard(1, 1, new Card("Oros", 1));
+            var card = new Card("Oros", 1);
+            GameValidator.ValidateDiscard(1, 1, card);
         }
 
         [Fact]
-        public void ValidateDiscard_NullCard_ThrowsBusinessLogicException()
+        public void ValidateDiscard_NotTurnOwner_ThrowsNotYourTurnException()
         {
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDiscard(1, 1, null));
+            var card = new Card("Oros", 1);
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDiscard(1, 2, card));
+            Assert.Equal(ServiceErrorType.NotYourTurn, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateSwap_ValidContext_Void()
+        public void ValidateDiscard_CardNull_ThrowsGameRuleViolationException()
+        {
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDiscard(1, 1, null));
+            Assert.Equal(ServiceErrorType.GameRuleViolation, exception.ErrorType);
+        }
+
+        [Fact]
+        public void ValidateSwap_ValidContext_ReturnsVoid()
         {
             var context = new SwapValidationContext
             {
@@ -193,15 +225,22 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 IsCardDrawnFromDeck = true,
                 PlayerReviewingDiscardId = 1,
                 MustDiscardToFinishTurn = false,
-                CardToDiscard = new Card("Oros", 1),
-                DiscardPileCount = 1
+                CardToDiscard = new Card("Copas", 1),
+                DiscardPileCount = 5
             };
-
             GameValidator.ValidateSwap(context);
         }
 
         [Fact]
-        public void ValidateSwap_NotDrawnFromDeck_ThrowsBusinessLogicException()
+        public void ValidateSwap_NotTurnOwner_ThrowsNotYourTurnException()
+        {
+            var context = new SwapValidationContext { PlayerId = 1, CurrentTurnPlayerId = 2 };
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            Assert.Equal(ServiceErrorType.NotYourTurn, exception.ErrorType);
+        }
+
+        [Fact]
+        public void ValidateSwap_NotDrawnFromDeck_ThrowsInvalidCardActionException()
         {
             var context = new SwapValidationContext
             {
@@ -209,12 +248,12 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 CurrentTurnPlayerId = 1,
                 IsCardDrawnFromDeck = false
             };
-
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            Assert.Equal(ServiceErrorType.InvalidCardAction, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateSwap_ReviewingIdMismatch_ThrowsBusinessLogicException()
+        public void ValidateSwap_PlayerNotReviewingDiscard_ThrowsInvalidCardActionException()
         {
             var context = new SwapValidationContext
             {
@@ -223,12 +262,43 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 IsCardDrawnFromDeck = true,
                 PlayerReviewingDiscardId = 2
             };
-
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            Assert.Equal(ServiceErrorType.InvalidCardAction, exception.ErrorType);
         }
 
         [Fact]
-        public void ValidateSwap_DiscardPileEmpty_ThrowsBusinessLogicException()
+        public void ValidateSwap_MustDiscardToFinish_ThrowsMustDiscardToFinishException()
+        {
+            var context = new SwapValidationContext
+            {
+                PlayerId = 1,
+                CurrentTurnPlayerId = 1,
+                IsCardDrawnFromDeck = true,
+                PlayerReviewingDiscardId = 1,
+                MustDiscardToFinishTurn = true
+            };
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            Assert.Equal(ServiceErrorType.MustDiscardToFinish, exception.ErrorType);
+        }
+
+        [Fact]
+        public void ValidateSwap_CardToDiscardNull_ThrowsGameRuleViolationException()
+        {
+            var context = new SwapValidationContext
+            {
+                PlayerId = 1,
+                CurrentTurnPlayerId = 1,
+                IsCardDrawnFromDeck = true,
+                PlayerReviewingDiscardId = 1,
+                MustDiscardToFinishTurn = false,
+                CardToDiscard = null
+            };
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            Assert.Equal(ServiceErrorType.GameRuleViolation, exception.ErrorType);
+        }
+
+        [Fact]
+        public void ValidateSwap_DiscardPileEmpty_ThrowsEmptyDiscaardException()
         {
             var context = new SwapValidationContext
             {
@@ -240,14 +310,26 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 CardToDiscard = new Card("Oros", 1),
                 DiscardPileCount = 0
             };
-
-            Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
+            Assert.Equal(ServiceErrorType.EmptyDiscaard, exception.ErrorType);
         }
 
         [Fact]
         public void IsValidMeldCombination_NullList_ReturnsFalse()
         {
-            var result = GameValidator.IsValidMeldCombination(null);
+            bool result = GameValidator.IsValidMeldCombination(null);
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsValidMeldCombination_ListTooSmall_ReturnsFalse()
+        {
+            var cards = new List<Card>
+            {
+                new Card("Oros", 1),
+                new Card("Copas", 1)
+            };
+            bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);
         }
 
@@ -260,12 +342,12 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 new Card("Copas", 1),
                 new Card("Espadas", 1)
             };
-            var result = GameValidator.IsValidMeldCombination(cards);
+            bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.True(result);
         }
 
         [Fact]
-        public void IsValidMeldCombination_InvalidTerciaSameSuit_ReturnsFalse()
+        public void IsValidMeldCombination_InvalidTercia_DuplicateSuits_ReturnsFalse()
         {
             var cards = new List<Card>
             {
@@ -273,7 +355,7 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 new Card("Oros", 1),
                 new Card("Espadas", 1)
             };
-            var result = GameValidator.IsValidMeldCombination(cards);
+            bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);
         }
 
@@ -286,7 +368,7 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 new Card("Oros", 2),
                 new Card("Oros", 3)
             };
-            var result = GameValidator.IsValidMeldCombination(cards);
+            bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.True(result);
         }
 
@@ -295,16 +377,16 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
         {
             var cards = new List<Card>
             {
-                new Card("Oros", 6),
-                new Card("Oros", 7),
-                new Card("Oros", 10)
+                new Card("Espadas", 6),
+                new Card("Espadas", 7),
+                new Card("Espadas", 10)
             };
-            var result = GameValidator.IsValidMeldCombination(cards);
+            bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.True(result);
         }
 
         [Fact]
-        public void IsValidMeldCombination_InvalidCorridaMixedSuits_ReturnsFalse()
+        public void IsValidMeldCombination_InvalidCorrida_MixedSuits_ReturnsFalse()
         {
             var cards = new List<Card>
             {
@@ -312,12 +394,12 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 new Card("Copas", 2),
                 new Card("Oros", 3)
             };
-            var result = GameValidator.IsValidMeldCombination(cards);
+            bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);
         }
 
         [Fact]
-        public void IsValidMeldCombination_InvalidCorridaNotSequential_ReturnsFalse()
+        public void IsValidMeldCombination_InvalidCorrida_GapInRanks_ReturnsFalse()
         {
             var cards = new List<Card>
             {
@@ -325,7 +407,7 @@ namespace ConquiánServidor.Tests.BusinessLogic.Validation
                 new Card("Oros", 3),
                 new Card("Oros", 4)
             };
-            var result = GameValidator.IsValidMeldCombination(cards);
+            bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);
         }
     }

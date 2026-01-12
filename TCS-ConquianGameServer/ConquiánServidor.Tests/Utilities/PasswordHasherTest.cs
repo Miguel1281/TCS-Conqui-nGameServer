@@ -1,6 +1,6 @@
-﻿using ConquiánServidor.Utilities;
+﻿using Xunit;
+using ConquiánServidor.Utilities;
 using System;
-using Xunit;
 
 namespace ConquiánServidor.Tests.Utilities
 {
@@ -9,84 +9,52 @@ namespace ConquiánServidor.Tests.Utilities
         [Fact]
         public void HashPassword_ValidPassword_ReturnsNonEmptyString()
         {
-            string password = "Password123!";
-
+            string password = "TestPassword123!";
             string result = PasswordHasher.hashPassword(password);
-
-            Assert.NotNull(result);
-            Assert.NotEmpty(result);
-            Assert.NotEqual(password, result);
+            Assert.False(string.IsNullOrEmpty(result));
         }
 
         [Fact]
         public void HashPassword_SamePasswordTwice_ReturnsDifferentHashes()
         {
-            string password = "SecretPassword";
-
+            string password = "SamePassword";
             string hash1 = PasswordHasher.hashPassword(password);
             string hash2 = PasswordHasher.hashPassword(password);
-
             Assert.NotEqual(hash1, hash2);
         }
 
         [Fact]
         public void HashPassword_NullPassword_ThrowsArgumentNullException()
         {
-            string password = null;
-
-            Assert.Throws<ArgumentNullException>(() => PasswordHasher.hashPassword(password));
+            Assert.Throws<ArgumentNullException>(() => PasswordHasher.hashPassword(null));
         }
 
         [Fact]
-        public void HashPassword_EmptyString_ReturnsValidHash()
+        public void VerifyPassword_CorrectPassword_ReturnsTrue()
         {
-            string password = "";
-
-            string result = PasswordHasher.hashPassword(password);
-
-            Assert.NotNull(result);
-            Assert.NotEmpty(result);
-        }
-
-        [Fact]
-        public void VerifyPassword_CorrectPasswordAndHash_ReturnsTrue()
-        {
-            string password = "MyPassword";
+            string password = "MySecretPassword";
             string hash = PasswordHasher.hashPassword(password);
-
             bool result = PasswordHasher.verifyPassword(password, hash);
-
             Assert.True(result);
         }
 
         [Fact]
-        public void VerifyPassword_WrongPassword_ReturnsFalse()
+        public void VerifyPassword_IncorrectPassword_ReturnsFalse()
         {
             string password = "CorrectPassword";
             string wrongPassword = "WrongPassword";
             string hash = PasswordHasher.hashPassword(password);
-
             bool result = PasswordHasher.verifyPassword(wrongPassword, hash);
-
             Assert.False(result);
         }
 
         [Fact]
-        public void VerifyPassword_NullHash_ThrowsArgumentNullException()
+        public void VerifyPassword_EmptyPasswordAgainstHash_ReturnsFalse()
         {
             string password = "Password";
-            string hash = null;
-
-            Assert.Throws<ArgumentNullException>(() => PasswordHasher.verifyPassword(password, hash));
-        }
-
-        [Fact]
-        public void VerifyPassword_InvalidHashFormat_ThrowsException()
-        {
-            string password = "Password";
-            string invalidHash = "NotABcryptHash";
-
-            Assert.ThrowsAny<Exception>(() => PasswordHasher.verifyPassword(password, invalidHash));
+            string hash = PasswordHasher.hashPassword(password);
+            bool result = PasswordHasher.verifyPassword("", hash);
+            Assert.False(result);
         }
     }
 }

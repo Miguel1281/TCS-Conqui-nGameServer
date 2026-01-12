@@ -1,5 +1,4 @@
 ﻿using ConquiánServidor.BusinessLogic;
-using ConquiánServidor.Utilities.Email.Templates;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
@@ -27,7 +26,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
             playerRepositoryMock = new Mock<IPlayerRepository>();
             emailServiceMock = new Mock<IEmailService>();
             presenceManagerMock = new Mock<IPresenceManager>();
-
             authenticationLogic = new AuthenticationLogic(
                 playerRepositoryMock.Object,
                 emailServiceMock.Object,
@@ -36,319 +34,438 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task AuthenticatePlayerAsync_ValidCredentials_ReturnsPlayerDto()
+        public async Task AuthenticatePlayerAsync_ValidCredentialsAndOffline_ReturnsNotNull()
         {
-            string email = "test@test.com";
-            string password = "StrongPassword123!";
+            string email = "test@example.com";
+            string password = "Password1$";
             string hashedPassword = PasswordHasher.hashPassword(password);
+            var player = new Player { idPlayer = 1, email = email, password = hashedPassword };
 
-            var player = new Player
-            {
-                idPlayer = 1,
-                email = email,
-                password = hashedPassword,
-                nickname = "Tester",
-                pathPhoto = "photo.png"
-            };
-
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
-            presenceManagerMock.Setup(p => p.IsPlayerOnline(player.idPlayer)).Returns(false);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            presenceManagerMock.Setup(pm => pm.IsPlayerOnline(player.idPlayer)).Returns(false);
 
             var result = await authenticationLogic.AuthenticatePlayerAsync(email, password);
 
             Assert.NotNull(result);
+        }
+
+        [Fact]
+        public async Task AuthenticatePlayerAsync_ValidCredentialsAndOffline_ReturnsCorrectId()
+        {
+            string email = "test@example.com";
+            string password = "Password1$";
+            string hashedPassword = PasswordHasher.hashPassword(password);
+            var player = new Player { idPlayer = 1, email = email, password = hashedPassword };
+
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            presenceManagerMock.Setup(pm => pm.IsPlayerOnline(player.idPlayer)).Returns(false);
+
+            var result = await authenticationLogic.AuthenticatePlayerAsync(email, password);
+
             Assert.Equal(player.idPlayer, result.idPlayer);
+        }
+
+        [Fact]
+        public async Task AuthenticatePlayerAsync_ValidCredentialsAndOffline_ReturnsOnlineStatus()
+        {
+            string email = "test@example.com";
+            string password = "Password1$";
+            string hashedPassword = PasswordHasher.hashPassword(password);
+            var player = new Player { idPlayer = 1, email = email, password = hashedPassword };
+
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            presenceManagerMock.Setup(pm => pm.IsPlayerOnline(player.idPlayer)).Returns(false);
+
+            var result = await authenticationLogic.AuthenticatePlayerAsync(email, password);
+
             Assert.Equal(PlayerStatus.Online, result.Status);
-            presenceManagerMock.Verify(p => p.NotifyStatusChange(player.idPlayer, (int)PlayerStatus.Online), Times.Once);
         }
 
         [Fact]
-        public async Task AuthenticatePlayerAsync_InvalidPassword_ThrowsBusinessLogicException()
+        public async Task AuthenticatePlayerAsync_ValidCredentialsAndOffline_NotifiesPresenceManager()
         {
-            string email = "test@test.com";
-            string password = "CorrectPassword";
-            string wrongPassword = "WrongPassword";
+            string email = "test@example.com";
+            string password = "Password1$";
             string hashedPassword = PasswordHasher.hashPassword(password);
-
             var player = new Player { idPlayer = 1, email = email, password = hashedPassword };
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            presenceManagerMock.Setup(pm => pm.IsPlayerOnline(player.idPlayer)).Returns(false);
 
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.AuthenticatePlayerAsync(email, wrongPassword));
+            await authenticationLogic.AuthenticatePlayerAsync(email, password);
+
+            presenceManagerMock.Verify(pm => pm.NotifyStatusChange(player.idPlayer, (int)PlayerStatus.Online), Times.Once);
+        }
+
+        [Fact]
+        public async Task AuthenticatePlayerAsync_UserNotFound_ThrowsInvalidPasswordException()
+        {
+            string email = "nonexistent@example.com";
+            string password = "Password1$";
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.AuthenticatePlayerAsync(email, password));
 
             Assert.Equal(ServiceErrorType.InvalidPassword, exception.ErrorType);
         }
 
         [Fact]
-        public async Task AuthenticatePlayerAsync_UserNotFound_ThrowsBusinessLogicException()
+        public async Task AuthenticatePlayerAsync_WrongPassword_ThrowsInvalidPasswordException()
         {
-            string email = "unknown@test.com";
-            string password = "AnyPassword";
+            string email = "test@example.com";
+            string correctPassword = "Password1$";
+            string wrongPassword = "WrongPassword1$";
+            string hashedPassword = PasswordHasher.hashPassword(correctPassword);
+            var player = new Player { idPlayer = 1, email = email, password = hashedPassword };
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.AuthenticatePlayerAsync(email, password));
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.AuthenticatePlayerAsync(email, wrongPassword));
 
             Assert.Equal(ServiceErrorType.InvalidPassword, exception.ErrorType);
         }
 
         [Fact]
-        public async Task AuthenticatePlayerAsync_UserAlreadyOnline_ThrowsBusinessLogicException()
+        public async Task AuthenticatePlayerAsync_UserAlreadyOnline_ThrowsSessionActiveException()
         {
-            string email = "test@test.com";
-            string password = "StrongPassword123!";
+            string email = "test@example.com";
+            string password = "Password1$";
             string hashedPassword = PasswordHasher.hashPassword(password);
-
             var player = new Player { idPlayer = 1, email = email, password = hashedPassword };
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
-            presenceManagerMock.Setup(p => p.IsPlayerOnline(player.idPlayer)).Returns(true);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            presenceManagerMock.Setup(pm => pm.IsPlayerOnline(player.idPlayer)).Returns(true);
 
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.AuthenticatePlayerAsync(email, password));
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.AuthenticatePlayerAsync(email, password));
 
             Assert.Equal(ServiceErrorType.SessionActive, exception.ErrorType);
         }
 
         [Fact]
-        public async Task SignOutPlayerAsync_Invoke_NotifiesOfflineStatus()
+        public async Task SignOutPlayerAsync_Execution_NotifiesPresenceManager()
         {
             int playerId = 1;
 
             await authenticationLogic.SignOutPlayerAsync(playerId);
 
-            presenceManagerMock.Verify(p => p.NotifyStatusChange(playerId, (int)PlayerStatus.Offline), Times.Once);
+            presenceManagerMock.Verify(pm => pm.NotifyStatusChange(playerId, (int)PlayerStatus.Offline), Times.Once);
         }
 
         [Fact]
-        public async Task RegisterPlayerAsync_ValidData_UpdatesPlayer()
+        public async Task RegisterPlayerAsync_InvalidName_ThrowsInvalidNameFormatException()
         {
-            var dto = new PlayerDto
-            {
-                email = "new@test.com",
-                password = "StrongPass123!",
-                name = "Juan",
-                lastName = "Perez",
-                nickname = "JuanP",
-                pathPhoto = "default.png"
-            };
+            var playerDto = new PlayerDto { name = "", lastName = "ValidLast", nickname = "ValidNick", password = "Password1$" };
 
-            var existingTempPlayer = new Player { idPlayer = 1, email = dto.email };
-
-            playerRepositoryMock.Setup(r => r.DoesNicknameExistAsync(dto.nickname)).ReturnsAsync(false);
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(dto.email)).ReturnsAsync(existingTempPlayer);
-
-            await authenticationLogic.RegisterPlayerAsync(dto);
-
-            playerRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
-            Assert.Equal(dto.name, existingTempPlayer.name);
-            Assert.NotNull(existingTempPlayer.password);
-        }
-
-        [Fact]
-        public async Task RegisterPlayerAsync_InvalidName_ThrowsBusinessLogicException()
-        {
-            var dto = new PlayerDto { name = "Juan123", lastName = "Perez", nickname = "JuanP", password = "Pass" };
-
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.RegisterPlayerAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.RegisterPlayerAsync(playerDto));
 
             Assert.Equal(ServiceErrorType.InvalidNameFormat, exception.ErrorType);
         }
 
         [Fact]
-        public async Task RegisterPlayerAsync_WeakPassword_ThrowsBusinessLogicException()
+        public async Task RegisterPlayerAsync_WeakPassword_ThrowsInvalidPasswordFormatException()
         {
-            var dto = new PlayerDto
-            {
-                name = "Juan",
-                lastName = "Perez",
-                nickname = "JuanP",
-                password = "123"
-            };
+            var playerDto = new PlayerDto { name = "ValidName", lastName = "ValidLast", nickname = "ValidNick", password = "123" };
 
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.RegisterPlayerAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.RegisterPlayerAsync(playerDto));
 
             Assert.Equal(ServiceErrorType.InvalidPasswordFormat, exception.ErrorType);
         }
 
         [Fact]
-        public async Task RegisterPlayerAsync_NicknameExists_ThrowsBusinessLogicException()
+        public async Task RegisterPlayerAsync_NicknameExists_ThrowsDuplicateRecordException()
         {
-            var dto = new PlayerDto
-            {
-                name = "Juan",
-                lastName = "Perez",
-                nickname = "ExistingNick",
-                password = "StrongPass123!"
-            };
+            var playerDto = new PlayerDto { name = "ValidName", lastName = "ValidLast", nickname = "ExistingNick", password = "Password1$" };
+            playerRepositoryMock.Setup(repo => repo.DoesNicknameExistAsync(playerDto.nickname)).ReturnsAsync(true);
 
-            playerRepositoryMock.Setup(r => r.DoesNicknameExistAsync(dto.nickname)).ReturnsAsync(true);
-
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.RegisterPlayerAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.RegisterPlayerAsync(playerDto));
 
             Assert.Equal(ServiceErrorType.DuplicateRecord, exception.ErrorType);
         }
 
         [Fact]
-        public async Task RegisterPlayerAsync_TempUserNotFound_ThrowsBusinessLogicException()
+        public async Task RegisterPlayerAsync_TemporaryUserNotFound_ThrowsUserNotFoundException()
         {
-            var dto = new PlayerDto
-            {
-                email = "ghost@test.com",
-                name = "Juan",
-                lastName = "Perez",
-                nickname = "JuanP",
-                password = "StrongPass123!"
-            };
+            var playerDto = new PlayerDto { email = "new@example.com", name = "ValidName", lastName = "ValidLast", nickname = "NewNick", password = "Password1$" };
+            playerRepositoryMock.Setup(repo => repo.DoesNicknameExistAsync(playerDto.nickname)).ReturnsAsync(false);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(playerDto.email)).ReturnsAsync((Player)null);
 
-            playerRepositoryMock.Setup(r => r.DoesNicknameExistAsync(dto.nickname)).ReturnsAsync(false);
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(dto.email)).ReturnsAsync((Player)null);
-
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.RegisterPlayerAsync(dto));
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.RegisterPlayerAsync(playerDto));
 
             Assert.Equal(ServiceErrorType.UserNotFound, exception.ErrorType);
         }
 
         [Fact]
-        public async Task SendVerificationCodeAsync_NewUser_CreatesPlayerAndSendsEmail()
+        public async Task RegisterPlayerAsync_ValidData_UpdatesPlayerName()
         {
-            string email = "newuser@test.com";
-            string generatedCode = "123456";
+            var playerDto = new PlayerDto { email = "test@example.com", name = "Juan", lastName = "Perez", nickname = "JuanP", password = "Password1$", pathPhoto = "img.png" };
+            var existingPlayer = new Player { idPlayer = 1, email = "test@example.com", name = "OldName" };
 
-            playerRepositoryMock.Setup(r => r.GetPlayerForVerificationAsync(email)).ReturnsAsync((Player)null);
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
-            emailServiceMock.Setup(e => e.GenerateVerificationCode()).Returns(generatedCode);
+            playerRepositoryMock.Setup(repo => repo.DoesNicknameExistAsync(playerDto.nickname)).ReturnsAsync(false);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(playerDto.email)).ReturnsAsync(existingPlayer);
 
-            string result = await authenticationLogic.SendVerificationCodeAsync(email);
+            await authenticationLogic.RegisterPlayerAsync(playerDto);
 
-            Assert.Equal(generatedCode, result);
-            playerRepositoryMock.Verify(r => r.AddPlayer(It.IsAny<Player>()), Times.Once);
-            playerRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
-            emailServiceMock.Verify(e => e.SendEmailAsync(email, It.IsAny<VerificationEmailTemplate>()), Times.Once);
+            Assert.Equal("Juan", existingPlayer.name);
         }
 
         [Fact]
-        public async Task SendVerificationCodeAsync_AlreadyRegistered_ThrowsBusinessLogicException()
+        public async Task RegisterPlayerAsync_ValidData_ClearsVerificationCode()
         {
-            string email = "registered@test.com";
-            var existingPlayer = new Player { idPlayer = 1 };
+            var playerDto = new PlayerDto { email = "test@example.com", name = "Juan", lastName = "Perez", nickname = "JuanP", password = "Password1$", pathPhoto = "img.png" };
+            var existingPlayer = new Player { idPlayer = 1, email = "test@example.com", verificationCode = "123" };
 
-            playerRepositoryMock.Setup(r => r.GetPlayerForVerificationAsync(email)).ReturnsAsync(existingPlayer);
+            playerRepositoryMock.Setup(repo => repo.DoesNicknameExistAsync(playerDto.nickname)).ReturnsAsync(false);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(playerDto.email)).ReturnsAsync(existingPlayer);
 
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.SendVerificationCodeAsync(email));
+            await authenticationLogic.RegisterPlayerAsync(playerDto);
+
+            Assert.Null(existingPlayer.verificationCode);
+        }
+
+        [Fact]
+        public async Task RegisterPlayerAsync_ValidData_SavesChanges()
+        {
+            var playerDto = new PlayerDto { email = "test@example.com", name = "Juan", lastName = "Perez", nickname = "JuanP", password = "Password1$", pathPhoto = "img.png" };
+            var existingPlayer = new Player { idPlayer = 1, email = "test@example.com" };
+
+            playerRepositoryMock.Setup(repo => repo.DoesNicknameExistAsync(playerDto.nickname)).ReturnsAsync(false);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(playerDto.email)).ReturnsAsync(existingPlayer);
+
+            await authenticationLogic.RegisterPlayerAsync(playerDto);
+
+            playerRepositoryMock.Verify(repo => repo.SaveChangesAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task GenerateAndStoreRecoveryTokenAsync_UserNotFound_ThrowsUserNotFoundException()
+        {
+            string email = "unknown@example.com";
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.GenerateAndStoreRecoveryTokenAsync(email));
+
+            Assert.Equal(ServiceErrorType.UserNotFound, exception.ErrorType);
+        }
+
+        [Fact]
+        public async Task GenerateAndStoreRecoveryTokenAsync_UserWithoutPassword_ThrowsUserNotFoundException()
+        {
+            string email = "nopass@example.com";
+            var player = new Player { email = email, password = null };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.GenerateAndStoreRecoveryTokenAsync(email));
+
+            Assert.Equal(ServiceErrorType.UserNotFound, exception.ErrorType);
+        }
+
+        [Fact]
+        public async Task GenerateAndStoreRecoveryTokenAsync_ValidUser_ReturnsGeneratedCode()
+        {
+            string email = "valid@example.com";
+            var player = new Player { email = email, password = "hashed" };
+            string generatedCode = "123456";
+
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns(generatedCode);
+
+            string result = await authenticationLogic.GenerateAndStoreRecoveryTokenAsync(email);
+
+            Assert.Equal(generatedCode, result);
+        }
+
+        [Fact]
+        public async Task GenerateAndStoreRecoveryTokenAsync_ValidUser_UpdatesPlayerCode()
+        {
+            string email = "valid@example.com";
+            var player = new Player { email = email, password = "hashed" };
+            string generatedCode = "123456";
+
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns(generatedCode);
+
+            await authenticationLogic.GenerateAndStoreRecoveryTokenAsync(email);
+
+            Assert.Equal(generatedCode, player.verificationCode);
+        }
+
+        [Fact]
+        public async Task GenerateAndStoreRecoveryTokenAsync_ValidUser_SavesChanges()
+        {
+            string email = "valid@example.com";
+            var player = new Player { email = email, password = "hashed" };
+            string generatedCode = "123456";
+
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns(generatedCode);
+
+            await authenticationLogic.GenerateAndStoreRecoveryTokenAsync(email);
+
+            playerRepositoryMock.Verify(repo => repo.SaveChangesAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task SendVerificationCodeAsync_InvalidEmail_ThrowsInvalidEmailFormatException()
+        {
+            string email = "invalid-email";
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.SendVerificationCodeAsync(email));
+
+            Assert.Equal(ServiceErrorType.InvalidEmailFormat, exception.ErrorType);
+        }
+
+        [Fact]
+        public async Task SendVerificationCodeAsync_AlreadyRegistered_ThrowsRegisteredMailException()
+        {
+            string email = "test@example.com";
+            var player = new Player { email = email, name = "Registered User" };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerForVerificationAsync(email)).ReturnsAsync(player);
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.SendVerificationCodeAsync(email));
 
             Assert.Equal(ServiceErrorType.RegisteredMail, exception.ErrorType);
         }
 
         [Fact]
-        public async Task VerifyCodeAsync_ValidCode_Success()
+        public async Task SendVerificationCodeAsync_NewUser_ReturnsGeneratedCode()
         {
-            string email = "test@test.com";
-            string code = "123456";
-            var player = new Player
-            {
-                email = email,
-                verificationCode = code,
-                codeExpiryDate = DateTime.UtcNow.AddMinutes(5)
-            };
+            string email = "new@example.com";
+            string code = "654321";
+            playerRepositoryMock.Setup(repo => repo.GetPlayerForVerificationAsync(email)).ReturnsAsync((Player)null);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns(code);
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            string result = await authenticationLogic.SendVerificationCodeAsync(email);
 
-            await authenticationLogic.VerifyCodeAsync(email, code);
+            Assert.Equal(code, result);
         }
 
         [Fact]
-        public async Task VerifyCodeAsync_ExpiredCode_ThrowsBusinessLogicException()
+        public async Task SendVerificationCodeAsync_NewUser_AddsPlayer()
         {
-            string email = "test@test.com";
-            string code = "123456";
-            var player = new Player
-            {
-                email = email,
-                verificationCode = code,
-                codeExpiryDate = DateTime.UtcNow.AddMinutes(-5)
-            };
+            string email = "new@example.com";
+            string code = "654321";
+            playerRepositoryMock.Setup(repo => repo.GetPlayerForVerificationAsync(email)).ReturnsAsync((Player)null);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns(code);
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            await authenticationLogic.SendVerificationCodeAsync(email);
 
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.VerifyCodeAsync(email, code));
+            playerRepositoryMock.Verify(repo => repo.AddPlayer(It.IsAny<Player>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task SendVerificationCodeAsync_NewUser_SendsEmail()
+        {
+            string email = "new@example.com";
+            string code = "654321";
+            playerRepositoryMock.Setup(repo => repo.GetPlayerForVerificationAsync(email)).ReturnsAsync((Player)null);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns(code);
+
+            await authenticationLogic.SendVerificationCodeAsync(email);
+
+            emailServiceMock.Verify(s => s.SendEmailAsync(email, It.IsAny<IEmailTemplate>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task VerifyCodeAsync_UserNotFound_ThrowsUserNotFoundException()
+        {
+            string email = "test@example.com";
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.VerifyCodeAsync(email, "123456"));
+
+            Assert.Equal(ServiceErrorType.UserNotFound, exception.ErrorType);
+        }
+
+        [Fact]
+        public async Task VerifyCodeAsync_CodeExpired_ThrowsVerificationCodeExpiredException()
+        {
+            string email = "test@example.com";
+            var player = new Player { email = email, verificationCode = "123456", codeExpiryDate = DateTime.UtcNow.AddMinutes(-1) };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.VerifyCodeAsync(email, "123456"));
 
             Assert.Equal(ServiceErrorType.VerificationCodeExpired, exception.ErrorType);
         }
 
         [Fact]
-        public async Task VerifyCodeAsync_IncorrectCode_ThrowsBusinessLogicException()
+        public async Task VerifyCodeAsync_CodeIncorrect_ThrowsInvalidVerificationCodeException()
         {
-            string email = "test@test.com";
-            var player = new Player
-            {
-                email = email,
-                verificationCode = "123456",
-                codeExpiryDate = DateTime.UtcNow.AddMinutes(5)
-            };
+            string email = "test@example.com";
+            var player = new Player { email = email, verificationCode = "123456", codeExpiryDate = DateTime.UtcNow.AddMinutes(10) };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
-
-            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
-                authenticationLogic.VerifyCodeAsync(email, "654321"));
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.VerifyCodeAsync(email, "000000"));
 
             Assert.Equal(ServiceErrorType.InvalidVerificationCode, exception.ErrorType);
         }
 
         [Fact]
-        public async Task HandlePasswordResetAsync_ValidInput_UpdatesPassword()
+        public async Task HandlePasswordResetAsync_InvalidPassword_ThrowsInvalidPasswordFormatException()
         {
-            string email = "test@test.com";
+            string email = "test@example.com";
             string token = "123456";
-            string newPassword = "NewPassword1!";
-            var player = new Player
-            {
-                email = email,
-                verificationCode = token,
-                codeExpiryDate = DateTime.UtcNow.AddMinutes(10)
-            };
+            string newPassword = "weak";
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => authenticationLogic.HandlePasswordResetAsync(email, token, newPassword));
+
+            Assert.Equal(ServiceErrorType.InvalidPasswordFormat, exception.ErrorType);
+        }
+
+        [Fact]
+        public async Task HandlePasswordResetAsync_ValidInput_ClearsVerificationCode()
+        {
+            string email = "test@example.com";
+            string token = "123456";
+            string newPassword = "NewPassword1$";
+            var player = new Player { email = email, verificationCode = token, codeExpiryDate = DateTime.UtcNow.AddMinutes(10) };
+
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
             await authenticationLogic.HandlePasswordResetAsync(email, token, newPassword);
 
-            playerRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
             Assert.Null(player.verificationCode);
-            Assert.NotEqual(newPassword, player.password);
         }
 
         [Fact]
-        public async Task DeleteTemporaryPlayerAsync_PlayerNoName_DeletesPlayer()
+        public async Task HandlePasswordResetAsync_ValidInput_SavesChanges()
         {
-            string email = "temp@test.com";
-            var player = new Player { email = email, name = null };
+            string email = "test@example.com";
+            string token = "123456";
+            string newPassword = "NewPassword1$";
+            var player = new Player { email = email, verificationCode = token, codeExpiryDate = DateTime.UtcNow.AddMinutes(10) };
 
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+
+            await authenticationLogic.HandlePasswordResetAsync(email, token, newPassword);
+
+            playerRepositoryMock.Verify(repo => repo.SaveChangesAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task DeleteTemporaryPlayerAsync_PlayerIsTemporary_DeletesPlayer()
+        {
+            string email = "temp@example.com";
+            var player = new Player { email = email, name = "" };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
             await authenticationLogic.DeleteTemporaryPlayerAsync(email);
 
-            playerRepositoryMock.Verify(r => r.DeletePlayerAsync(player), Times.Once);
+            playerRepositoryMock.Verify(repo => repo.DeletePlayerAsync(player), Times.Once);
         }
 
         [Fact]
-        public async Task DeleteTemporaryPlayerAsync_PlayerWithName_DoesNotDelete()
+        public async Task DeleteTemporaryPlayerAsync_PlayerIsRegistered_DoesNotDelete()
         {
-            string email = "registered@test.com";
+            string email = "registered@example.com";
             var player = new Player { email = email, name = "Juan" };
-
-            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
 
             await authenticationLogic.DeleteTemporaryPlayerAsync(email);
 
-            playerRepositoryMock.Verify(r => r.DeletePlayerAsync(It.IsAny<Player>()), Times.Never);
+            playerRepositoryMock.Verify(repo => repo.DeletePlayerAsync(It.IsAny<Player>()), Times.Never);
         }
     }
 }

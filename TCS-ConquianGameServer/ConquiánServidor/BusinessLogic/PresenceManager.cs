@@ -29,7 +29,6 @@ namespace ConquiánServidor.BusinessLogic
 
         public async void DisconnectUser(int idPlayer)
         {
-            Logger.Info($"Detectada desconexión del jugador {idPlayer}. Limpiando sesión...");
 
             try
             {

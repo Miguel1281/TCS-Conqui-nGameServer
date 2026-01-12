@@ -49,5 +49,8 @@ namespace ConquiánServidor.Contracts.DataContracts
 
         [DataMember]
         public string Player2PathPhoto { get; set; }
+
+        [DataMember]
+        public bool ErrorSavingToDatabase { get; set; }
     }
 }

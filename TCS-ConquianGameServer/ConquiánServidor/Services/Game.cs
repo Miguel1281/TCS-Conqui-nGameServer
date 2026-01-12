@@ -29,7 +29,7 @@ namespace ConquiánServidor.Services
         public Game()
         {
             Bootstrapper.Init();
-            this.presenceManager = Bootstrapper.Container.Resolve<IPresenceManager>(); // Resolver dependencia
+            this.presenceManager = Bootstrapper.Container.Resolve<IPresenceManager>(); 
             this.gameSessionManager = Bootstrapper.Container.Resolve<IGameSessionManager>();
             this.lifetimeScope = Bootstrapper.Container.Resolve<ILifetimeScope>();
         }
@@ -212,6 +212,8 @@ namespace ConquiánServidor.Services
         {
             using (var scope = this.lifetimeScope.BeginLifetimeScope())
             {
+                bool databaseError = false;
+
                 if (!result.IsDraw && result.WinnerId > 0)
                 {
                     try
@@ -219,7 +221,11 @@ namespace ConquiánServidor.Services
                         var playerRepo = scope.Resolve<IPlayerRepository>();
                         result.PointsWon = await playerRepo.UpdatePlayerPointsAsync(result.WinnerId);
                     }
-                    catch (Exception ex) { Logger.Error(ex, "error updating points."); }
+                    catch (Exception ex) 
+                    { 
+                        Logger.Error(ex, "error updating points."); 
+                        databaseError = true;
+                    }
                 }
 
                 try
@@ -238,14 +244,23 @@ namespace ConquiánServidor.Services
 
                     await gameRepo.AddGameAsync(dbGame);
                 }
-                catch (Exception ex) { Logger.Error(ex, "error saving history."); }
+                catch (Exception ex) 
+                { 
+                    Logger.Error(ex, "error saving history."); 
+                    databaseError = true;
+                }
+
+                result.ErrorSavingToDatabase = databaseError;
 
                 try
                 {
                     var instance = this.gameSessionManager.GetGame(result.RoomCode);
                     instance?.BroadcastGameResult(result);
                 }
-                catch (Exception ex) { Logger.Error(ex, "error broadcasting result."); }
+                catch (Exception ex) 
+                { 
+                    Logger.Error(ex, "error broadcasting result."); 
+                }
             }
         }
 

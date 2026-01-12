@@ -35,14 +35,27 @@ namespace ConquiánServidor.BusinessLogic
 
             foreach (var p in friends)
             {
-                bool isOnline = this.presenceManager.IsPlayerOnline(p.idPlayer);
+                PlayerStatus status = PlayerStatus.Offline;
+
+                if (this.presenceManager.IsPlayerInGame(p.idPlayer))
+                {
+                    status = PlayerStatus.InGame;
+                }
+                else if (this.presenceManager.IsPlayerInLobby(p.idPlayer))
+                {
+                    status = PlayerStatus.InLobby;
+                }
+                else if (this.presenceManager.IsPlayerOnline(p.idPlayer))
+                {
+                    status = PlayerStatus.Online;
+                }
 
                 friendDtos.Add(new PlayerDto
                 {
                     idPlayer = p.idPlayer,
                     nickname = p.nickname,
                     pathPhoto = p.pathPhoto,
-                    Status = isOnline ? PlayerStatus.Online : PlayerStatus.Offline,
+                    Status = status,
                     idLevel = p.idLevel
                 });
             }
@@ -78,7 +91,20 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
-            bool isOnline = this.presenceManager.IsPlayerOnline(player.idPlayer);
+            PlayerStatus status = PlayerStatus.Offline;
+
+            if (this.presenceManager.IsPlayerInGame(player.idPlayer))
+            {
+                status = PlayerStatus.InGame;
+            }
+            else if (this.presenceManager.IsPlayerInLobby(player.idPlayer))
+            {
+                status = PlayerStatus.InLobby;
+            }
+            else if (this.presenceManager.IsPlayerOnline(player.idPlayer))
+            {
+                status = PlayerStatus.Online;
+            }
 
             Logger.Info($"Player search successful. Found Player ID: {player.idPlayer}");
 
@@ -91,7 +117,7 @@ namespace ConquiánServidor.BusinessLogic
                 pathPhoto = player.pathPhoto,
                 idLevel = player.idLevel,
                 RankName = rankName,
-                Status = isOnline ? PlayerStatus.Online : PlayerStatus.Offline
+                Status = status 
             };
         }
 

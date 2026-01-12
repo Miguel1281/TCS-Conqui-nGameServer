@@ -212,6 +212,14 @@ namespace ConquiánServidor.Services
 
                     if (callbacks.IsEmpty || isHost)
                     {
+                        if (isHost)
+                        {
+                            foreach (var remainingPlayerId in callbacks.Keys)
+                            {
+                                Task.Run(() => presenceManager.NotifyStatusChange(remainingPlayerId, (int)PlayerStatus.Online));
+                            }
+                        }
+
                         lobbyCallbacks.TryRemove(roomCode, out _);
                         chatHistories.TryRemove(roomCode, out _);
                     }

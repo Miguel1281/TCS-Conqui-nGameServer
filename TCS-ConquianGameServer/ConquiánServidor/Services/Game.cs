@@ -4,6 +4,7 @@ using ConquiánServidor.BusinessLogic.Game;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.Contracts.ServiceContracts;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Properties.Langs;
@@ -21,12 +22,14 @@ namespace ConquiánServidor.Services
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
         private readonly IGameSessionManager gameSessionManager;
         private readonly ILifetimeScope lifetimeScope;
+        private readonly IPresenceManager presenceManager;
 
         private const string INTERNAL_SERVER_ERROR_REASON = "internal server error";
 
         public Game()
         {
             Bootstrapper.Init();
+            this.presenceManager = Bootstrapper.Container.Resolve<IPresenceManager>(); // Resolver dependencia
             this.gameSessionManager = Bootstrapper.Container.Resolve<IGameSessionManager>();
             this.lifetimeScope = Bootstrapper.Container.Resolve<ILifetimeScope>();
         }
@@ -137,9 +140,26 @@ namespace ConquiánServidor.Services
                 var game = this.gameSessionManager.GetGame(roomCode);
                 if (game != null)
                 {
+                    var playersToNotify = game.Players.Select(p => p.idPlayer).ToList();
+
                     game.NotifyGameEndedByAbandonment(playerId);
                     this.gameSessionManager.RemoveGame(roomCode);
                     Logger.Info($"game {roomCode} ended due to player {playerId} leaving.");
+
+                    foreach (var id in playersToNotify)
+                    {
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await this.presenceManager.NotifyStatusChange(id, (int)PlayerStatus.Online);
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Warn(ex, $"Error updating status for player {id} in LeaveGame");
+                            }
+                        });
+                    }
                 }
             }
             catch (Exception ex)

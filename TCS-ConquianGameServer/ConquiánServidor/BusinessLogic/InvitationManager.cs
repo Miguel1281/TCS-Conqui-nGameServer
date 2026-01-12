@@ -47,6 +47,12 @@ namespace ConquiánServidor.BusinessLogic
                 throw new BusinessLogicException(ServiceErrorType.UserInGame);
             }
 
+            if (presenceManager.IsPlayerInLobby(idReceiver))
+            {
+                Logger.Warn($"Invitation blocked: Receiver ID {idReceiver} is currently IN LOBBY.");
+                throw new BusinessLogicException(ServiceErrorType.UserInLobby);
+            }
+
             if (onlinePlayers.TryGetValue(idReceiver, out IInvitationCallback receiverCallback))
             {
                 try

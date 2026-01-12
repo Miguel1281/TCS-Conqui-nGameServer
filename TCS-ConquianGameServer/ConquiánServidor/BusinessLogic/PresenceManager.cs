@@ -244,5 +244,14 @@ namespace ConquiánServidor.BusinessLogic
             }
             return false;
         }
+
+        public bool IsPlayerInLobby(int playerId)
+        {
+            if (playerStatuses.TryGetValue(playerId, out PlayerStatus status))
+            {
+                return status == PlayerStatus.InLobby;
+            }
+            return false;
+        }
     }
 }

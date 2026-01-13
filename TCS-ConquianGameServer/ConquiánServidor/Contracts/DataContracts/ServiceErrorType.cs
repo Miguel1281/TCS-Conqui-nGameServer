@@ -133,6 +133,9 @@ namespace ConquiánServidor.Contracts.DataContracts
         PlayerBanned = 41,
         
         [EnumMember]
-        UserInLobby = 42
+        UserInLobby = 42,
+
+        [EnumMember]
+        OpponentConnectionLost = 43
     }
 }

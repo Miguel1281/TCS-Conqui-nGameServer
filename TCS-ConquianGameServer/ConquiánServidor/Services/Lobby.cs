@@ -304,7 +304,7 @@ namespace ConquiánServidor.Services
                             });
 
 
-                            if (await Task.WhenAny(pingTask, Task.Delay(50000)) == pingTask)
+                            if (await Task.WhenAny(pingTask, Task.Delay(55000)) == pingTask)
                             {
                                 isAlive = pingTask.Result;
                             }
@@ -322,10 +322,9 @@ namespace ConquiánServidor.Services
 
                         if (!isAlive)
                         {
-                            var faultData = new ServiceFaultDto(
-                                ServiceErrorType.OperationFailed,$"No se puede iniciar: El jugador {playerId} no responde (posible reconexión).");
+                            var faultData = new ServiceFaultDto(ServiceErrorType.OpponentConnectionLost, "El oponente no responde al ping.");
 
-                            throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Jugador no responde"));
+                            throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Connection Timeout"));
                         }
                     }
                 }

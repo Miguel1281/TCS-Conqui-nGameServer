@@ -4,6 +4,7 @@ using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using NLog;
 using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -204,18 +205,21 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             foreach (var kvp in playerCallbacks)
             {
-                try
-                {
-                    kvp.Value.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, $"Failed to broadcast time update to Player ID {kvp.Key}. Detecting disconnection.");
+                int pid = kvp.Key;
+                var cb = kvp.Value;
 
-                    playerCallbacks.TryRemove(kvp.Key, out _);
-
-                    Task.Run(() => ProcessAFK(kvp.Key));
-                }
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        cb.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
+                    }
+                    catch (Exception)
+                    {
+                        Logger.Info($"Tiempo de conexión agotado para jugador {pid}. Finalizando partida.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
+                });
             }
         }
 
@@ -494,34 +498,41 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             if (opponentId != 0 && playerCallbacks.TryGetValue(opponentId, out IGameCallback opponentCallback))
             {
-                try
+                Task.Run(() =>
                 {
-                    action(opponentCallback);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, $"Failed to notify opponent ID {opponentId} in Room {RoomCode}. Removing callback.");
-                    playerCallbacks.TryRemove(opponentId, out _);
-                    Task.Run(() => ProcessAFK(opponentId));
-                }
+                    try
+                    {
+                        action(opponentCallback);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Warn(ex, $"Failed to notify opponent ID {opponentId} (Background Task).");
+                        Task.Run(() => ProcessAFK(opponentId));
+                    }
+                });
             }
         }
 
         private void Broadcast(Action<IGameCallback> action)
         {
-            foreach (var kvp in playerCallbacks)
+            Task.Run(() =>
             {
-                try
+                foreach (var kvp in playerCallbacks)
                 {
-                    action(kvp.Value);
+                    int pid = kvp.Key;
+                    try
+                    {
+                        action(kvp.Value);
+                    }
+                    catch (Exception)
+                    {
+                        Logger.Warn($"Broadcast falló para {pid}.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
                 }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, $"Broadcast failed for Player ID {kvp.Key} in Room {RoomCode}.");
-                    Task.Run(() => ProcessAFK(kvp.Key));
-                }
-            }
+            });
         }
+
         public void NotifyGameEndedByAbandonment(int leavingPlayerId)
         {
             StopGame();
@@ -530,14 +541,17 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             if (opponentId != 0 && playerCallbacks.TryGetValue(opponentId, out IGameCallback callback))
             {
-                try
+                Task.Run(() =>
                 {
-                    callback.OnOpponentLeft();
-                }
-                catch (Exception ex)
-                {
-                    Logger.Error(ex, $"Error notifying room exit {RoomCode}");
-                }
+                    try
+                    {
+                        callback.OnOpponentLeft();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error(ex, $"Error notifying room exit {RoomCode}");
+                    }
+                });
             }
         }
 

@@ -280,20 +280,81 @@ namespace ConquiánServidor.Services
         {
             try
             {
-                await lobbyLogic.StartGameAsync(roomCode);
+
                 if (lobbyCallbacks.TryGetValue(roomCode, out var participants))
                 {
-                    foreach (var playerId in participants.Keys)
+                    foreach (var entry in participants)
+                    {
+                        int playerId = entry.Key;
+                        var callback = entry.Value;
+                        bool isAlive = false;
+
+                        try
+                        {
+                            var pingTask = Task.Run(() =>
+                            {
+                                try
+                                {
+                                    return callback.Ping();
+                                }
+                                catch
+                                {
+                                    return false;
+                                }
+                            });
+
+
+                            if (await Task.WhenAny(pingTask, Task.Delay(50000)) == pingTask)
+                            {
+                                isAlive = pingTask.Result;
+                            }
+                            else
+                            {
+                                isAlive = false;
+                                Logger.Warn($"Ping timeout para jugador {playerId} en sala {roomCode}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Warn(ex, $"Error al hacer ping al jugador {playerId}");
+                            isAlive = false;
+                        }
+
+                        if (!isAlive)
+                        {
+                            var faultData = new ServiceFaultDto(
+                                ServiceErrorType.OperationFailed,$"No se puede iniciar: El jugador {playerId} no responde (posible reconexión).");
+
+                            throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Jugador no responde"));
+                        }
+                    }
+                }
+                else
+                {
+                    var faultData = new ServiceFaultDto(ServiceErrorType.LobbyNotFound, "Lobby no encontrado en memoria");
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Lobby Error"));
+                }
+
+                await lobbyLogic.StartGameAsync(roomCode);
+
+                if (lobbyCallbacks.TryGetValue(roomCode, out var validParticipants))
+                {
+                    foreach (var playerId in validParticipants.Keys)
                     {
                         await presenceManager.NotifyStatusChange(playerId, (int)PlayerStatus.InGame);
                     }
                 }
+
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGameStarting());
             }
             catch (BusinessLogicException ex)
             {
                 var faultData = new ServiceFaultDto(ex.ErrorType, LOGIC_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(ex.ErrorType.ToString()));
+            }
+            catch (FaultException<ServiceFaultDto>)
+            {
+                throw;
             }
             catch (Exception ex)
             {

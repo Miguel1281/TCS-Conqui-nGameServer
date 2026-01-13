@@ -26,5 +26,8 @@ namespace ConquiánServidor.Contracts.ServiceContracts
 
         [OperationContract(IsOneWay = true)]
         void YouWereKicked();
+
+        [OperationContract]
+        bool Ping();
     }
 }

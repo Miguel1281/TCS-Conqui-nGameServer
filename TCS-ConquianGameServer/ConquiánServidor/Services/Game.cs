@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace ConquiánServidor.Services
 {
-    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Reentrant)]
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Reentrant)]
     public class Game : IGame
     {
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();

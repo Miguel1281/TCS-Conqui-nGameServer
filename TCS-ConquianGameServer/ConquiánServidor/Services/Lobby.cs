@@ -8,6 +8,8 @@ using ConquiánServidor.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.Entity.Core;
+using System.Data.SqlClient;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -91,9 +93,16 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
+                if (ex is SqlException || ex is EntityException)
+                {
+                    Logger.Error(ex, $"Database error creating lobby for host {idHostPlayer}");
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                }
+
                 Logger.Error(ex, $"Error creando lobby para host {idHostPlayer}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
+                var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -270,9 +279,16 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
+                if (ex is SqlException || ex is EntityException)
+                {
+                    Logger.Error(ex, "Database error selecting gamemode");
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                }
+
                 Logger.Error(ex, "Error seleccionando modo de juego");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
+                var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -357,9 +373,16 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
+                if (ex is SqlException || ex is EntityException)
+                {
+                    Logger.Error(ex, $"Database error starting game in lobby {roomCode}");
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                }
+
                 Logger.Error(ex, $"Error al iniciar juego en lobby {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
+                var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 
@@ -434,9 +457,16 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
+                if (ex is SqlException || ex is EntityException)
+                {
+                    Logger.Error(ex, $"Database error kicking player {idPlayerToKick} from room {roomCode}");
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                }
+
                 Logger.Error(ex, $"Error kicking player {idPlayerToKick} from room {roomCode}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(INTERNAL_ERROR_REASON));
+                var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
+                throw new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_ERROR_REASON));
             }
         }
 

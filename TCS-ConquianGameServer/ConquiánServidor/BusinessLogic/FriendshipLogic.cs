@@ -129,6 +129,13 @@ namespace ConquiánServidor.BusinessLogic
 
             if (existingFriendship != null)
             {
+                if (existingFriendship.idStatus == (int)FriendshipStatus.Pending && existingFriendship.idOrigen == idFriend)
+                {
+                    Logger.Info($"Mutual request detected (Collision). Auto-accepting request from {idFriend} to {idPlayer}.");
+
+                    await UpdateFriendRequestStatusAsync(existingFriendship.idFriendship, (int)FriendshipStatus.Accepted);
+                    return; 
+                }
                 Logger.Warn($"Friend request failed: Relationship already exists between Player ID {idPlayer} and Target ID {idFriend}");
                 throw new BusinessLogicException(ServiceErrorType.ExistingRequest);
             }

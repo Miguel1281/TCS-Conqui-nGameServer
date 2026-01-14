@@ -68,8 +68,8 @@ namespace ConquiánServidor.BusinessLogic
         {
             Logger.Info($"Sign out attempt for Player ID: {idPlayer}");
 
-            await this.presenceManager.NotifyStatusChange(idPlayer, (int)PlayerStatus.Offline);
-
+            this.presenceManager.DisconnectUser(idPlayer);
+            await Task.CompletedTask;
             Logger.Info($"Sign out notification sent for Player ID: {idPlayer}");
         }
 

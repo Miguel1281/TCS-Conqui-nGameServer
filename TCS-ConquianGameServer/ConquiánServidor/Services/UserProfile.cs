@@ -118,18 +118,11 @@ namespace ConquiánServidor.Services
                 return new FaultException<ServiceFaultDto>(fault, new FaultReason(businessEx.ErrorType.ToString()));
             }
 
-            if (ex is DbUpdateException)
+            if (ex is SqlException || ex is EntityException || ex is DbUpdateException)
             {
                 Logger.Error(ex, logMessage);
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DB_SAVE_ERROR_MESSAGE);
-                return new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_ERROR_REASON));
-            }
-
-            if (ex is SqlException || ex is EntityException)
-            {
-                Logger.Error(ex, logMessage);
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_UNAVAILABLE_MESSAGE);
-                return new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_ERROR_REASON));
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
+                return new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Unavailable"));
             }
 
             Logger.Error(ex, logMessage);

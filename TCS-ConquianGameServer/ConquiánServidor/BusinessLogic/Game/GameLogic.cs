@@ -214,9 +214,9 @@ namespace ConquiánServidor.BusinessLogic.Game
                     {
                         cb.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        Logger.Info($"Tiempo de conexión agotado para jugador {pid}. Finalizando partida.");
+                        Logger.Info(ex,$"Tiempo de conexión agotado para jugador {pid}. Finalizando partida.");
                         Task.Run(() => ProcessAFK(pid));
                     }
                 });
@@ -524,9 +524,9 @@ namespace ConquiánServidor.BusinessLogic.Game
                     {
                         action(kvp.Value);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        Logger.Warn($"Broadcast falló para {pid}.");
+                        Logger.Warn(ex,$"Broadcast falló para {pid}.");
                         Task.Run(() => ProcessAFK(pid));
                     }
                 }

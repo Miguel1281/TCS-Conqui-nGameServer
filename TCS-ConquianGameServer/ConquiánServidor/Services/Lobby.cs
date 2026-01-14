@@ -34,6 +34,8 @@ namespace ConquiánServidor.Services
         private const string INTERNAL_ERROR_REASON = "Internal Error";
         private const string LOBBY_NOT_FOUND_MESSAGE = "Lobby not found in memory";
         private const string LOBBY_NOT_FOUND_REASON = "Lobby Not Found";
+        private const string DATABASE_ERROR_MESSAGE = "Error connecting to database";
+        private const string DATABASE_UNAVAILABLE_REASON = "Database Unavailable";
 
         public Lobby()
         {
@@ -96,8 +98,8 @@ namespace ConquiánServidor.Services
                 if (ex is SqlException || ex is EntityException)
                 {
                     Logger.Error(ex, $"Database error creating lobby for host {idHostPlayer}");
-                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
-                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(DATABASE_UNAVAILABLE_REASON));
                 }
 
                 Logger.Error(ex, $"Error creando lobby para host {idHostPlayer}");
@@ -282,8 +284,8 @@ namespace ConquiánServidor.Services
                 if (ex is SqlException || ex is EntityException)
                 {
                     Logger.Error(ex, "Database error selecting gamemode");
-                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
-                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(DATABASE_UNAVAILABLE_REASON));
                 }
 
                 Logger.Error(ex, "Error seleccionando modo de juego");
@@ -296,69 +298,11 @@ namespace ConquiánServidor.Services
         {
             try
             {
-
-                if (lobbyCallbacks.TryGetValue(roomCode, out var participants))
-                {
-                    foreach (var entry in participants)
-                    {
-                        int playerId = entry.Key;
-                        var callback = entry.Value;
-                        bool isAlive = false;
-
-                        try
-                        {
-                            var pingTask = Task.Run(() =>
-                            {
-                                try
-                                {
-                                    return callback.Ping();
-                                }
-                                catch
-                                {
-                                    return false;
-                                }
-                            });
-
-
-                            if (await Task.WhenAny(pingTask, Task.Delay(55000)) == pingTask)
-                            {
-                                isAlive = pingTask.Result;
-                            }
-                            else
-                            {
-                                isAlive = false;
-                                Logger.Warn($"Ping timeout para jugador {playerId} en sala {roomCode}");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Warn(ex, $"Error al hacer ping al jugador {playerId}");
-                            isAlive = false;
-                        }
-
-                        if (!isAlive)
-                        {
-                            var faultData = new ServiceFaultDto(ServiceErrorType.OpponentConnectionLost, "El oponente no responde al ping.");
-
-                            throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Connection Timeout"));
-                        }
-                    }
-                }
-                else
-                {
-                    var faultData = new ServiceFaultDto(ServiceErrorType.LobbyNotFound, "Lobby no encontrado en memoria");
-                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Lobby Error"));
-                }
+                await VerifyLobbyParticipantsAsync(roomCode);
 
                 await lobbyLogic.StartGameAsync(roomCode);
 
-                if (lobbyCallbacks.TryGetValue(roomCode, out var validParticipants))
-                {
-                    foreach (var playerId in validParticipants.Keys)
-                    {
-                        await presenceManager.NotifyStatusChange(playerId, (int)PlayerStatus.InGame);
-                    }
-                }
+                await UpdatePlayersStatusToInGameAsync(roomCode);
 
                 NotifyPlayersInLobby(roomCode, null, (cb) => cb.NotifyGameStarting());
             }
@@ -376,13 +320,80 @@ namespace ConquiánServidor.Services
                 if (ex is SqlException || ex is EntityException)
                 {
                     Logger.Error(ex, $"Database error starting game in lobby {roomCode}");
-                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
-                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(DATABASE_UNAVAILABLE_REASON));
                 }
 
                 Logger.Error(ex, $"Error al iniciar juego en lobby {roomCode}");
                 var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
                 throw new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_ERROR_REASON));
+            }
+        }
+
+        private static async Task VerifyLobbyParticipantsAsync(string roomCode)
+        {
+            if (!lobbyCallbacks.TryGetValue(roomCode, out var participants))
+            {
+                var faultData = new ServiceFaultDto(ServiceErrorType.LobbyNotFound, "Lobby no encontrado en memoria");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Lobby Error"));
+            }
+
+            foreach (var entry in participants)
+            {
+                int playerId = entry.Key;
+                var callback = entry.Value;
+
+                bool isAlive = await PingPlayerWithTimeoutAsync(playerId, callback, roomCode);
+
+                if (!isAlive)
+                {
+                    var faultData = new ServiceFaultDto(ServiceErrorType.OpponentConnectionLost, "El oponente no responde al ping.");
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Connection Timeout"));
+                }
+            }
+        }
+
+        private static async Task<bool> PingPlayerWithTimeoutAsync(int playerId, ILobbyCallback callback, string roomCode)
+        {
+            try
+            {
+                var pingTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        return callback.Ping();
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
+
+                if (await Task.WhenAny(pingTask, Task.Delay(55000)) == pingTask)
+                {
+                    return pingTask.Result;
+                }
+                else
+                {
+                    Logger.Warn($"Ping timeout para jugador {playerId} en sala {roomCode}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Warn(ex, $"Error al hacer ping al jugador {playerId}");
+                return false;
+            }
+        }
+
+        private async Task UpdatePlayersStatusToInGameAsync(string roomCode)
+        {
+            if (lobbyCallbacks.TryGetValue(roomCode, out var validParticipants))
+            {
+                foreach (var playerId in validParticipants.Keys)
+                {
+                    await presenceManager.NotifyStatusChange(playerId, (int)PlayerStatus.InGame);
+                }
             }
         }
 
@@ -460,8 +471,8 @@ namespace ConquiánServidor.Services
                 if (ex is SqlException || ex is EntityException)
                 {
                     Logger.Error(ex, $"Database error kicking player {idPlayerToKick} from room {roomCode}");
-                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
-                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Database Unavailable"));
+                    var faultData = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
+                    throw new FaultException<ServiceFaultDto>(faultData, new FaultReason(DATABASE_UNAVAILABLE_REASON));
                 }
 
                 Logger.Error(ex, $"Error kicking player {idPlayerToKick} from room {roomCode}");

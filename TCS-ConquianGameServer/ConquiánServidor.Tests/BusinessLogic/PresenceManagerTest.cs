@@ -92,6 +92,8 @@ namespace ConquiánServidor.Tests.BusinessLogic
             mockFriendshipLogic.Setup(f => f.GetFriendsAsync(userChangingStatus)).ReturnsAsync(friendsList);
 
             await presenceManager.NotifyStatusChange(userChangingStatus, newStatus);
+
+            mockFriendshipLogic.Verify(f => f.GetFriendsAsync(userChangingStatus), Times.Once);
         }
 
         [Fact]
@@ -108,7 +110,11 @@ namespace ConquiánServidor.Tests.BusinessLogic
         [Fact]
         public void NotifyNewFriendRequest_TargetOffline_DoesNotThrow()
         {
-            presenceManager.NotifyNewFriendRequest(999);
+            int targetId = 999;
+
+            var exception = Record.Exception(() => presenceManager.NotifyNewFriendRequest(targetId));
+
+            Assert.Null(exception);
         }
 
         [Fact]

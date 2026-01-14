@@ -23,9 +23,8 @@ namespace ConquiánServidor.Services
         private const string LOGIC_ERROR_MESSAGE = "logic error";
         private const string INTERNAL_SERVER_ERROR_MESSAGE = "internal server error";
         private const string INTERNAL_ERROR_REASON = "internal error";
-        private const string DATABASE_UNAVAILABLE_MESSAGE = "database unavailable";
-        private const string DATABASE_ERROR_REASON = "database error";
-        private const string DB_SAVE_ERROR_MESSAGE = "error saving changes";
+        private const string DATABASE_UNAVAILABLE_MESSAGE = "Database Unavailable";
+        private const string DATABASE_ERROR_MESSAGE = "Error connecting to database";
 
         public UserProfile()
         {
@@ -121,8 +120,8 @@ namespace ConquiánServidor.Services
             if (ex is SqlException || ex is EntityException || ex is DbUpdateException)
             {
                 Logger.Error(ex, logMessage);
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, "Error connecting to database");
-                return new FaultException<ServiceFaultDto>(fault, new FaultReason("Database Unavailable"));
+                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
+                return new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_MESSAGE));
             }
 
             Logger.Error(ex, logMessage);

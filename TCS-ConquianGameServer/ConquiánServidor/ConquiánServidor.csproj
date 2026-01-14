@@ -7,7 +7,7 @@
     <ProductVersion>8.0.50727</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{6C38BAB6-FA80-46D9-B1AA-D23CF568F395}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>ConquiánServidor</RootNamespace>
     <AssemblyName>ConquiánServidor</AssemblyName>
@@ -35,6 +35,9 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>ConquiánServidor.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Autofac, Version=9.0.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
@@ -207,6 +210,7 @@
     <Compile Include="Contracts\ServiceContracts\IPresenceCallback.cs" />
     <Compile Include="Contracts\ServiceContracts\ISignUp.cs" />
     <Compile Include="Contracts\ServiceContracts\IUserProfile.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Langs\Lang1.Designer.cs">
       <AutoGen>True</AutoGen>

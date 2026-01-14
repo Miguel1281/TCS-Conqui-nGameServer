@@ -209,5 +209,35 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var code = manager.GetLobbyCodeForPlayer(10);
             Assert.Equal("R1", code);
         }
+
+        [Fact]
+        public void SetGamemode_SessionNotFound_CompletesWithoutError()
+        {
+            var manager = new LobbySessionManager();
+
+            var exception = Record.Exception(() => manager.SetGamemode("NONEXISTENT", 1));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void BanPlayer_SessionNotFound_CompletesWithoutError()
+        {
+            var manager = new LobbySessionManager();
+
+            var exception = Record.Exception(() => manager.BanPlayer("NONEXISTENT", 1));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public void RemoveLobby_SessionNotFound_CompletesWithoutError()
+        {
+            var manager = new LobbySessionManager();
+
+            var exception = Record.Exception(() => manager.RemoveLobby("NONEXISTENT"));
+
+            Assert.Null(exception);
+        }
     }
 }

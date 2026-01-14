@@ -40,10 +40,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
             );
         }
 
-        // -------------------------------------------------------------------------
-        // GetLobbyStateAsync
-        // -------------------------------------------------------------------------
-
         [Fact]
         public async Task GetLobbyStateAsync_SessionNotFound_ThrowsBusinessLogicException()
         {
@@ -90,10 +86,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
             Assert.Equal("CODE1", result.RoomCode);
         }
 
-        // -------------------------------------------------------------------------
-        // CreateLobbyAsync
-        // -------------------------------------------------------------------------
-
         [Fact]
         public async Task CreateLobbyAsync_HostNotFound_ThrowsBusinessLogicException()
         {
@@ -126,10 +118,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             lobbyRepositoryMock.Verify(r => r.AddLobby(It.IsAny<Lobby>()), Times.Once);
         }
-
-        // -------------------------------------------------------------------------
-        // JoinLobbyAsync
-        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task JoinLobbyAsync_LobbyNotFound_ThrowsBusinessLogicException()
@@ -201,10 +189,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
             Assert.Equal(2, result.idPlayer);
         }
 
-        // -------------------------------------------------------------------------
-        // JoinLobbyAsGuestAsync
-        // -------------------------------------------------------------------------
-
         [Fact]
         public async Task JoinLobbyAsGuestAsync_InviteUsed_ThrowsBusinessLogicException()
         {
@@ -260,9 +244,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
             Assert.Equal(-1, result.idPlayer);
         }
 
-        // -------------------------------------------------------------------------
-        // LeaveLobbyAsync
-        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task LeaveLobbyAsync_LobbyNotFound_ReturnsFalse()
@@ -307,9 +288,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
             Assert.Equal((int)LobbyStatus.Finished, lobby.idStatusLobby);
         }
 
-        // -------------------------------------------------------------------------
-        // SelectGamemodeAsync
-        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task SelectGamemodeAsync_LobbyNotFound_ThrowsBusinessLogicException()
@@ -329,10 +307,6 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             sessionManagerMock.Verify(m => m.SetGamemode("CODE1", 1), Times.Once);
         }
-
-        // -------------------------------------------------------------------------
-        // StartGameAsync
-        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task StartGameAsync_SessionNotFound_ThrowsBusinessLogicException()
@@ -389,7 +363,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
             sessionManagerMock.Setup(m => m.GetLobbySession("CODE1")).Returns(session);
             lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
 
-            var mockGame = new Mock<ConquiánServidor.BusinessLogic.Game.ConquianGame>("CODE1", 1, new List<PlayerDto> { p1, p2 });
+            var mockGame = new Mock<ConquiánServidor.BusinessLogic.Game.GameLogic>("CODE1", 1, new List<PlayerDto> { p1, p2 });
             gameSessionManagerMock.Setup(m => m.GetGame("CODE1")).Returns(mockGame.Object);
 
             await lobbyLogic.StartGameAsync("CODE1");
@@ -415,17 +389,13 @@ namespace ConquiánServidor.Tests.BusinessLogic
             sessionManagerMock.Setup(m => m.GetLobbySession("CODE1")).Returns(session);
             lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
 
-            var mockGame = new Mock<ConquiánServidor.BusinessLogic.Game.ConquianGame>("CODE1", 1, new List<PlayerDto> { p1, p2 });
+            var mockGame = new Mock<ConquiánServidor.BusinessLogic.Game.GameLogic>("CODE1", 1, new List<PlayerDto> { p1, p2 });
             gameSessionManagerMock.Setup(m => m.GetGame("CODE1")).Returns(mockGame.Object);
 
             await lobbyLogic.StartGameAsync("CODE1");
 
             Assert.Equal((int)LobbyStatus.InGame, lobby.idStatusLobby);
         }
-
-        // -------------------------------------------------------------------------
-        // KickPlayerAsync
-        // -------------------------------------------------------------------------
 
         [Fact]
         public async Task KickPlayerAsync_LobbyNotFound_ThrowsBusinessLogicException()
@@ -473,6 +443,79 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await lobbyLogic.KickPlayerAsync("CODE1", 1, 2);
 
             sessionManagerMock.Verify(m => m.RemovePlayerFromLobby("CODE1", 2), Times.Once);
+        }
+
+        [Fact]
+        public async Task CreateLobbyAsync_Success_CreatesLobbyInSession()
+        {
+            var player = new Player { idPlayer = 1, nickname = "Host" };
+            playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(1)).ReturnsAsync(player);
+            lobbyRepositoryMock.Setup(r => r.DoesRoomCodeExistAsync(It.IsAny<string>())).ReturnsAsync(false);
+
+            await lobbyLogic.CreateLobbyAsync(1);
+
+            sessionManagerMock.Verify(m => m.CreateLobby(It.IsAny<string>(), It.IsAny<PlayerDto>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task JoinLobbyAsGuestAsync_LobbyInGame_ThrowsLobbyFullException()
+        {
+            var lobby = new Lobby { idStatusLobby = (int)LobbyStatus.InGame };
+            guestInvitationManagerMock.Setup(m => m.ValidateInvitation("email", "CODE1")).Returns(InviteResult.Valid);
+            playerRepositoryMock.Setup(r => r.GetPlayerByEmailAsync("email")).ReturnsAsync((Player)null);
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => lobbyLogic.JoinLobbyAsGuestAsync("email", "CODE1"));
+
+            Assert.Equal(ServiceErrorType.LobbyFull, exception.ErrorType);
+        }
+
+        [Fact]
+        public async Task LeaveLobbyAsync_NonHostLeaves_ReturnsFalse()
+        {
+            var lobby = new Lobby { idHostPlayer = 1, roomCode = "CODE1" };
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            var result = await lobbyLogic.LeaveLobbyAsync("CODE1", 2);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task LeaveLobbyAsync_NonHostLeaves_DoesNotRemoveLobby()
+        {
+            var lobby = new Lobby { idHostPlayer = 1, roomCode = "CODE1" };
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            await lobbyLogic.LeaveLobbyAsync("CODE1", 2);
+
+            sessionManagerMock.Verify(m => m.RemoveLobby("CODE1"), Times.Never);
+        }
+
+        [Fact]
+        public async Task SelectGamemodeAsync_Success_SavesChangesToRepository()
+        {
+            var lobby = new Lobby { roomCode = "CODE1" };
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+
+            await lobbyLogic.SelectGamemodeAsync("CODE1", 1);
+
+            lobbyRepositoryMock.Verify(r => r.SaveChangesAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task JoinLobbyAsync_PlayerBanned_ThrowsPlayerBannedErrorType()
+        {
+            var lobby = new Lobby { idStatusLobby = (int)LobbyStatus.Waiting };
+            var player = new Player { idPlayer = 2 };
+            lobbyRepositoryMock.Setup(r => r.GetLobbyByRoomCodeAsync("CODE1")).ReturnsAsync(lobby);
+            playerRepositoryMock.Setup(r => r.GetPlayerByIdAsync(2)).ReturnsAsync(player);
+            sessionManagerMock.Setup(m => m.AddPlayerToLobby(It.IsAny<string>(), It.IsAny<PlayerDto>()))
+                .Throws(new InvalidOperationException("Banned"));
+
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() => lobbyLogic.JoinLobbyAsync("CODE1", 2));
+
+            Assert.Equal(ServiceErrorType.PlayerBanned, exception.ErrorType);
         }
     }
 }

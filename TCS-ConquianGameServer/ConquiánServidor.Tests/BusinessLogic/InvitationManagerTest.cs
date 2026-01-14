@@ -114,16 +114,12 @@ namespace ConquiánServidor.Tests.BusinessLogic
             presenceManagerMock.Setup(p => p.IsPlayerInGame(idReceiver)).Returns(false);
             invitationManager.Subscribe(idReceiver, callbackMock.Object);
 
-            await Assert.ThrowsAsync<BusinessLogicException>(() => invitationManager.SendInvitationAsync(1, "Nick", idReceiver, "CODE"));
+            await Record.ExceptionAsync(() => invitationManager.SendInvitationAsync(1, "Nick", idReceiver, "CODE"));
 
-            try
-            {
-                await invitationManager.SendInvitationAsync(1, "Nick", idReceiver, "CODE");
-            }
-            catch (BusinessLogicException ex)
-            {
-                Assert.Equal(ServiceErrorType.OperationFailed, ex.ErrorType);
-            }
+            var exception = await Assert.ThrowsAsync<BusinessLogicException>(() =>
+                invitationManager.SendInvitationAsync(1, "Nick", idReceiver, "CODE"));
+
+            Assert.Equal(ServiceErrorType.OperationFailed, exception.ErrorType);
         }
 
 
@@ -190,6 +186,32 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await invitationManager.SendInvitationAsync(1, "Nick", idReceiver, "CODE");
 
             oldCallbackMock.Verify(c => c.OnInvitationReceived(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task SendInvitationAsync_ReceiverInLobby_ThrowsBusinessLogicException()
+        {
+            int idReceiver = 2;
+            presenceManagerMock.Setup(p => p.IsPlayerInLobby(idReceiver)).Returns(true);
+
+            await Assert.ThrowsAsync<BusinessLogicException>(() =>
+                invitationManager.SendInvitationAsync(1, "Sender", idReceiver, "ABCDE"));
+        }
+
+        [Fact]
+        public async Task SendInvitationAsync_ReceiverInLobby_ThrowsUserInLobbyErrorType()
+        {
+            int idReceiver = 2;
+            presenceManagerMock.Setup(p => p.IsPlayerInLobby(idReceiver)).Returns(true);
+
+            try
+            {
+                await invitationManager.SendInvitationAsync(1, "Sender", idReceiver, "ABCDE");
+            }
+            catch (BusinessLogicException ex)
+            {
+                Assert.Equal(ServiceErrorType.UserInLobby, ex.ErrorType);
+            }
         }
     }
 }

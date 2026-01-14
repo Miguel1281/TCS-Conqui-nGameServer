@@ -7,11 +7,10 @@ using ConquiánServidor.BusinessLogic.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System;
 
-namespace ConquiánServidor.Tests.BusinessLogic.Game
+namespace ConquiánServidor.Tests.BusinessLogic
 {
-    public class ConquianGameTest
+    public class GameLogicTest
     {
         private readonly Mock<IGameCallback> mockCallback1;
         private readonly Mock<IGameCallback> mockCallback2;
@@ -19,7 +18,7 @@ namespace ConquiánServidor.Tests.BusinessLogic.Game
         private const string ROOM_CODE = "TEST1";
         private const int GAMEMODE_CLASSIC = 1;
 
-        public ConquianGameTest()
+        public GameLogicTest()
         {
             mockCallback1 = new Mock<IGameCallback>();
             mockCallback2 = new Mock<IGameCallback>();
@@ -30,15 +29,15 @@ namespace ConquiánServidor.Tests.BusinessLogic.Game
             };
         }
 
-        private ConquianGame CreateGame()
+        private GameLogic CreateGame()
         {
-            var game = new ConquianGame(ROOM_CODE, GAMEMODE_CLASSIC, players);
+            var game = new GameLogic(ROOM_CODE, GAMEMODE_CLASSIC, players);
             game.RegisterPlayerCallback(1, mockCallback1.Object);
             game.RegisterPlayerCallback(2, mockCallback2.Object);
             return game;
         }
 
-        private void TransitionToDrawPhase(ConquianGame game)
+        private void TransitionToDrawPhase(GameLogic game)
         {
             int p1 = players[0].idPlayer;
             game.PassTurn(p1);
@@ -224,12 +223,13 @@ namespace ConquiánServidor.Tests.BusinessLogic.Game
         }
 
         [Fact]
-        public void NotifyGameEndedByAbandonment_CallsCallback()
+        public async Task NotifyGameEndedByAbandonment_PlayerAbandons_CallsOnOpponentLeft()
         {
             var game = CreateGame();
             int leaverId = 1;
 
             game.NotifyGameEndedByAbandonment(leaverId);
+            await Task.Delay(100);
 
             mockCallback2.Verify(c => c.OnOpponentLeft(), Times.Once);
         }
@@ -244,6 +244,147 @@ namespace ConquiánServidor.Tests.BusinessLogic.Game
             await Task.Delay(200);
 
             mockCallback2.Verify(c => c.NotifyGameEndedByAFK(It.IsAny<string>()), Times.AtLeastOnce);
+        }
+
+        [Fact]
+        public void GetInitialTimeInSeconds_ClassicMode_Returns600()
+        {
+            var game = new GameLogic(ROOM_CODE, 1, players);
+            int time = game.GetInitialTimeInSeconds();
+            Assert.Equal(600, time);
+        }
+
+        [Fact]
+        public void GetInitialTimeInSeconds_ExtendedMode_Returns1200()
+        {
+            var game = new GameLogic(ROOM_CODE, 2, players);
+            int time = game.GetInitialTimeInSeconds();
+            Assert.Equal(1200, time);
+        }
+
+        [Fact]
+        public void DrawFromDeck_Success_UpdatesDiscardPile()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            var cardToDraw = game.StockPile[0];
+
+            game.DrawFromDeck(turnPlayer);
+
+            Assert.Equal(cardToDraw.Id, game.DiscardPile.Last().Id);
+        }
+
+        [Fact]
+        public void SwapDrawnCard_Success_UpdatesHand()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            var cardToDraw = game.StockPile[0];
+            game.DrawFromDeck(turnPlayer);
+            var cardToDiscard = game.PlayerHands[turnPlayer].First();
+
+            game.SwapDrawnCard(turnPlayer, cardToDiscard.Id);
+
+            Assert.Contains(game.PlayerHands[turnPlayer], c => c.Id == cardToDraw.Id);
+        }
+
+        [Fact]
+        public void SwapDrawnCard_Success_ChangesTurn()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            game.DrawFromDeck(turnPlayer);
+            var cardToDiscard = game.PlayerHands[turnPlayer].First();
+            int initialTurn = turnPlayer;
+
+            game.SwapDrawnCard(turnPlayer, cardToDiscard.Id);
+
+            Assert.NotEqual(initialTurn, game.GetCurrentTurnPlayerId());
+        }
+
+        [Fact]
+        public void ProcessPlayerMove_ValidMeld_AddsMeldToPlayer()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            game.PlayerHands[turnPlayer].Clear();
+            game.PlayerHands[turnPlayer].Add(new Card("Oros", 1));
+            game.PlayerHands[turnPlayer].Add(new Card("Copas", 1));
+            game.PlayerHands[turnPlayer].Add(new Card("Espadas", 1));
+            var cardIds = new List<string> { "Oros_1", "Copas_1", "Espadas_1" };
+
+            game.ProcessPlayerMove(turnPlayer, cardIds);
+
+            Assert.Single(game.PlayerMelds[turnPlayer]);
+        }
+
+        [Fact]
+        public void ProcessPlayerMove_ValidMeld_RemovesCardsFromHand()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            game.PlayerHands[turnPlayer].Clear();
+            game.PlayerHands[turnPlayer].Add(new Card("Oros", 1));
+            game.PlayerHands[turnPlayer].Add(new Card("Copas", 1));
+            game.PlayerHands[turnPlayer].Add(new Card("Espadas", 1));
+            var cardIds = new List<string> { "Oros_1", "Copas_1", "Espadas_1" };
+
+            game.ProcessPlayerMove(turnPlayer, cardIds);
+
+            Assert.Empty(game.PlayerHands[turnPlayer]);
+        }
+
+        [Fact]
+        public void ProcessPlayerMove_WinningCondition_FinishesGame()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            bool gameFinished = false;
+            game.OnGameFinished += (result) => gameFinished = true;
+            game.PlayerMelds[turnPlayer].Add(new List<Card> { new Card("Bastos", 10), new Card("Bastos", 11), new Card("Bastos", 12) });
+            game.PlayerHands[turnPlayer].Clear();
+            game.PlayerHands[turnPlayer].Add(new Card("Oros", 1));
+            game.PlayerHands[turnPlayer].Add(new Card("Copas", 1));
+            game.PlayerHands[turnPlayer].Add(new Card("Espadas", 1));
+            var cardIds = new List<string> { "Oros_1", "Copas_1", "Espadas_1" };
+
+            game.ProcessPlayerMove(turnPlayer, cardIds);
+
+            Assert.True(gameFinished);
+        }
+
+        [Fact]
+        public void PassTurn_RivalPassesDiscard_DoesNotChangeTurn()
+        {
+            var game = CreateGame();
+            int hostId = players[0].idPlayer;
+            int rivalId = players[1].idPlayer;
+            game.PassTurn(hostId);
+            int currentTurn = game.GetCurrentTurnPlayerId();
+
+            game.PassTurn(rivalId);
+
+            Assert.Equal(currentTurn, game.GetCurrentTurnPlayerId());
+        }
+
+        [Fact]
+        public void PassTurn_AfterDrawing_ChangesTurn()
+        {
+            var game = CreateGame();
+            TransitionToDrawPhase(game);
+            int turnPlayer = game.GetCurrentTurnPlayerId();
+            game.DrawFromDeck(turnPlayer);
+            int initialTurn = turnPlayer;
+
+            game.PassTurn(turnPlayer);
+
+            Assert.NotEqual(initialTurn, game.GetCurrentTurnPlayerId());
         }
     }
 }

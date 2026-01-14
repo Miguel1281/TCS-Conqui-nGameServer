@@ -185,7 +185,7 @@ namespace ConquiánServidor.Services
         }
 
 
-        private ConquianGame GetGameOrThrow(string roomCode)
+        private GameLogic GetGameOrThrow(string roomCode)
         {
             var game = this.gameSessionManager.GetGame(roomCode);
             if (game == null)
@@ -279,7 +279,7 @@ namespace ConquiánServidor.Services
             });
         }
 
-        private GameStateDto BuildGameStateForPlayer(ConquianGame game, int playerId)
+        private GameStateDto BuildGameStateForPlayer(GameLogic game, int playerId)
         {
             var hand = game.PlayerHands[playerId].Select(c => new CardDto
             {

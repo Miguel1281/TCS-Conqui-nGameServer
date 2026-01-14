@@ -11,13 +11,13 @@ namespace ConquiánServidor.BusinessLogic
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private readonly ConcurrentDictionary<string, ConquianGame> games = new ConcurrentDictionary<string, ConquianGame>();
+        private readonly ConcurrentDictionary<string, GameLogic> games = new ConcurrentDictionary<string, GameLogic>();
 
         public void CreateGame(string roomCode, int gamemodeId, List<PlayerDto> players)
         {
             Logger.Info($"Attempting to create game session. Room Code: {roomCode}, Gamemode: {gamemodeId}");
 
-            var newGame = new ConquianGame(roomCode, gamemodeId, players);
+            var newGame = new GameLogic(roomCode, gamemodeId, players);
 
             if (games.TryAdd(roomCode, newGame))
             {
@@ -29,7 +29,7 @@ namespace ConquiánServidor.BusinessLogic
             }
         }
 
-        public ConquianGame GetGame(string roomCode)
+        public GameLogic GetGame(string roomCode)
         {
             if (games.TryGetValue(roomCode, out var game))
             {

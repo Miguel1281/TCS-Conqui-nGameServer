@@ -7,6 +7,7 @@ using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
+using ConquiánServidor.Utilities.Email.Templates;
 using Moq;
 using System;
 using System.Threading.Tasks;
@@ -148,7 +149,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             await authenticationLogic.SignOutPlayerAsync(playerId);
 
-            presenceManagerMock.Verify(pm => pm.NotifyStatusChange(playerId, (int)PlayerStatus.Offline), Times.Once);
+            presenceManagerMock.Verify(pm => pm.DisconnectUser(playerId), Times.Once);
         }
 
         [Fact]
@@ -427,7 +428,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await authenticationLogic.HandlePasswordResetAsync(email, token, newPassword);
 
             Assert.Null(player.verificationCode);
-        }
+        } 
 
         [Fact]
         public async Task HandlePasswordResetAsync_ValidInput_SavesChanges()
@@ -466,6 +467,83 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await authenticationLogic.DeleteTemporaryPlayerAsync(email);
 
             playerRepositoryMock.Verify(repo => repo.DeletePlayerAsync(It.IsAny<Player>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task VerifyCodeAsync_ValidCode_CompletesSuccessfully()
+        {
+            string email = "test@example.com";
+            var player = new Player { email = email, verificationCode = "123456", codeExpiryDate = DateTime.UtcNow.AddMinutes(10) };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+
+            var exception = await Record.ExceptionAsync(() => authenticationLogic.VerifyCodeAsync(email, "123456"));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task HandlePasswordRecoveryRequestAsync_ValidEmail_SendsRecoveryEmail()
+        {
+            string email = "valid@example.com";
+            var player = new Player { email = email, password = "hashed" };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns("123456");
+
+            await authenticationLogic.HandlePasswordRecoveryRequestAsync(email);
+
+            emailServiceMock.Verify(s => s.SendEmailAsync(email, It.IsAny<RecoveryEmailTemplate>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task HandleTokenValidationAsync_ValidToken_CompletesSuccessfully()
+        {
+            string email = "test@example.com";
+            string token = "123456";
+            var player = new Player { email = email, verificationCode = token, codeExpiryDate = DateTime.UtcNow.AddMinutes(10) };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(player);
+
+            var exception = await Record.ExceptionAsync(() => authenticationLogic.HandleTokenValidationAsync(email, token));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task SendVerificationCodeAsync_ExistingTempUser_DoesNotAddPlayer()
+        {
+            string email = "temp@example.com";
+            var tempPlayer = new Player { idPlayer = 1, email = email };
+            playerRepositoryMock.Setup(repo => repo.GetPlayerForVerificationAsync(email)).ReturnsAsync((Player)null);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync(tempPlayer);
+            emailServiceMock.Setup(s => s.GenerateVerificationCode()).Returns("123456");
+
+            await authenticationLogic.SendVerificationCodeAsync(email);
+
+            playerRepositoryMock.Verify(repo => repo.AddPlayer(It.IsAny<Player>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DeleteTemporaryPlayerAsync_UserNotFound_DoesNotDeletePlayer()
+        {
+            string email = "unknown@example.com";
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(email)).ReturnsAsync((Player)null);
+
+            await authenticationLogic.DeleteTemporaryPlayerAsync(email);
+
+            playerRepositoryMock.Verify(repo => repo.DeletePlayerAsync(It.IsAny<Player>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task RegisterPlayerAsync_ValidData_HashesPassword()
+        {
+            var playerDto = new PlayerDto { email = "test@example.com", name = "Juan", lastName = "Perez", nickname = "JuanP", password = "Password1$", pathPhoto = "img.png" };
+            var existingPlayer = new Player { idPlayer = 1, email = "test@example.com" };
+
+            playerRepositoryMock.Setup(repo => repo.DoesNicknameExistAsync(playerDto.nickname)).ReturnsAsync(false);
+            playerRepositoryMock.Setup(repo => repo.GetPlayerByEmailAsync(playerDto.email)).ReturnsAsync(existingPlayer);
+
+            await authenticationLogic.RegisterPlayerAsync(playerDto);
+
+            Assert.True(PasswordHasher.verifyPassword(playerDto.password, existingPlayer.password));
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Xunit;
 using ConquiánServidor.BusinessLogic.Validation;
 
-namespace ConquiánServidor.Tests.BusinessLogic.Validation
+namespace ConquiánServidor.Tests.Validation
 {
     public class SignUpServerValidatorTest
     {

@@ -175,5 +175,35 @@ namespace ConquiánServidor.Tests.BusinessLogic
 
             Assert.Null(retrieved);
         }
+
+        [Fact]
+        public void ValidateInvitation_BoundaryTime_ReturnsValid()
+        {
+            var manager = new GuestInvitationManager();
+            string email = "limit@example.com";
+            manager.AddInvitation(email, "CODE");
+            var data = manager.GetInvitation(email);
+            data.CreationDate = DateTime.UtcNow.AddMinutes(-29);
+
+            var result = manager.ValidateInvitation(email, "CODE");
+
+            Assert.Equal(InviteResult.Valid, result);
+        }
+
+        [Fact]
+        public void AddInvitation_ExistingEmail_UpdatesCreationDate()
+        {
+            var manager = new GuestInvitationManager();
+            string email = "renew@example.com";
+            manager.AddInvitation(email, "OLD");
+            var data = manager.GetInvitation(email);
+            var oldDate = DateTime.UtcNow.AddMinutes(-20);
+            data.CreationDate = oldDate;
+
+            manager.AddInvitation(email, "NEW");
+            var newData = manager.GetInvitation(email);
+
+            Assert.NotEqual(oldDate, newData.CreationDate);
+        }
     }
 }

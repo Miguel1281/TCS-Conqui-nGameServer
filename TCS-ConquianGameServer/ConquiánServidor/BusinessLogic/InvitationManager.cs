@@ -2,7 +2,6 @@
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.Properties.Langs;
 using NLog;
 using System;
 using System.Collections.Concurrent;

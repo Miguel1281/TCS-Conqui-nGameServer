@@ -7,7 +7,7 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
     public interface IGameSessionManager
     {
         void CreateGame(string roomCode, int gamemodeId, List<PlayerDto> players);
-        ConquianGame GetGame(string roomCode);
+        GameLogic GetGame(string roomCode);
         void RemoveGame(string roomCode);
         void CheckAndClearActiveSessions(int playerId);
     }

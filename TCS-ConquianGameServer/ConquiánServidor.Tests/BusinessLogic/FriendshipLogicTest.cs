@@ -2,7 +2,7 @@
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.ConquiánDB.Abstractions;
+using System.Data.Entity.Infrastructure;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.DataAccess.Abstractions;
@@ -364,6 +364,117 @@ namespace ConquiánServidor.Tests.BusinessLogic
             await friendshipLogic.DeleteFriendAsync(playerId, friendId);
 
             friendshipRepositoryMock.Verify(r => r.RemoveFriendship(It.IsAny<Friendship>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetPlayerByNicknameAsync_PlayerInLobby_ReturnsInLobbyStatus()
+        {
+            string nickname = "Gamer";
+            int requesterId = 1;
+            var player = new Player { idPlayer = 2, nickname = nickname };
+            playerRepositoryMock.Setup(r => r.GetPlayerByNicknameAsync(nickname)).ReturnsAsync(player);
+            presenceManagerMock.Setup(pm => pm.IsPlayerInLobby(player.idPlayer)).Returns(true);
+
+            var result = await friendshipLogic.GetPlayerByNicknameAsync(nickname, requesterId);
+
+            Assert.Equal(PlayerStatus.InLobby, result.Status);  
+        }
+
+        [Fact]
+        public async Task GetPlayerByNicknameAsync_PlayerOnline_ReturnsOnlineStatus()
+        {
+            string nickname = "Gamer";
+            int requesterId = 1;
+            var player = new Player { idPlayer = 2, nickname = nickname };
+            playerRepositoryMock.Setup(r => r.GetPlayerByNicknameAsync(nickname)).ReturnsAsync(player);
+            presenceManagerMock.Setup(pm => pm.IsPlayerOnline(player.idPlayer)).Returns(true);
+
+            var result = await friendshipLogic.GetPlayerByNicknameAsync(nickname, requesterId);
+
+            Assert.Equal(PlayerStatus.Online, result.Status);
+        }
+
+        [Fact]
+        public async Task GetPlayerByNicknameAsync_PlayerWithRank_ReturnsRankName()
+        {
+            string nickname = "ProGamer";
+            int requesterId = 1;
+            var player = new Player { idPlayer = 2, nickname = nickname, LevelRules = new LevelRules { RankName = "Gold" } };
+            playerRepositoryMock.Setup(r => r.GetPlayerByNicknameAsync(nickname)).ReturnsAsync(player);
+
+            var result = await friendshipLogic.GetPlayerByNicknameAsync(nickname, requesterId);
+
+            Assert.Equal("Gold", result.RankName);
+        }
+
+        [Fact]
+        public async Task SendFriendRequestAsync_MutualRequest_DoesNotAddNewRequest()
+        {
+            int playerId = 1;
+            int friendId = 2;
+            var existingReverseRequest = new Friendship { idStatus = (int)FriendshipStatus.Pending, idOrigen = friendId, idFriendship = 5 };
+            friendshipRepositoryMock.Setup(r => r.GetExistingRelationshipAsync(playerId, friendId)).ReturnsAsync(existingReverseRequest);
+            friendshipRepositoryMock.Setup(r => r.GetPendingRequestByIdAsync(5)).ReturnsAsync(existingReverseRequest);
+
+            await friendshipLogic.SendFriendRequestAsync(playerId, friendId);
+
+            friendshipRepositoryMock.Verify(r => r.AddFriendship(It.IsAny<Friendship>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task SendFriendRequestAsync_DbUpdateException_ThrowsExistingRequestException()
+        {
+            int playerId = 1;
+            int friendId = 2;
+            friendshipRepositoryMock.Setup(r => r.GetExistingRelationshipAsync(playerId, friendId)).ReturnsAsync((Friendship)null);
+            friendshipRepositoryMock.Setup(r => r.AddFriendship(It.IsAny<Friendship>())).Throws(new DbUpdateException());
+
+            await Assert.ThrowsAsync<BusinessLogicException>(() => friendshipLogic.SendFriendRequestAsync(playerId, friendId));
+        }
+
+        [Fact]
+        public async Task UpdateFriendRequestStatusAsync_MutualPendingExists_RemovesMutualRequest()
+        {
+            int friendshipId = 10;
+            int senderId = 1;
+            int receiverId = 2;
+            var request = new Friendship { idFriendship = friendshipId, idOrigen = senderId, idDestino = receiverId, idStatus = (int)FriendshipStatus.Pending };
+            var mutualRequest = new Friendship { idFriendship = 11 };
+
+            friendshipRepositoryMock.Setup(r => r.GetPendingRequestByIdAsync(friendshipId)).ReturnsAsync(request);
+            friendshipRepositoryMock.Setup(r => r.GetAcceptedFriendshipAsync(senderId, receiverId)).ReturnsAsync((Friendship)null);
+            friendshipRepositoryMock.Setup(r => r.GetPendingRequestAsync(receiverId, senderId)).ReturnsAsync(mutualRequest);
+
+            await friendshipLogic.UpdateFriendRequestStatusAsync(friendshipId, (int)FriendshipStatus.Accepted);
+
+            friendshipRepositoryMock.Verify(r => r.RemoveFriendship(mutualRequest), Times.Once);
+        }
+
+        [Fact]
+        public async Task UpdateFriendRequestStatusAsync_ConcurrencyException_DoesNotThrow()
+        {
+            int friendshipId = 10;
+            var request = new Friendship { idFriendship = friendshipId };
+            friendshipRepositoryMock.Setup(r => r.GetPendingRequestByIdAsync(friendshipId)).ReturnsAsync(request);
+            friendshipRepositoryMock.Setup(r => r.SaveChangesAsync()).ThrowsAsync(new DbUpdateConcurrencyException());
+
+            var exception = await Record.ExceptionAsync(() => friendshipLogic.UpdateFriendRequestStatusAsync(friendshipId, (int)FriendshipStatus.Accepted));
+
+            Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task DeleteFriendAsync_ConcurrencyException_DoesNotThrow()
+        {
+            int playerId = 1;
+            int friendId = 2;
+            var friendship = new Friendship();
+            friendshipRepositoryMock.Setup(r => r.GetAcceptedFriendshipAsync(playerId, friendId)).ReturnsAsync(friendship);
+            friendshipRepositoryMock.Setup(r => r.SaveChangesAsync()).ThrowsAsync(new DbUpdateConcurrencyException());
+
+            var exception = await Record.ExceptionAsync(() => friendshipLogic.DeleteFriendAsync(playerId, friendId));
+
+            Assert.Null(exception);
         }
     }
 }

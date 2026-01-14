@@ -5,7 +5,7 @@ using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.BusinessLogic.Game;
 
-namespace ConquiánServidor.Tests.BusinessLogic.Validation
+namespace ConquiánServidor.Tests.Validation
 {
     public class GameValidatorTest
     {

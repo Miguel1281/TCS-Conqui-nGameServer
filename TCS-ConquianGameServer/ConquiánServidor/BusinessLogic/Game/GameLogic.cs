@@ -14,7 +14,7 @@ using System.Timers;
 
 namespace ConquiánServidor.BusinessLogic.Game
 {
-    public class ConquianGame
+    public class GameLogic
     {
         private const int GAMEMODE_CLASSIC = 1;
 
@@ -63,7 +63,7 @@ namespace ConquiánServidor.BusinessLogic.Game
         public event Action<GameResultDto> OnGameFinished;
 
 
-        public ConquianGame(string roomCode, int gamemodeId, List<PlayerDto> players)
+        public GameLogic(string roomCode, int gamemodeId, List<PlayerDto> players)
         {
             RoomCode = roomCode;
             GamemodeId = gamemodeId;

@@ -23,10 +23,8 @@ namespace ConquiánServidor
                 StartAllServices();
 
                 Console.WriteLine();
-                Console.WriteLine("========================================");
                 Console.WriteLine("Todos los servicios están activos.");
-                Console.WriteLine("Presiona ENTER para detener el servidor");
-                Console.WriteLine("========================================");
+                Console.WriteLine("Presiona ENTER para detener el servidor...");
                 Console.ReadLine();
             }
             catch (Exception ex)
@@ -45,9 +43,8 @@ namespace ConquiánServidor
 
         private static void PrintBanner()
         {
-            Console.WriteLine("========================================");
+            Console.WriteLine();
             Console.WriteLine("        CONQUIÁN SERVER");
-            Console.WriteLine("========================================");
             Console.WriteLine();
         }
 
@@ -83,9 +80,8 @@ namespace ConquiánServidor
                 Console.WriteLine($"[OK] Servicio {serviceName} iniciado.");
                 Console.ResetColor();
             }
-            catch (AddressAlreadyInUseException ex)
+            catch (AddressAlreadyInUseException)
             {
-                logger.Error(ex, $"Puerto en uso para {serviceName}");
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"[FAIL] {serviceName} - Puerto en uso.");
                 Console.ResetColor();
@@ -93,9 +89,8 @@ namespace ConquiánServidor
             }
             catch (CommunicationException ex)
             {
-                logger.Error(ex, $"Error de comunicación en {serviceName}");
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"[FAIL] {serviceName} - {ex.Message}");
+                Console.WriteLine($"[FAIL] {serviceName} - Error de comunicación: {ex.Message}");
                 Console.ResetColor();
                 throw;
             }

@@ -136,6 +136,9 @@ namespace ConquiánServidor.Contracts.DataContracts
         UserInLobby = 42,
 
         [EnumMember]
-        OpponentConnectionLost = 43
+        OpponentConnectionLost = 43,
+
+        [EnumMember]
+        RoomNotFound = 44
     }
 }

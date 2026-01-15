@@ -4,8 +4,9 @@ using ConquiánServidor.Contracts.Enums;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.ServiceModel;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.Lobby
 {
     public class LobbySessionManager:ILobbySessionManager 
     {
@@ -48,26 +49,31 @@ namespace ConquiánServidor.BusinessLogic
         public PlayerDto AddPlayerToLobby(string roomCode, PlayerDto player)
         {
             var session = GetLobbySession(roomCode);
-            if (session == null)
-            {
-                return null;
-            }
 
             lock (session)
             {
                 if (session.KickedPlayers.Contains(player.idPlayer))
                 {
-                    throw new InvalidOperationException("Banned");
+                    throw new FaultException<ServiceFaultDto>(
+                        new ServiceFaultDto(
+                            ServiceErrorType.PlayerBanned,
+                            "El jugador ha sido expulsado de este lobby",
+                            nameof(AddPlayerToLobby)), new FaultReason("El jugador ha sido expulsado de este lobby"));
                 }
 
                 if (session.Players.Count >= 2)
                 {
-                    return null;
+                    throw new FaultException<ServiceFaultDto>(
+                        new ServiceFaultDto(
+                            ServiceErrorType.LobbyFull,
+                            "El lobby está lleno",
+                            nameof(AddPlayerToLobby)), new FaultReason("El lobby está lleno"));
                 }
 
-                if (session.Players.Any(p => p.idPlayer == player.idPlayer))
+                var existingPlayer = session.Players.FirstOrDefault(p => p.idPlayer == player.idPlayer);
+                if (existingPlayer != null)
                 {
-                    return player;
+                    return existingPlayer;
                 }
 
                 session.Players.Add(player);
@@ -79,14 +85,16 @@ namespace ConquiánServidor.BusinessLogic
         {
             var session = GetLobbySession(roomCode);
 
-            if (session == null)
-            {
-                return null;
-            }
-
             if (!availableGuestIds.TryPop(out int guestId))
             {
-                return null;
+                throw new FaultException<ServiceFaultDto>(
+                    new ServiceFaultDto(
+                        ServiceErrorType.OperationFailed,
+                        "No hay IDs de invitado disponibles. Se ha alcanzado el límite de invitados concurrentes",
+                        nameof(AddGuestToLobby)
+                    ),
+                    new FaultReason("No hay IDs de invitado disponibles")
+                );
             }
 
             lock (session)
@@ -94,7 +102,14 @@ namespace ConquiánServidor.BusinessLogic
                 if (session.Players.Count >= 2)
                 {
                     availableGuestIds.Push(guestId);
-                    return null;
+                    throw new FaultException<ServiceFaultDto>(
+                        new ServiceFaultDto(
+                            ServiceErrorType.LobbyFull,
+                            "El lobby está lleno",
+                            nameof(AddGuestToLobby)
+                        ),
+                        new FaultReason("El lobby está lleno")
+                    );
                 }
 
                 string nickname = $"Guest{Math.Abs(guestId)}";
@@ -115,25 +130,31 @@ namespace ConquiánServidor.BusinessLogic
         public PlayerDto RemovePlayerFromLobby(string roomCode, int idPlayer)
         {
             var session = GetLobbySession(roomCode);
-            if (session != null)
+
+            lock (session)
             {
-                lock (session)
+                var playerToRemove = session.Players.FirstOrDefault(p => p.idPlayer == idPlayer);
+                if (playerToRemove == null)
                 {
-                    var playerToRemove = session.Players.FirstOrDefault(p => p.idPlayer == idPlayer);
-                    if (playerToRemove != null)
-                    {
-                        session.Players.Remove(playerToRemove);
-
-                        if (playerToRemove.idPlayer < 0)
-                        {
-                            availableGuestIds.Push(playerToRemove.idPlayer);
-                        }
-
-                        return playerToRemove;
-                    }
+                    throw new FaultException<ServiceFaultDto>(
+                        new ServiceFaultDto(
+                            ServiceErrorType.NotFound,
+                            $"El jugador con ID {idPlayer} no se encontró en el lobby",
+                            nameof(RemovePlayerFromLobby)
+                        ),
+                        new FaultReason($"El jugador con ID {idPlayer} no se encontró en el lobby")
+                    );
                 }
+
+                session.Players.Remove(playerToRemove);
+
+                if (playerToRemove.idPlayer < 0)
+                {
+                    availableGuestIds.Push(playerToRemove.idPlayer);
+                }
+
+                return playerToRemove;
             }
-            return null;
         }
 
         public void SetGamemode(string roomCode, int idGamemode)
@@ -187,7 +208,15 @@ namespace ConquiánServidor.BusinessLogic
                     }
                 }
             }
-            return null;
+
+            throw new FaultException<ServiceFaultDto>(
+                new ServiceFaultDto(
+                    ServiceErrorType.NotFound,
+                    $"El jugador con ID {idPlayer} no se encuentra en ningún lobby",
+                    nameof(GetLobbyCodeForPlayer)
+                ),
+                new FaultReason($"El jugador con ID {idPlayer} no se encuentra en ningún lobby")
+            );
         }
     }
 }

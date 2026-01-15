@@ -1,10 +1,10 @@
-﻿using static ConquiánServidor.BusinessLogic.GuestInvitationManager; 
+﻿using ConquiánServidor.BusinessLogic.Guest;
 
 namespace ConquiánServidor.BusinessLogic.Interfaces
 {
     public interface IGuestInvitationManager
     {
         void AddInvitation(string email, string roomCode);
-        InviteResult ValidateInvitation(string email, string roomCode);
+        GuestInvitationManager.InviteResult ValidateInvitation(string email, string roomCode);
     }
 }

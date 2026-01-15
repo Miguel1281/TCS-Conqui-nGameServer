@@ -1,6 +1,5 @@
 ﻿using Xunit;
 using Moq;
-using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Contracts.DataContracts;
@@ -10,7 +9,8 @@ using ConquiánServidor.ConquiánDB;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System;
-using static ConquiánServidor.BusinessLogic.GuestInvitationManager;
+using ConquiánServidor.BusinessLogic.Lobby;
+using static ConquiánServidor.BusinessLogic.Guest.GuestInvitationManager;
 
 namespace ConquiánServidor.Tests.BusinessLogic
 {

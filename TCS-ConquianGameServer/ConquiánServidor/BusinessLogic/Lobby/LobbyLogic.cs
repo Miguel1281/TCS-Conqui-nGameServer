@@ -9,9 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using static ConquiánServidor.BusinessLogic.GuestInvitationManager;
+using ConquiánServidor.BusinessLogic.Guest;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.Lobby
 {
     public class LobbyLogic:ILobbyLogic
     {
@@ -181,13 +181,13 @@ namespace ConquiánServidor.BusinessLogic
 
             var inviteResult = this.guestInvitationManager.ValidateInvitation(email, roomCode);
 
-            if (inviteResult == InviteResult.Used)
+            if (inviteResult == GuestInvitationManager.InviteResult.Used)
             {
                 Logger.Warn($"Guest join failed: Invitation already used. Room Code {roomCode}.");
                 throw new BusinessLogicException(ServiceErrorType.GuestInviteUsed);
             }
 
-            if (inviteResult != InviteResult.Valid)
+            if (inviteResult != GuestInvitationManager.InviteResult.Valid)
             {
                 Logger.Warn($"Guest join failed: Invitation not found or expired. Room Code {roomCode}.");
                 throw new BusinessLogicException(ServiceErrorType.ValidationFailed);

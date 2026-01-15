@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.Guest
 {
     public class GuestInvitationManager:IGuestInvitationManager
     {
+        private const int INVITATION_EXPIRATION_MINUTES = 30;
+
         private readonly ConcurrentDictionary<string, GuestInviteData> invitations;
 
         public enum InviteResult 
@@ -41,29 +43,45 @@ namespace ConquiánServidor.BusinessLogic
 
         public InviteResult ValidateInvitation(string email, string roomCode)
         {
+            InviteResult result = InviteResult.NotFound;
+
             if (invitations.TryGetValue(email, out var data))
             {
-                if (data.WasUsed)
-                {
-                    return InviteResult.Used;
-                }
-
-                if ((DateTime.UtcNow - data.CreationDate).TotalMinutes >= 30)
-                {
-                    invitations.TryRemove(email, out _); 
-                    return InviteResult.Expired;
-                }
-
-                if (data.RoomCode != roomCode)
-                {
-                    return InviteResult.NotFound; 
-                }
-
-                data.WasUsed = true;
-                return InviteResult.Valid;
+                result = DetermineInvitationStatus(data, roomCode, email);
             }
 
-            return InviteResult.NotFound;
+            return result;
+        }
+
+        private InviteResult DetermineInvitationStatus(GuestInviteData data, string roomCode, string email)
+        {
+            InviteResult status;
+
+            if (data.WasUsed)
+            {
+                status = InviteResult.Used;
+            }
+            else if (IsInvitationExpired(data))
+            {
+                invitations.TryRemove(email, out _);
+                status = InviteResult.Expired;
+            }
+            else if (data.RoomCode != roomCode)
+            {
+                status = InviteResult.NotFound;
+            }
+            else
+            {
+                data.WasUsed = true;
+                status = InviteResult.Valid;
+            }
+
+            return status;
+        }
+
+        private bool IsInvitationExpired(GuestInviteData data)
+        {
+            return (DateTime.UtcNow - data.CreationDate).TotalMinutes >= INVITATION_EXPIRATION_MINUTES;
         }
     }
 }

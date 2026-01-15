@@ -1,7 +1,7 @@
 ﻿using Xunit;
-using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Guest;
 using System;
-using static ConquiánServidor.BusinessLogic.GuestInvitationManager;
+using static ConquiánServidor.BusinessLogic.Guest.GuestInvitationManager;
 
 namespace ConquiánServidor.Tests.BusinessLogic
 {

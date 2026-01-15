@@ -1,11 +1,11 @@
-﻿using ConquiánServidor.BusinessLogic;
-using ConquiánServidor.BusinessLogic.Exceptions;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
 using Moq;
 using System;
 using System.Threading.Tasks;
+using ConquiánServidor.BusinessLogic.Lobby;
 using Xunit;
 
 namespace ConquiánServidor.Tests.BusinessLogic

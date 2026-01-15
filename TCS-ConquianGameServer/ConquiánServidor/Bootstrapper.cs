@@ -9,6 +9,8 @@ using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
 using NLog;
 using System;
+using ConquiánServidor.BusinessLogic.Guest;
+using ConquiánServidor.BusinessLogic.Lobby;
 
 namespace ConquiánServidor
 {

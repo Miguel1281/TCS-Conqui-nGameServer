@@ -215,8 +215,8 @@ namespace ConquiánServidor.BusinessLogic
                     }
                 }
 
-                TimeSpan t = TimeSpan.FromSeconds(g.gameTime);
-                string timeFormatted = string.Format("{0:D2}:{1:D2}", (int)t.TotalMinutes, t.Seconds);
+                TimeSpan timeSpan = TimeSpan.FromSeconds(g.gameTime);
+                string timeFormatted = string.Format("{0:D2}:{1:D2}", (int)timeSpan.TotalMinutes, timeSpan.Seconds);
 
                 return new GameHistoryDto
                 {

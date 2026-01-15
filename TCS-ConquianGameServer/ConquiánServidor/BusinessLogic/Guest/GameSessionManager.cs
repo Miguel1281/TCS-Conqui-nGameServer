@@ -1,11 +1,14 @@
-﻿using ConquiánServidor.BusinessLogic.Game;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
+using ConquiánServidor.BusinessLogic.Game;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using NLog;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ServiceModel;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.Guest
 {
     public class GameSessionManager : IGameSessionManager
     {
@@ -36,7 +39,7 @@ namespace ConquiánServidor.BusinessLogic
                 return game;
             }
             Logger.Warn($"Game session lookup failed: Room Code {roomCode} not found.");
-            return null;
+            throw new BusinessLogicException(ServiceErrorType.RoomNotFound);
         }
 
         public void RemoveGame(string roomCode)
@@ -70,6 +73,18 @@ namespace ConquiánServidor.BusinessLogic
                     try
                     {
                         gameInstance.NotifyGameEndedByAbandonment(playerId);
+                    }
+                    catch (CommunicationException ex)
+                    {
+                        Logger.Error(ex, $"Error de comunicación al notificar abandono en room {roomCode}");
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        Logger.Error(ex, $"Timeout al notificar abandono en room {roomCode}");
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        Logger.Error(ex, $"Channel closed when reporting abandonment in room {roomCode}");
                     }
                     catch (System.Exception ex)
                     {

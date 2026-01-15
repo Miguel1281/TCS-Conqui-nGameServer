@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using ConquiánServidor.Contracts.DataContracts;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.Lobby
 {
     public class LobbySession
     {

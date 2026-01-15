@@ -1,8 +1,6 @@
-﻿using ConquiánServidor.BusinessLogic;
-using ConquiánServidor.Contracts.DataContracts;
-using ConquiánServidor.Contracts.Enums;
+﻿using ConquiánServidor.Contracts.DataContracts;
 using System;
-using System.Linq;
+using ConquiánServidor.BusinessLogic.Lobby;
 using Xunit;
 
 namespace ConquiánServidor.Tests.BusinessLogic

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.Guest
 {
     public class GuestInviteData
     {

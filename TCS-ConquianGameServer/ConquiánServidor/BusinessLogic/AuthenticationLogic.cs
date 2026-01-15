@@ -41,7 +41,6 @@ namespace ConquiánServidor.BusinessLogic
 
             if (playerFromDb == null || !PasswordHasher.verifyPassword(playerPassword, playerFromDb.password))
             {
-                Logger.Warn("Authentication failed: Invalid credentials.");
                 throw new BusinessLogicException(ServiceErrorType.InvalidPassword);
             }
 
@@ -66,8 +65,6 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task SignOutPlayerAsync(int idPlayer)
         {
-            Logger.Info($"Sign out attempt for Player ID: {idPlayer}");
-
             this.presenceManager.DisconnectUser(idPlayer);
             await Task.CompletedTask;
             Logger.Info($"Sign out notification sent for Player ID: {idPlayer}");
@@ -79,27 +76,23 @@ namespace ConquiánServidor.BusinessLogic
                 !string.IsNullOrEmpty(SignUpServerValidator.ValidateLastName(finalPlayerData.lastName)) ||
                 !string.IsNullOrEmpty(SignUpServerValidator.ValidateNickname(finalPlayerData.nickname)))
             {
-                Logger.Warn("Registration failed: Invalid name format.");
                 throw new BusinessLogicException(ServiceErrorType.InvalidNameFormat);
             }
 
             if (!string.IsNullOrEmpty(SignUpServerValidator.ValidatePassword(finalPlayerData.password)))
             {
-                Logger.Warn("Registration failed: Weak password.");
                 throw new BusinessLogicException(ServiceErrorType.InvalidPasswordFormat);
             }
 
             bool nicknameExists = await playerRepository.DoesNicknameExistAsync(finalPlayerData.nickname);
             if (nicknameExists)
             {
-                Logger.Warn("Registration failed: Nickname already exists.");
                 throw new BusinessLogicException(ServiceErrorType.DuplicateRecord);
             }
 
             var playerToUpdate = await playerRepository.GetPlayerByEmailAsync(finalPlayerData.email);
             if (playerToUpdate == null)
             {
-                Logger.Error("Registration flow error: Temporary user not found.");
                 throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
@@ -124,7 +117,6 @@ namespace ConquiánServidor.BusinessLogic
 
             if (player == null || string.IsNullOrEmpty(player.password))
             {
-                Logger.Warn("Recovery token requested for non-existent or invalid user.");
                 throw new BusinessLogicException(ServiceErrorType.UserNotFound);
             }
 
@@ -142,14 +134,12 @@ namespace ConquiánServidor.BusinessLogic
             string emailError = SignUpServerValidator.ValidateEmail(email);
             if (!string.IsNullOrEmpty(emailError))
             {
-                Logger.Warn("Verification requested with invalid email format.");
                 throw new BusinessLogicException(ServiceErrorType.InvalidEmailFormat);
             }
 
             var existingPlayer = await playerRepository.GetPlayerForVerificationAsync(email);
             if (existingPlayer != null)
             {
-                Logger.Warn($"Verification attempted for existing Player ID: {existingPlayer.idPlayer}");
                 throw new BusinessLogicException(ServiceErrorType.RegisteredMail);
             }
 
@@ -192,7 +182,6 @@ namespace ConquiánServidor.BusinessLogic
 
             if (player.verificationCode != code)
             {
-                Logger.Warn($"Incorrect verification code for Player ID {player.idPlayer}");
                 throw new BusinessLogicException(ServiceErrorType.InvalidVerificationCode);
             }
 
@@ -206,7 +195,6 @@ namespace ConquiánServidor.BusinessLogic
             var emailTemplate = new RecoveryEmailTemplate(recoveryCode);
             await emailService.SendEmailAsync(email, emailTemplate);
 
-            Logger.Info("Recovery email sent.");
         }
 
         public async Task HandleTokenValidationAsync(string email, string token)
@@ -219,7 +207,6 @@ namespace ConquiánServidor.BusinessLogic
             string passwordError = SignUpServerValidator.ValidatePassword(newPassword);
             if (!string.IsNullOrEmpty(passwordError))
             {
-                Logger.Warn("Password reset failed: Invalid password format.");
                 throw new BusinessLogicException(ServiceErrorType.InvalidPasswordFormat);
             }
 

@@ -81,8 +81,6 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idPlayer)
         {
-            Logger.Info($"Search player by nickname initiated by Requesting Player ID: {idPlayer}");
-
             var player = await playerRepository.GetPlayerByNicknameAsync(nickname);
 
             if (player == null || player.idPlayer == idPlayer)
@@ -131,8 +129,6 @@ namespace ConquiánServidor.BusinessLogic
             {
                 if (existingFriendship.idStatus == (int)FriendshipStatus.Pending && existingFriendship.idOrigen == idFriend)
                 {
-                    Logger.Info($"Mutual request detected (Collision). Auto-accepting request from {idFriend} to {idPlayer}.");
-
                     await UpdateFriendRequestStatusAsync(existingFriendship.idFriendship, (int)FriendshipStatus.Accepted);
                     return; 
                 }
@@ -164,8 +160,6 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task UpdateFriendRequestStatusAsync(int idFriendship, int newStatus)
         {
-            Logger.Info($"Updating friend request status. Friendship ID: {idFriendship}, New Status: {newStatus}");
-
             var request = await friendshipRepository.GetPendingRequestByIdAsync(idFriendship);
 
             if (request == null)
@@ -183,7 +177,6 @@ namespace ConquiánServidor.BusinessLogic
 
                 if (existingAccepted != null)
                 {
-                    Logger.Info("Friendship already established via another request. Deleting duplicate pending request.");
                     friendshipRepository.RemoveFriendship(request);
                 }
                 else
@@ -220,8 +213,6 @@ namespace ConquiánServidor.BusinessLogic
 
         public async Task DeleteFriendAsync(int idPlayer, int idFriend)
         {
-            Logger.Info($"Friend deletion attempt: Player ID {idPlayer} removing Friend ID {idFriend}");
-
             var friendship = await friendshipRepository.GetAcceptedFriendshipAsync(idPlayer, idFriend);
 
             if (friendship == null)

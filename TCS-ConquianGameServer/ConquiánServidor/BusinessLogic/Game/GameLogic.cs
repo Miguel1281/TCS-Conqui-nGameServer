@@ -230,13 +230,25 @@ namespace ConquiánServidor.BusinessLogic.Game
                     {
                         cb.OnTimeUpdated(gameSeconds, turnSeconds, currentPlayerId);
                     }
+                    catch (System.ServiceModel.CommunicationException ex)
+                    {
+                        Logger.Info(ex, $"Error de comunicación con jugador {pid}. Finalizando partida.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        Logger.Info(ex, $"Tiempo de conexión agotado para jugador {pid}. Finalizando partida.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        Logger.Info(ex, $"Canal cerrado para jugador {pid}. Finalizando partida.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
                     catch (Exception ex)
                     {
-                        Logger.Info(ex,$"Tiempo de conexión agotado para jugador {pid}. Finalizando partida.");
-                        Task.Run(() =>
-                        {
-                            ProcessAFK(pid);
-                        });
+                        Logger.Info(ex, $"Tiempo de conexión agotado para jugador {pid}. Finalizando partida.");
+                        Task.Run(() => ProcessAFK(pid));
                     }
                 });
             }
@@ -275,7 +287,15 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             ExecuteMeld(playerId, hand, moveContext);
 
-            NotifyAndCheckGameStatus(playerId, hand.Count, moveContext.FullMeld, moveContext.UsingDiscardCard);
+            var notificationContext = new MeldNotificationContext
+            {
+                PlayerId = playerId,
+                HandCount = hand.Count,
+                FullMeld = moveContext.FullMeld,
+                UsingDiscardCard = moveContext.UsingDiscardCard
+            };
+
+            NotifyAndCheckGameStatus(notificationContext);
         }
 
         private bool CheckWinCondition(int playerId)
@@ -341,12 +361,6 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             if (playerReviewingDiscardId == playerId && !isCardDrawnFromDeck)
             {
-                if (hasHostPassedInitialDiscard)
-                {
-                    playerReviewingDiscardId = null;
-                    return;
-                }
-
                 playerReviewingDiscardId = null;
                 return;
             }
@@ -454,69 +468,39 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void FinishGame(int winnerId, bool isDraw)
         {
-
-            lock (endLock)
+            if (!TryMarkGameAsEnded())
             {
-                if (isGameEnded)
-                {
-                    return;
-                }
-
-                isGameEnded = true;
+                return;
             }
 
             StopGame();
 
-            int loserId = -1;
-            if (!isDraw)
-            {
-                loserId = Players.FirstOrDefault(p => p.idPlayer != winnerId)?.idPlayer ?? -1;
-            }
+            var result = BuildGameResult(winnerId, isDraw);
+            OnGameFinished?.Invoke(result);
 
-            PlayerDto p1;
-            if (Players.Count > 0)
-            {
-                p1 = Players[PLAYER_1_INDEX];
-            }
-            else
-            {
-                p1 = null;
-            }
+            Logger.Info($"Game {RoomCode} ended. Winner: {winnerId}. Draw: {isDraw}");
+        }
 
-            PlayerDto p2;
-            if (Players.Count > 1)
+        private bool TryMarkGameAsEnded()
+        {
+            lock (endLock)
             {
-                p2 = Players[PLAYER_2_INDEX];
+                if (isGameEnded)
+                {
+                    return false;
+                }
+                isGameEnded = true;
+                return true;
             }
-            else
-            {
-                p2 = null;
-            }
+        }
 
-            int duration = GetInitialTimeInSeconds() - remainingSeconds;
-            if (duration < 0) duration = 0;
+        private GameResultDto BuildGameResult(int winnerId, bool isDraw)
+        {
+            int loserId = GetLoserId(winnerId, isDraw);
+            var (player1, player2) = GetPlayers();
+            int duration = CalculateGameDuration();
 
-            int p1Score;
-            if ((p1 != null && PlayerMelds.ContainsKey(p1.idPlayer)))
-            {
-                p1Score = PlayerMelds[p1.idPlayer].Count;
-            }
-            else
-            {
-                p1Score = 0;
-            }
-
-            int p2Score;
-            if ((p2 != null && PlayerMelds.ContainsKey(p2.idPlayer)))
-            {
-                p2Score = PlayerMelds[p2.idPlayer].Count;
-            }
-            else
-            {
-                p2Score = 0;
-            }
-
-            var result = new GameResultDto
+            return new GameResultDto
             {
                 WinnerId = winnerId,
                 LoserId = loserId,
@@ -525,22 +509,58 @@ namespace ConquiánServidor.BusinessLogic.Game
                 RoomCode = this.RoomCode,
                 GamemodeId = GamemodeId,
 
-                Player1Id = p1?.idPlayer ?? -1,
-                Player1Name = p1?.nickname,
-                Player1Score = p1Score,
-                Player1PathPhoto = p1?.pathPhoto,
+                Player1Id = player1?.idPlayer ?? -1,
+                Player1Name = player1?.nickname,
+                Player1Score = GetPlayerScore(player1),
+                Player1PathPhoto = player1?.pathPhoto,
 
-                Player2Id = p2?.idPlayer ?? -1,
-                Player2Name = p2?.nickname,
-                Player2Score = p2Score,
-                Player2PathPhoto = p2?.pathPhoto,
+                Player2Id = player2?.idPlayer ?? -1,
+                Player2Name = player2?.nickname,
+                Player2Score = GetPlayerScore(player2),
+                Player2PathPhoto = player2?.pathPhoto,
 
                 DurationSeconds = duration
             };
+        }
 
-            OnGameFinished?.Invoke(result);
+        private int GetLoserId(int winnerId, bool isDraw)
+        {
+            if (isDraw)
+            {
+                return -1;
+            }
 
-            Logger.Info($"Game {RoomCode} ended. Winner: {winnerId}. Draw: {isDraw}");
+            return Players.FirstOrDefault(p => p.idPlayer != winnerId)?.idPlayer ?? -1;
+        }
+
+        private (PlayerDto player1, PlayerDto player2) GetPlayers()
+        {
+            PlayerDto player1 = Players.Count > 0 ? Players[PLAYER_1_INDEX] : null;
+            PlayerDto player2 = Players.Count > 1 ? Players[PLAYER_2_INDEX] : null;
+            return (player1, player2);
+        }
+
+        private int CalculateGameDuration()
+        {
+            int duration = GetInitialTimeInSeconds() - remainingSeconds;
+            if (duration < 0)
+            {
+                return 0;
+            }
+            else
+            {
+                return duration;
+            }
+        }
+
+        private int GetPlayerScore(PlayerDto player)
+        {
+            if (player == null || !PlayerMelds.ContainsKey(player.idPlayer))
+            {
+                return 0;
+            }
+
+            return PlayerMelds[player.idPlayer].Count;
         }
 
         public void BroadcastGameResult(GameResultDto result)
@@ -563,13 +583,25 @@ namespace ConquiánServidor.BusinessLogic.Game
                     {
                         action(opponentCallback);
                     }
+                    catch (System.ServiceModel.CommunicationException ex)
+                    {
+                        Logger.Warn(ex, $"Error de comunicación al notificar oponente ID {opponentId}.");
+                        Task.Run(() => ProcessAFK(opponentId));
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        Logger.Warn(ex, $"Timeout al notificar oponente ID {opponentId}.");
+                        Task.Run(() => ProcessAFK(opponentId));
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        Logger.Warn(ex, $"Canal cerrado para oponente ID {opponentId}.");
+                        Task.Run(() => ProcessAFK(opponentId));
+                    }
                     catch (Exception ex)
                     {
                         Logger.Warn(ex, $"Failed to notify opponent ID {opponentId} (Background Task).");
-                        Task.Run(() =>
-                        {
-                            ProcessAFK(opponentId);
-                        });
+                        Task.Run(() => ProcessAFK(opponentId));
                     }
                 });
             }
@@ -586,13 +618,25 @@ namespace ConquiánServidor.BusinessLogic.Game
                     {
                         action(kvp.Value);
                     }
+                    catch (System.ServiceModel.CommunicationException ex)
+                    {
+                        Logger.Warn(ex, $"Error de comunicación en broadcast para jugador {pid}.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        Logger.Warn(ex, $"Timeout en broadcast para jugador {pid}.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        Logger.Warn(ex, $"Canal cerrado en broadcast para jugador {pid}.");
+                        Task.Run(() => ProcessAFK(pid));
+                    }
                     catch (Exception ex)
                     {
                         Logger.Warn(ex,$"Broadcast falló para {pid}.");
-                        Task.Run(() =>
-                        {
-                            ProcessAFK(pid);
-                        });
+                        Task.Run(() => ProcessAFK(pid));
                     }
                 }
             });
@@ -611,6 +655,18 @@ namespace ConquiánServidor.BusinessLogic.Game
                     try
                     {
                         callback.OnOpponentLeft();
+                    }
+                    catch (System.ServiceModel.CommunicationException ex)
+                    {
+                        Logger.Error(ex, $"Error de comunicación al notificar salida en Room {RoomCode}");
+                    }
+                    catch (TimeoutException ex)
+                    {
+                        Logger.Error(ex, $"Timeout al notificar salida en Room {RoomCode}");
+                    }
+                    catch (ObjectDisposedException ex)
+                    {
+                        Logger.Error(ex, $"Canal cerrado al notificar salida en Room {RoomCode}");
                     }
                     catch (Exception ex)
                     {
@@ -742,9 +798,9 @@ namespace ConquiánServidor.BusinessLogic.Game
             PlayerMelds[playerId].Add(context.FullMeld);
         }
 
-        private void NotifyAndCheckGameStatus(int playerId, int handCount, List<Card> fullMeld, bool usingDiscardCard)
+        private void NotifyAndCheckGameStatus(MeldNotificationContext context)
         {
-            var cardDtos = fullMeld.Select(c => new CardDto
+            var cardDtos = context.FullMeld.Select(c => new CardDto
             {
                 Id = c.Id,
                 Suit = c.Suit,
@@ -752,15 +808,15 @@ namespace ConquiánServidor.BusinessLogic.Game
                 ImagePath = c.ImagePath
             }).ToArray();
 
-            NotifyOpponent(playerId, (callback) =>
+            NotifyOpponent(context.PlayerId, (callback) =>
             {
                 callback.NotifyOpponentMeld(cardDtos);
-                callback.OnOpponentHandUpdated(handCount);
+                callback.OnOpponentHandUpdated(context.HandCount);
             });
 
-            bool gameEnded = CheckWinCondition(playerId);
+            bool gameEnded = CheckWinCondition(context.PlayerId);
 
-            if (usingDiscardCard)
+            if (context.UsingDiscardCard)
             {
                 BroadcastDiscardUpdate();
 
@@ -773,47 +829,74 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public void ProcessAFK(int afkPlayerId)
         {
-            lock (endLock)
+            if (!TryMarkGameAsEnded())
             {
-                if (isGameEnded)
-                {
-                    return;
-                }
-
-                isGameEnded = true;
+                return;
             }
 
             StopGame();
-
             Logger.Info($"Game ended in Room {RoomCode} due to inactivity of Player {afkPlayerId}.");
 
+            NotifyPlayerAFK(afkPlayerId, AFK_REASON_SELF);
+            NotifyRivalAFK(afkPlayerId);
+        }
+
+        private void NotifyPlayerAFK(int playerId, string reason)
+        {
+            if (!playerCallbacks.TryGetValue(playerId, out var callback))
+            {
+                return;
+            }
+
+            SafeNotifyAsync(() => callback.NotifyGameEndedByAFK(reason),
+                $"Error al notificar AFK al jugador {playerId}");
+        }
+
+        private void NotifyRivalAFK(int afkPlayerId)
+        {
             int rivalId = Players.FirstOrDefault(p => p.idPlayer != afkPlayerId)?.idPlayer ?? 0;
 
-            if (playerCallbacks.TryGetValue(afkPlayerId, out var afkCallback))
+            if (rivalId == 0)
             {
-                Task.Run(() =>
-                {
-                    try { 
-                        afkCallback.NotifyGameEndedByAFK(AFK_REASON_SELF); 
-                    }
-                    catch (Exception ex) {
-                        Logger.Error(ex, "Error notifying rival about AFK.");
-                    }
-                });
+                return;
             }
 
-            if (rivalId != 0 && playerCallbacks.TryGetValue(rivalId, out var rivalCallback))
+            NotifyPlayerAFK(rivalId, AFK_REASON_RIVAL);
+        }
+
+        private void SafeNotifyAsync(Action notifyAction, string errorContext)
+        {
+            Task.Run(() =>
             {
-                Task.Run(() =>
+                try
                 {
-                    try { 
-                        rivalCallback.NotifyGameEndedByAFK(AFK_REASON_RIVAL); 
-                    }
-                    catch (Exception ex) { 
-                        Logger.Error(ex, "Error notifying rival about AFK."); 
-                    }
-                });
-            }
+                    notifyAction();
+                }
+                catch (System.ServiceModel.CommunicationException ex)
+                {
+                    Logger.Error(ex, $"{errorContext} - Error de comunicación.");
+                }
+                catch (TimeoutException ex)
+                {
+                    Logger.Error(ex, $"{errorContext} - Timeout.");
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    Logger.Error(ex, $"{errorContext} - Canal cerrado.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, $"{errorContext} - Error inesperado.");
+                }
+            });
+        }
+
+        private sealed class MeldNotificationContext
+        {
+            public int PlayerId { get; set; }
+            public int HandCount { get; set; }
+            public List<Card> FullMeld { get; set; }
+            public bool UsingDiscardCard { get; set; }
         }
     }
 }

@@ -7,14 +7,12 @@ namespace ConquiánServidor.BusinessLogic.Exceptions
     {
         public ServiceErrorType ErrorType { get; }
 
-        public BusinessLogicException(ServiceErrorType errorType)
-            : base(errorType.ToString())
+        public BusinessLogicException(ServiceErrorType errorType) : base(errorType.ToString())
         {
             ErrorType = errorType;
         }
 
-        public BusinessLogicException(ServiceErrorType errorType, string message)
-            : base(message)
+        public BusinessLogicException(ServiceErrorType errorType, string message) : base(message)
         {
             ErrorType = errorType;
         }

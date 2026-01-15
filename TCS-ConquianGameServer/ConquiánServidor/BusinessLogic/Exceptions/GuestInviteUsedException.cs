@@ -4,6 +4,8 @@ namespace ConquiánServidor.BusinessLogic.Exceptions
 {
     public class GuestInviteUsedException : Exception
     {
-        public GuestInviteUsedException(string message) : base(message) { }
+        public GuestInviteUsedException(string message) : base(message)
+        {
+        }
     }
 }

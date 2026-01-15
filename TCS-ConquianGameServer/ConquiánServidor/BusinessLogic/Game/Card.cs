@@ -1,5 +1,4 @@
-﻿using System;
-
+﻿
 namespace ConquiánServidor.BusinessLogic.Game
 {
     public class Card
@@ -8,7 +7,13 @@ namespace ConquiánServidor.BusinessLogic.Game
         public int Rank { get; set; }    
         public string ImagePath { get; set; }
 
-        public string Id => $"{Suit}_{Rank}";
+        public string Id
+        {
+            get
+            {
+                return $"{Suit}_{Rank}";
+            }
+        }
 
         public Card(string suit, int rank)
         {

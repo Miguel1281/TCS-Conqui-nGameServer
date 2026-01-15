@@ -8,7 +8,13 @@ namespace ConquiánServidor.BusinessLogic
     {
         private readonly ConcurrentDictionary<string, GuestInviteData> invitations;
 
-        public enum InviteResult { Valid, NotFound, Expired, Used }
+        public enum InviteResult 
+        { 
+            Valid, 
+            NotFound, 
+            Expired, 
+            Used 
+        }
 
         public GuestInvitationManager()
         {

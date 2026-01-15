@@ -58,7 +58,10 @@ namespace ConquiánServidor.BusinessLogic
                 var roomCode = gameEntry.Key;
                 var gameInstance = gameEntry.Value;
 
-                bool isPlayerInGame = gameInstance.Players.Exists(p => p.idPlayer == playerId);
+                bool isPlayerInGame = gameInstance.Players.Exists(p =>
+                {
+                    return p.idPlayer == playerId;
+                });
 
                 if (isPlayerInGame)
                 {

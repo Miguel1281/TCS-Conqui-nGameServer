@@ -196,14 +196,14 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void ValidateDiscard_Valid_ReturnsVoid()
         {
-            var card = new Card("Oros", 1);
+            var card = new CardsGame("Oros", 1);
             GameValidator.ValidateDiscard(1, 1, card);
         }
 
         [Fact]
         public void ValidateDiscard_NotTurnOwner_ThrowsNotYourTurnException()
         {
-            var card = new Card("Oros", 1);
+            var card = new CardsGame("Oros", 1);
             var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateDiscard(1, 2, card));
             Assert.Equal(ServiceErrorType.NotYourTurn, exception.ErrorType);
         }
@@ -225,7 +225,7 @@ namespace ConquiánServidor.Tests.Validation
                 IsCardDrawnFromDeck = true,
                 PlayerReviewingDiscardId = 1,
                 MustDiscardToFinishTurn = false,
-                CardToDiscard = new Card("Copas", 1),
+                CardToDiscard = new CardsGame("Copas", 1),
                 DiscardPileCount = 5
             };
             GameValidator.ValidateSwap(context);
@@ -307,7 +307,7 @@ namespace ConquiánServidor.Tests.Validation
                 IsCardDrawnFromDeck = true,
                 PlayerReviewingDiscardId = 1,
                 MustDiscardToFinishTurn = false,
-                CardToDiscard = new Card("Oros", 1),
+                CardToDiscard = new CardsGame("Oros", 1),
                 DiscardPileCount = 0
             };
             var exception = Assert.Throws<BusinessLogicException>(() => GameValidator.ValidateSwap(context));
@@ -324,10 +324,10 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void IsValidMeldCombination_ListTooSmall_ReturnsFalse()
         {
-            var cards = new List<Card>
+            var cards = new List<CardsGame>
             {
-                new Card("Oros", 1),
-                new Card("Copas", 1)
+                new CardsGame("Oros", 1),
+                new CardsGame("Copas", 1)
             };
             bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);
@@ -336,11 +336,11 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void IsValidMeldCombination_ValidTercia_ReturnsTrue()
         {
-            var cards = new List<Card>
+            var cards = new List<CardsGame>
             {
-                new Card("Oros", 1),
-                new Card("Copas", 1),
-                new Card("Espadas", 1)
+                new CardsGame("Oros", 1),
+                new CardsGame("Copas", 1),
+                new CardsGame("Espadas", 1)
             };
             bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.True(result);
@@ -349,11 +349,11 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void IsValidMeldCombination_InvalidTercia_DuplicateSuits_ReturnsFalse()
         {
-            var cards = new List<Card>
+            var cards = new List<CardsGame>
             {
-                new Card("Oros", 1),
-                new Card("Oros", 1),
-                new Card("Espadas", 1)
+                new CardsGame("Oros", 1),
+                new CardsGame("Oros", 1),
+                new CardsGame("Espadas", 1)
             };
             bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);
@@ -362,11 +362,11 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void IsValidMeldCombination_ValidCorrida_ReturnsTrue()
         {
-            var cards = new List<Card>
+            var cards = new List<CardsGame>
             {
-                new Card("Oros", 1),
-                new Card("Oros", 2),
-                new Card("Oros", 3)
+                new CardsGame("Oros", 1),
+                new CardsGame("Oros", 2),
+                new CardsGame("Oros", 3)
             };
             bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.True(result);
@@ -375,11 +375,11 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void IsValidMeldCombination_ValidCorridaWithJump_ReturnsTrue()
         {
-            var cards = new List<Card>
+            var cards = new List<CardsGame>
             {
-                new Card("Espadas", 6),
-                new Card("Espadas", 7),
-                new Card("Espadas", 10)
+                new CardsGame("Espadas", 6),
+                new CardsGame("Espadas", 7),
+                new CardsGame("Espadas", 10)
             };
             bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.True(result);
@@ -388,11 +388,11 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void IsValidMeldCombination_InvalidCorrida_MixedSuits_ReturnsFalse()
         {
-            var cards = new List<Card>
+            var cards = new List<CardsGame>
             {
-                new Card("Oros", 1),
-                new Card("Copas", 2),
-                new Card("Oros", 3)
+                new CardsGame("Oros", 1),
+                new CardsGame("Copas", 2),
+                new CardsGame("Oros", 3)
             };
             bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);
@@ -401,11 +401,11 @@ namespace ConquiánServidor.Tests.Validation
         [Fact]
         public void IsValidMeldCombination_InvalidCorrida_GapInRanks_ReturnsFalse()
         {
-            var cards = new List<Card>
+            var cards = new List<CardsGame>
             {
-                new Card("Oros", 1),
-                new Card("Oros", 3),
-                new Card("Oros", 4)
+                new CardsGame("Oros", 1),
+                new CardsGame("Oros", 3),
+                new CardsGame("Oros", 4)
             };
             bool result = GameValidator.IsValidMeldCombination(cards);
             Assert.False(result);

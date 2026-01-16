@@ -13,14 +13,14 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     {
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
-        Task<bool> RequestPasswordRecoveryAsync(string email, int mode);
+        Task RequestPasswordRecoveryAsync(string email, int mode);
 
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
-        Task<bool> ValidateRecoveryTokenAsync(string email, string token);
+        Task ValidateRecoveryTokenAsync(string email, string token);
 
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
-        Task<bool> ResetPasswordAsync(string email, string token, string newPassword);
+        Task ResetPasswordAsync(string email, string token, string newPassword);
     }
 }

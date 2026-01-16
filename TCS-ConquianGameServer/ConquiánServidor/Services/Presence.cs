@@ -1,5 +1,4 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.ServiceContracts;
 using System.ServiceModel;
@@ -17,10 +16,11 @@ namespace ConquiánServidor.Services
             this.presenceManager = Bootstrapper.Container.Resolve<IPresenceManager>();
         }
 
-        public Presence(PresenceManager presenceManager)
+        public Presence(IPresenceManager presenceManager)
         {
             this.presenceManager = presenceManager;
         }
+
         public void Subscribe(int idPlayer)
         {
             var callback = OperationContext.Current.GetCallbackChannel<IPresenceCallback>();

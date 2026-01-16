@@ -1,13 +1,10 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using NLog;
+using ConquiánServidor.Utilities.ExceptionHandler;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity.Core;
-using System.Data.SqlClient;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -16,24 +13,20 @@ namespace ConquiánServidor.Services
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerCall, ConcurrencyMode = ConcurrencyMode.Multiple)]
     public class FriendList : IFriendList
     {
-        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IFriendshipLogic friendshipLogic;
-
-        private const string LOGIC_ERROR_MESSAGE = "logic error";
-        private const string INTERNAL_SERVER_ERROR_MESSAGE = "internal server error";
-        private const string INTERNAL_FAULT_REASON = "internal error";
-        private const string DATABASE_ERROR_MESSAGE = "database error";
-        private const string DATABASE_UNAVAILABLE_REASON = "database unavailable";
+        private readonly IServiceExceptionHandler serviceExceptionHandler;
 
         public FriendList()
         {
             Bootstrapper.Init();
             this.friendshipLogic = Bootstrapper.Container.Resolve<IFriendshipLogic>();
+            this.serviceExceptionHandler = Bootstrapper.Container.Resolve<IServiceExceptionHandler>();
         }
 
-        public FriendList(IFriendshipLogic friendshipLogic)
+        public FriendList(IFriendshipLogic friendshipLogic, IServiceExceptionHandler serviceExceptionHandler)
         {
             this.friendshipLogic = friendshipLogic;
+            this.serviceExceptionHandler = serviceExceptionHandler;
         }
 
         public async Task<PlayerDto> GetPlayerByNicknameAsync(string nickname, int idCurrentUser)
@@ -44,7 +37,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error getting player by nickname");
+                throw serviceExceptionHandler.HandleException(ex, "FriendList: GetPlayerByNicknameAsync");
             }
         }
 
@@ -56,7 +49,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error getting friends list");
+                throw serviceExceptionHandler.HandleException(ex, "FriendList: GetFriendsAsync");
             }
         }
 
@@ -68,7 +61,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error getting friend requests");
+                throw serviceExceptionHandler.HandleException(ex, "FriendList: GetFriendRequestsAsync");
             }
         }
 
@@ -80,7 +73,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error sending friend request");
+                throw serviceExceptionHandler.HandleException(ex, "FriendList: SendFriendRequestAsync");
             }
         }
 
@@ -92,7 +85,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error updating friend request status");
+                throw serviceExceptionHandler.HandleException(ex, "FriendList: UpdateFriendRequestStatusAsync");
             }
         }
 
@@ -104,28 +97,8 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error deleting friend");
+                throw serviceExceptionHandler.HandleException(ex, "FriendList: DeleteFriendAsync");
             }
-        }
-
-        private static Exception HandleException(Exception ex, string logMessage)
-        {
-            if (ex is BusinessLogicException businessEx)
-            {
-                var fault = new ServiceFaultDto(businessEx.ErrorType, LOGIC_ERROR_MESSAGE);
-                return new FaultException<ServiceFaultDto>(fault, new FaultReason(businessEx.ErrorType.ToString()));
-            }
-
-            if (ex is SqlException || ex is EntityException)
-            {
-                Logger.Error(ex, logMessage);
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
-                return new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_REASON));
-            }
-
-            Logger.Error(ex, logMessage);
-            var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-            return new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_FAULT_REASON));
         }
     }
 }

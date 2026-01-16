@@ -35,14 +35,15 @@ namespace ConquiánServidor.BusinessLogic.Lobby
             }
         }
 
-        public async Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
+        public async Task SendInvitationAsync(InvitationSenderDto sender, int idReceiver, string roomCode)
         {
-            Logger.Info($"Invitation attempt: Sender ID {idSender} -> Receiver ID {idReceiver} for Room Code: {roomCode}");
+            ValidateInvitationRequest(sender, idReceiver, roomCode);
+
+            Logger.Info($"Invitation attempt: Sender ID {sender.IdPlayer} -> Receiver ID {idReceiver} for Room Code: {roomCode}");
 
             if (presenceManager.IsPlayerInGame(idReceiver))
             {
                 Logger.Warn($"Invitation blocked: Receiver ID {idReceiver} is currently IN GAME.");
-
                 throw new BusinessLogicException(ServiceErrorType.UserInGame);
             }
 
@@ -58,6 +59,50 @@ namespace ConquiánServidor.BusinessLogic.Lobby
                 throw new BusinessLogicException(ServiceErrorType.UserOffline);
             }
 
+            await DeliverInvitationAsync(receiverCallback, sender.Nickname, roomCode, idReceiver);
+        }
+
+        private void ValidateInvitationRequest(InvitationSenderDto sender, int idReceiver, string roomCode)
+        {
+            if (sender == null)
+            {
+                Logger.Error("SendInvitationAsync called with null sender");
+                throw new ArgumentNullException(nameof(sender), "Sender information is required");
+            }
+
+            if (sender.IdPlayer <= 0)
+            {
+                Logger.Error($"Invalid sender ID: {sender.IdPlayer}");
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed, "Invalid sender ID");
+            }
+
+            if (string.IsNullOrWhiteSpace(sender.Nickname))
+            {
+                Logger.Error($"Sender ID {sender.IdPlayer} has null or empty nickname");
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed, "Sender nickname is required");
+            }
+
+            if (idReceiver <= 0)
+            {
+                Logger.Error($"Invalid receiver ID: {idReceiver}");
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed, "Invalid receiver ID");
+            }
+
+            if (string.IsNullOrWhiteSpace(roomCode))
+            {
+                Logger.Error($"Invitation from {sender.IdPlayer} to {idReceiver} has null or empty room code");
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed, "Room code is required");
+            }
+
+            if (sender.IdPlayer == idReceiver)
+            {
+                Logger.Warn($"Player {sender.IdPlayer} attempted to send invitation to themselves");
+                throw new BusinessLogicException(ServiceErrorType.ValidationFailed, "Cannot send invitation to yourself");
+            }
+        }
+
+        private async Task DeliverInvitationAsync(IInvitationCallback receiverCallback, string senderNickname, string roomCode, int idReceiver)
+        {
             try
             {
                 receiverCallback.OnInvitationReceived(senderNickname, roomCode);

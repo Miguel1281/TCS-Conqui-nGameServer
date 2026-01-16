@@ -158,7 +158,6 @@ namespace ConquiánServidor.Services
 
                 game.NotifyGameEndedByAbandonment(playerId);
                 this.gameSessionManager.RemoveGame(roomCode);
-                Logger.Info($"Game {roomCode} ended due to player {playerId} leaving.");
 
                 foreach (var id in playersToNotify)
                 {

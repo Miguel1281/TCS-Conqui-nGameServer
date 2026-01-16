@@ -12,7 +12,7 @@ using NLog;
 using System;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.Authentication
 {
     public class AuthenticationLogic : IAuthenticationLogic
     {

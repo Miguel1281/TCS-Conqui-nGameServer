@@ -1,14 +1,11 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
+using ConquiánServidor.Utilities.ExceptionHandler;
 using NLog;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity.Core;
-using System.Data.Entity.Infrastructure;
-using System.Data.SqlClient;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -19,46 +16,51 @@ namespace ConquiánServidor.Services
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly IUserProfileLogic userProfileLogic;
-
-        private const string LOGIC_ERROR_MESSAGE = "logic error";
-        private const string INTERNAL_SERVER_ERROR_MESSAGE = "internal server error";
-        private const string INTERNAL_ERROR_REASON = "internal error";
-        private const string DATABASE_UNAVAILABLE_MESSAGE = "Database Unavailable";
-        private const string DATABASE_ERROR_MESSAGE = "Error connecting to database";
+        private readonly IServiceExceptionHandler exceptionHandler;
 
         public UserProfile()
         {
             Bootstrapper.Init();
             this.userProfileLogic = Bootstrapper.Container.Resolve<IUserProfileLogic>();
+            this.exceptionHandler = Bootstrapper.Container.Resolve<IServiceExceptionHandler>();
         }
 
-        public UserProfile(IUserProfileLogic userProfileLogic)
+        public UserProfile(IUserProfileLogic userProfileLogic, IServiceExceptionHandler exceptionHandler)
         {
             this.userProfileLogic = userProfileLogic;
+            this.exceptionHandler = exceptionHandler;
         }
 
         public async Task<PlayerDto> GetPlayerByIdAsync(int idPlayer)
         {
+            PlayerDto foundPlayer;
+
             try
             {
-                return await userProfileLogic.GetPlayerByIdAsync(idPlayer);
+                foundPlayer = await userProfileLogic.GetPlayerByIdAsync(idPlayer);
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error getting player profile");
+                throw exceptionHandler.HandleException(ex, "GetPlayerByIdAsync");
             }
+
+            return foundPlayer;
         }
 
         public async Task<List<SocialDto>> GetPlayerSocialsAsync(int idPlayer)
         {
+            List<SocialDto> playerSocials;
+
             try
             {
-                return await userProfileLogic.GetPlayerSocialsAsync(idPlayer);
+                playerSocials = await userProfileLogic.GetPlayerSocialsAsync(idPlayer);
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error getting player socials");
+                throw exceptionHandler.HandleException(ex, "GetPlayerSocialsAsync");
             }
+
+            return playerSocials;
         }
 
         public async Task UpdatePlayerAsync(PlayerDto playerDto)
@@ -69,7 +71,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error updating player profile");
+                throw exceptionHandler.HandleException(ex, "UpdatePlayerAsync");
             }
         }
 
@@ -81,7 +83,7 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error updating player socials");
+                throw exceptionHandler.HandleException(ex, "UpdatePlayerSocialsAsync");
             }
         }
 
@@ -93,40 +95,24 @@ namespace ConquiánServidor.Services
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error updating profile picture");
+                throw exceptionHandler.HandleException(ex, "UpdateProfilePictureAsync");
             }
         }
 
         public async Task<List<GameHistoryDto>> GetPlayerGameHistoryAsync(int idPlayer)
         {
+            List<GameHistoryDto> historyList;
+
             try
             {
-                return await userProfileLogic.GetPlayerGameHistoryAsync(idPlayer);
+                historyList = await userProfileLogic.GetPlayerGameHistoryAsync(idPlayer);
             }
             catch (Exception ex)
             {
-                throw HandleException(ex, "error getting player game history");
-            }
-        }
-
-        private static Exception HandleException(Exception ex, string logMessage)
-        {
-            if (ex is BusinessLogicException businessEx)
-            {
-                var fault = new ServiceFaultDto(businessEx.ErrorType, LOGIC_ERROR_MESSAGE);
-                return new FaultException<ServiceFaultDto>(fault, new FaultReason(businessEx.ErrorType.ToString()));
+                throw exceptionHandler.HandleException(ex, "GetPlayerGameHistoryAsync");
             }
 
-            if (ex is SqlException || ex is EntityException || ex is DbUpdateException)
-            {
-                Logger.Error(ex, logMessage);
-                var fault = new ServiceFaultDto(ServiceErrorType.DatabaseError, DATABASE_ERROR_MESSAGE);
-                return new FaultException<ServiceFaultDto>(fault, new FaultReason(DATABASE_UNAVAILABLE_MESSAGE));
-            }
-
-            Logger.Error(ex, logMessage);
-            var faultInternal = new ServiceFaultDto(ServiceErrorType.ServerInternalError, INTERNAL_SERVER_ERROR_MESSAGE);
-            return new FaultException<ServiceFaultDto>(faultInternal, new FaultReason(INTERNAL_ERROR_REASON));
+            return historyList;
         }
     }
 }

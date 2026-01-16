@@ -1,16 +1,19 @@
 ﻿using Autofac;
 using ConquiánServidor.BusinessLogic;
+using ConquiánServidor.BusinessLogic.Authentication;
+using ConquiánServidor.BusinessLogic.Guest;
 using ConquiánServidor.BusinessLogic.Interfaces;
+using ConquiánServidor.BusinessLogic.Lobby;
+using ConquiánServidor.BusinessLogic.UserProfile;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.ConquiánDB.Repositories; 
 using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
+using ConquiánServidor.Utilities.ExceptionHandler;
 using NLog;
 using System;
-using ConquiánServidor.BusinessLogic.Guest;
-using ConquiánServidor.BusinessLogic.Lobby;
 
 namespace ConquiánServidor
 {
@@ -34,25 +37,22 @@ namespace ConquiánServidor
                     var builder = new ContainerBuilder();
 
                     builder.RegisterType<ConquiánDBEntities>().AsSelf().InstancePerDependency();
-
                     builder.RegisterType<PlayerRepository>().As<IPlayerRepository>();
                     builder.RegisterType<LobbyRepository>().As<ILobbyRepository>();
                     builder.RegisterType<SocialRepository>().As<ISocialRepository>();
                     builder.RegisterType<FriendshipRepository>().As<IFriendshipRepository>();
-
                     builder.RegisterType<EmailService>().As<IEmailService>();
-
                     builder.RegisterType<AuthenticationLogic>().As<IAuthenticationLogic>(); 
                     builder.RegisterType<LobbyLogic>().As<ILobbyLogic>();
                     builder.RegisterType<UserProfileLogic>().As<IUserProfileLogic>();
                     builder.RegisterType<FriendshipLogic>().As<IFriendshipLogic>();
-
                     builder.RegisterType<PresenceManager>().As<IPresenceManager>().SingleInstance();
                     builder.RegisterType<InvitationManager>().As<IInvitationManager>().SingleInstance();
                     builder.RegisterType<LobbySessionManager>().As<ILobbySessionManager>().SingleInstance();
                     builder.RegisterType<GameSessionManager>().As<IGameSessionManager>().SingleInstance();
                     builder.RegisterType<GuestInvitationManager>().As<IGuestInvitationManager>().SingleInstance();
                     builder.RegisterType<GameRepository>().As<IGameRepository>();
+                    builder.RegisterType<ServiceExceptionHandler>().As<IServiceExceptionHandler>();
 
                     Container = builder.Build();
                     isInitialized = true;

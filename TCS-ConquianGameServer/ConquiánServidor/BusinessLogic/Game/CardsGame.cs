@@ -1,7 +1,7 @@
 ﻿
 namespace ConquiánServidor.BusinessLogic.Game
 {
-    public class Card
+    public class CardsGame
     {
         public string Suit { get; set; } 
         public int Rank { get; set; }    
@@ -15,7 +15,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             }
         }
 
-        public Card(string suit, int rank)
+        public CardsGame(string suit, int rank)
         {
             Suit = suit;
             Rank = rank;

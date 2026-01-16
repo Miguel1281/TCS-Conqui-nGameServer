@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.BusinessLogic
+namespace ConquiánServidor.BusinessLogic.UserProfile
 {
     public class UserProfileLogic:IUserProfileLogic
     {

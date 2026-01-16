@@ -9,18 +9,18 @@ namespace ConquiánServidor.Contracts.ServiceContracts
     {
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
-        Task<bool> RegisterPlayerAsync(PlayerDto newPlayer);
+        Task RegisterPlayerAsync(PlayerDto newPlayer); 
 
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
-        Task<string> SendVerificationCodeAsync(string email);
+        Task<string> SendVerificationCodeAsync(string email); 
 
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
-        Task<bool> VerifyCodeAsync(string email, string code);
+        Task VerifyCodeAsync(string email, string code);
 
         [OperationContract]
         [FaultContract(typeof(ServiceFaultDto))]
-        Task<bool> CancelRegistrationAsync(string email);
+        Task CancelRegistrationAsync(string email);
     }
 }

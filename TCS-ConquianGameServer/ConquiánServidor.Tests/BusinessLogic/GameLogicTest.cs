@@ -312,9 +312,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
             TransitionToDrawPhase(game);
             int turnPlayer = game.GetCurrentTurnPlayerId();
             game.PlayerHands[turnPlayer].Clear();
-            game.PlayerHands[turnPlayer].Add(new Card("Oros", 1));
-            game.PlayerHands[turnPlayer].Add(new Card("Copas", 1));
-            game.PlayerHands[turnPlayer].Add(new Card("Espadas", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Oros", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Copas", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Espadas", 1));
             var cardIds = new List<string> { "Oros_1", "Copas_1", "Espadas_1" };
 
             game.ProcessPlayerMove(turnPlayer, cardIds);
@@ -329,9 +329,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
             TransitionToDrawPhase(game);
             int turnPlayer = game.GetCurrentTurnPlayerId();
             game.PlayerHands[turnPlayer].Clear();
-            game.PlayerHands[turnPlayer].Add(new Card("Oros", 1));
-            game.PlayerHands[turnPlayer].Add(new Card("Copas", 1));
-            game.PlayerHands[turnPlayer].Add(new Card("Espadas", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Oros", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Copas", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Espadas", 1));
             var cardIds = new List<string> { "Oros_1", "Copas_1", "Espadas_1" };
 
             game.ProcessPlayerMove(turnPlayer, cardIds);
@@ -347,11 +347,11 @@ namespace ConquiánServidor.Tests.BusinessLogic
             int turnPlayer = game.GetCurrentTurnPlayerId();
             bool gameFinished = false;
             game.OnGameFinished += (result) => gameFinished = true;
-            game.PlayerMelds[turnPlayer].Add(new List<Card> { new Card("Bastos", 10), new Card("Bastos", 11), new Card("Bastos", 12) });
+            game.PlayerMelds[turnPlayer].Add(new List<CardsGame> { new CardsGame("Bastos", 10), new CardsGame("Bastos", 11), new CardsGame("Bastos", 12) });
             game.PlayerHands[turnPlayer].Clear();
-            game.PlayerHands[turnPlayer].Add(new Card("Oros", 1));
-            game.PlayerHands[turnPlayer].Add(new Card("Copas", 1));
-            game.PlayerHands[turnPlayer].Add(new Card("Espadas", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Oros", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Copas", 1));
+            game.PlayerHands[turnPlayer].Add(new CardsGame("Espadas", 1));
             var cardIds = new List<string> { "Oros_1", "Copas_1", "Espadas_1" };
 
             game.ProcessPlayerMove(turnPlayer, cardIds);

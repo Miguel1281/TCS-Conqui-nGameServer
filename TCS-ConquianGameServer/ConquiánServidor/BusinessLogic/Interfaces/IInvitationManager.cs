@@ -1,4 +1,5 @@
-﻿using ConquiánServidor.Contracts.ServiceContracts;
+﻿using ConquiánServidor.Contracts.DataContracts;
+using ConquiánServidor.Contracts.ServiceContracts;
 using System.Threading.Tasks;
 
 namespace ConquiánServidor.BusinessLogic.Interfaces
@@ -7,6 +8,6 @@ namespace ConquiánServidor.BusinessLogic.Interfaces
     {
         void Subscribe(int idPlayer, IInvitationCallback callback);
         void Unsubscribe(int idPlayer);
-        Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode);
+        Task SendInvitationAsync(InvitationSenderDto sender, int idReceiver, string roomCode);
     }
 }

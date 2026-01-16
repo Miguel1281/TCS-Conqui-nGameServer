@@ -93,19 +93,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bootstrapper.cs" />
-    <Compile Include="BusinessLogic\AuthenticationLogic.cs" />
+    <Compile Include="BusinessLogic\Authentication\AuthenticationLogic.cs" />
     <Compile Include="BusinessLogic\Exceptions\BusinessLogicException.cs" />
     <Compile Include="BusinessLogic\Exceptions\GuestInviteUsedException.cs" />
     <Compile Include="BusinessLogic\Exceptions\RegisteredUserAsGuestException.cs" />
-    <Compile Include="BusinessLogic\FriendshipLogic.cs" />
+    <Compile Include="BusinessLogic\Frienship\FriendshipLogic.cs" />
     <Compile Include="BusinessLogic\Guest\GameSessionManager.cs" />
-    <Compile Include="BusinessLogic\Game\Card.cs" />
+    <Compile Include="BusinessLogic\Game\CardsGame.cs" />
     <Compile Include="BusinessLogic\Game\GameLogic.cs" />
+    <Compile Include="BusinessLogic\Guest\GuestInvitationLogic.cs" />
     <Compile Include="BusinessLogic\Guest\GuestInvitationManager.cs" />
     <Compile Include="BusinessLogic\Guest\GuestInviteData.cs" />
     <Compile Include="BusinessLogic\Interfaces\IAuthenticationLogic.cs" />
     <Compile Include="BusinessLogic\Interfaces\IFriendshipLogic.cs" />
     <Compile Include="BusinessLogic\Interfaces\IGameSessionManager.cs" />
+    <Compile Include="BusinessLogic\Interfaces\IGuestInvitationLogic.cs" />
     <Compile Include="BusinessLogic\Interfaces\IGuestInvitationManager.cs" />
     <Compile Include="BusinessLogic\Interfaces\IInvitationManager.cs" />
     <Compile Include="BusinessLogic\Interfaces\ILobbyLogic.cs" />
@@ -117,7 +119,7 @@
     <Compile Include="BusinessLogic\Lobby\LobbySession.cs" />
     <Compile Include="BusinessLogic\Lobby\LobbySessionManager.cs" />
     <Compile Include="BusinessLogic\PresenceManager.cs" />
-    <Compile Include="BusinessLogic\UserProfileLogic.cs" />
+    <Compile Include="BusinessLogic\UserProfile\UserProfileLogic.cs" />
     <Compile Include="BusinessLogic\Validation\GameValidationContexts.cs" />
     <Compile Include="BusinessLogic\Validation\GameValidator.cs" />
     <Compile Include="BusinessLogic\Validation\SignUpServerValidator.cs" />
@@ -187,6 +189,7 @@
     <Compile Include="Contracts\DataContracts\LobbyDto.cs" />
     <Compile Include="Contracts\DataContracts\MessageDto.cs" />
     <Compile Include="Contracts\DataContracts\PlayerDto.cs" />
+    <Compile Include="Contracts\DataContracts\InvitationSenderDto.cs" />
     <Compile Include="Contracts\DataContracts\ServiceErrorType.cs" />
     <Compile Include="Contracts\DataContracts\ServiceFaultDto.cs" />
     <Compile Include="Contracts\DataContracts\SocialDto.cs" />
@@ -239,6 +242,8 @@
     <Compile Include="Utilities\Email\Templates\GuestInviteEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\RecoveryEmailTemplate.cs" />
     <Compile Include="Utilities\Email\Templates\VerificationEmailTemplate.cs" />
+    <Compile Include="Utilities\ExceptionHandler\IServiceExceptionHandler.cs" />
+    <Compile Include="Utilities\ExceptionHandler\ServiceExceptionHandler.cs" />
     <Compile Include="Utilities\PasswordHasher.cs" />
     <Compile Include="Utilities\ProfanityFilter.cs" />
   </ItemGroup>

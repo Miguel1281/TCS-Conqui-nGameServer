@@ -1,10 +1,8 @@
 ﻿using Autofac;
-using ConquiánServidor.BusinessLogic;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.Properties.Langs;
 using System;
 using System.ServiceModel;
 using System.Threading.Tasks;
@@ -33,10 +31,19 @@ namespace ConquiánServidor.Services
             {
                 var currentCallback = OperationContext.Current.GetCallbackChannel<IInvitationCallback>();
                 invitationManager.Subscribe(idPlayer, currentCallback);
+                Logger.Debug($"Player {idPlayer} subscribed to invitation service");
+            }
+            catch (BusinessLogicException ex)
+            {
+                Logger.Warn(ex, $"Business logic error subscribing player {idPlayer}. ErrorType: {ex.ErrorType}");
+                var fault = new ServiceFaultDto(ex.ErrorType, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Error in Subscribe for player {idPlayer}");
+                Logger.Error(ex, $"Unexpected error subscribing player {idPlayer}. Type: {ex.GetType().Name}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal server error");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
 
@@ -45,29 +52,40 @@ namespace ConquiánServidor.Services
             try
             {
                 invitationManager.Unsubscribe(idPlayer);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, $"Error unsubscribing player {idPlayer}");
-            }
-        }
-
-        public async Task SendInvitationAsync(int idSender, string senderNickname, int idReceiver, string roomCode)
-        {
-            try
-            {
-                await invitationManager.SendInvitationAsync(idSender, senderNickname, idReceiver, roomCode);
+                Logger.Debug($"Player {idPlayer} unsubscribed from invitation service");
             }
             catch (BusinessLogicException ex)
             {
+                Logger.Warn(ex, $"Business logic error unsubscribing player {idPlayer}. ErrorType: {ex.ErrorType}");
                 var fault = new ServiceFaultDto(ex.ErrorType, ex.Message);
                 throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, $"Critical error sending invitation from {idSender} to {idReceiver}");
-                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, ServiceErrorType.OperationFailed.ToString());
-                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal Server Error"));
+                Logger.Error(ex, $"Unexpected error unsubscribing player {idPlayer}. Type: {ex.GetType().Name}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal server error");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
+            }
+        }
+
+        public async Task SendInvitationAsync(InvitationSenderDto sender, int idReceiver, string roomCode)
+        {
+            try
+            {
+                await invitationManager.SendInvitationAsync(sender, idReceiver, roomCode);
+                Logger.Info($"Invitation sent from {sender?.IdPlayer} to {idReceiver} for room {roomCode}");
+            }
+            catch (BusinessLogicException ex)
+            {
+                Logger.Debug($"Business logic error sending invitation. ErrorType: {ex.ErrorType}");
+                var fault = new ServiceFaultDto(ex.ErrorType, ex.Message);
+                throw new FaultException<ServiceFaultDto>(fault, new FaultReason(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, $"Unexpected error sending invitation from {sender?.IdPlayer} to {idReceiver}. Type: {ex.GetType().Name}");
+                var faultData = new ServiceFaultDto(ServiceErrorType.ServerInternalError, "Internal server error");
+                throw new FaultException<ServiceFaultDto>(faultData, new FaultReason("Internal server error"));
             }
         }
     }

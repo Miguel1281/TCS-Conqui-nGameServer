@@ -20,7 +20,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
         public bool IsCardDrawnFromDeck { get; set; }
         public int? PlayerReviewingDiscardId { get; set; }
         public bool MustDiscardToFinishTurn { get; set; }
-        public Card CardToDiscard { get; set; }
+        public CardsGame CardToDiscard { get; set; }
         public int DiscardPileCount { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using ConquiánServidor.BusinessLogic;
+﻿using ConquiánServidor.BusinessLogic.Authentication;
 using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;

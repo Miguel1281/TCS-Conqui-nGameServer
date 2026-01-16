@@ -85,7 +85,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
             }
         }
 
-        public static void ValidateDiscard(int playerId, int currentTurnPlayerId, Card card)
+        public static void ValidateDiscard(int playerId, int currentTurnPlayerId, CardsGame card)
         {
             ValidateTurnOwner(playerId, currentTurnPlayerId);
 
@@ -122,7 +122,7 @@ namespace ConquiánServidor.BusinessLogic.Validation
             }
         }
 
-        public static bool IsValidMeldCombination(List<Card> cards)
+        public static bool IsValidMeldCombination(List<CardsGame> cards)
         {
             if (cards == null || cards.Count < MINIMUM_MELD_SIZE)
             {

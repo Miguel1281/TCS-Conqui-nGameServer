@@ -1,5 +1,4 @@
-﻿using ConquiánServidor.BusinessLogic;
-using ConquiánServidor.BusinessLogic.Exceptions;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
@@ -8,6 +7,7 @@ using DbEntity = ConquiánServidor.ConquiánDB;
 using Moq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ConquiánServidor.BusinessLogic.UserProfile;
 using Xunit;
 
 namespace ConquiánServidor.Tests.BusinessLogic

@@ -53,11 +53,11 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private readonly ConcurrentDictionary<int, IGameCallback> playerCallbacks;
         public List<PlayerDto> Players { get; private set; }
-        private List<Card> Deck { get; set; }
-        public Dictionary<int, List<Card>> PlayerHands { get; private set; }
-        public List<Card> StockPile { get; private set; }
-        public List<Card> DiscardPile { get; private set; }
-        public Dictionary<int, List<List<Card>>> PlayerMelds { get; private set; }
+        private List<CardsGame> Deck { get; set; }
+        public Dictionary<int, List<CardsGame>> PlayerHands { get; private set; }
+        public List<CardsGame> StockPile { get; private set; }
+        public List<CardsGame> DiscardPile { get; private set; }
+        public Dictionary<int, List<List<CardsGame>>> PlayerMelds { get; private set; }
 
         public event Action<GameResultDto> OnGameFinished;
 
@@ -76,10 +76,10 @@ namespace ConquiánServidor.BusinessLogic.Game
             isCardDrawnFromDeck = false;
             mustDiscardToFinishTurn = false;
 
-            PlayerHands = new Dictionary<int, List<Card>>();
-            PlayerMelds = new Dictionary<int, List<List<Card>>>();
-            PlayerHands = players.ToDictionary(player => player.idPlayer, player => new List<Card>());
-            PlayerMelds = players.ToDictionary(player => player.idPlayer, player => new List<List<Card>>());
+            PlayerHands = new Dictionary<int, List<CardsGame>>();
+            PlayerMelds = new Dictionary<int, List<List<CardsGame>>>();
+            PlayerHands = players.ToDictionary(player => player.idPlayer, player => new List<CardsGame>());
+            PlayerMelds = players.ToDictionary(player => player.idPlayer, player => new List<List<CardsGame>>());
 
             InitializeGame();
             Logger.Info($"Game initialized for Room Code: {RoomCode}. Gamemode: {GamemodeId}");
@@ -95,13 +95,13 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void CreateDeck()
         {
-            Deck = new List<Card>();
+            Deck = new List<CardsGame>();
 
             foreach (var suit in DECK_SUITS)
             {
                 foreach (var rank in DECK_RANKS)
                 {
-                    Deck.Add(new Card(suit, rank));
+                    Deck.Add(new CardsGame(suit, rank));
                 }
             }
         }
@@ -124,7 +124,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 n--;
                 int k = GetSecureRandomInt(n + 1);
-                Card value = Deck[k];
+                CardsGame value = Deck[k];
                 Deck[k] = Deck[n];
                 Deck[n] = value;
             }
@@ -156,7 +156,7 @@ namespace ConquiánServidor.BusinessLogic.Game
         private void SetupPiles()
         {
             StockPile = Deck;
-            DiscardPile = new List<Card>();
+            DiscardPile = new List<CardsGame>();
             var firstDiscard = StockPile[0];
             StockPile.RemoveAt(0);
             DiscardPile.Add(firstDiscard);
@@ -276,7 +276,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             GameValidator.ValidateActionAllowed(mustDiscardToFinishTurn);
             GameValidator.ValidateMoveInputs(cardIds);
 
-            if (!PlayerHands.TryGetValue(playerId, out List<Card> hand))
+            if (!PlayerHands.TryGetValue(playerId, out List<CardsGame> hand))
             {
                 throw new InvalidOperationException(ServiceErrorType.OperationFailed.ToString());
             }
@@ -678,7 +678,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public void SwapDrawnCard(int playerId, string cardIdToDiscard)
         {
-            if (PlayerHands.TryGetValue(playerId, out List<Card> hand))
+            if (PlayerHands.TryGetValue(playerId, out List<CardsGame> hand))
             {
                 var cardToDiscard = hand.FirstOrDefault(c => c.Id == cardIdToDiscard);
 
@@ -727,14 +727,14 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private sealed class MoveContext
         {
-            public List<Card> CardsFromHand { get; set; }
-            public List<Card> FullMeld { get; set; }
-            public Card DiscardCard { get; set; }
+            public List<CardsGame> CardsFromHand { get; set; }
+            public List<CardsGame> FullMeld { get; set; }
+            public CardsGame DiscardCard { get; set; }
             public bool UsingDiscardCard { get; set; }
             public List<string> HandCardIds { get; set; }
         }
 
-        private MoveContext BuildMoveContext(int playerId, List<string> cardIds, List<Card> hand)
+        private MoveContext BuildMoveContext(int playerId, List<string> cardIds, List<CardsGame> hand)
         {
             var context = new MoveContext
             {
@@ -764,7 +764,7 @@ namespace ConquiánServidor.BusinessLogic.Game
 
             context.CardsFromHand = hand.Where(card => context.HandCardIds.Contains(card.Id)).ToList();
 
-            context.FullMeld = new List<Card>(context.CardsFromHand);
+            context.FullMeld = new List<CardsGame>(context.CardsFromHand);
             if (context.UsingDiscardCard)
             {
                 context.FullMeld.Add(context.DiscardCard);
@@ -785,7 +785,7 @@ namespace ConquiánServidor.BusinessLogic.Game
             }
         }
 
-        private void ExecuteMeld(int playerId, List<Card> hand, MoveContext context)
+        private void ExecuteMeld(int playerId, List<CardsGame> hand, MoveContext context)
         {
             hand.RemoveAll(card => context.HandCardIds.Contains(card.Id));
 
@@ -895,7 +895,7 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             public int PlayerId { get; set; }
             public int HandCount { get; set; }
-            public List<Card> FullMeld { get; set; }
+            public List<CardsGame> FullMeld { get; set; }
             public bool UsingDiscardCard { get; set; }
         }
     }

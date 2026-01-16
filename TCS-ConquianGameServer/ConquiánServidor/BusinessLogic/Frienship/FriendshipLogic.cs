@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.BusinessLogic.Authentication
+namespace ConquiánServidor.BusinessLogic.Frienship
 {
     public class FriendshipLogic : IFriendshipLogic
     {

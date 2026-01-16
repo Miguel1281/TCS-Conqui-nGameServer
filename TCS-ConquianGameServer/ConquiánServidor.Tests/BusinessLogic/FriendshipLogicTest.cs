@@ -1,5 +1,4 @@
-﻿using ConquiánServidor.BusinessLogic.Authentication;
-using ConquiánServidor.BusinessLogic.Exceptions;
+﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.ConquiánDB;
 using System.Data.Entity.Infrastructure;
@@ -9,6 +8,7 @@ using ConquiánServidor.DataAccess.Abstractions;
 using Moq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ConquiánServidor.BusinessLogic.Frienship;
 using Xunit;
 
 namespace ConquiánServidor.Tests.BusinessLogic

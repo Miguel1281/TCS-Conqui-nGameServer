@@ -235,7 +235,7 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public async Task ProcessAFK_NotifiesRival()
+        public async Task ProcessAFK_NotifiesRival_GameEndedByAfk()
         {
             var game = CreateGame();
             int afkPlayerId = 1;

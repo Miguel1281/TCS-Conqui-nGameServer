@@ -2,7 +2,6 @@
 using ConquiánServidor.BusinessLogic.Validation;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using NLog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -30,11 +29,18 @@ namespace ConquiánServidor.BusinessLogic.Game
         private const int PLAYER_1_INDEX = 0;
         private const int PLAYER_2_INDEX = 1;
 
+        private const int NO_PLAYER_ID = -1;
+        private const int PLAYER_NOT_FOUND = 0;
+        private const int DEFAULT_SCORE = 0;
+        private const int MINIMUM_DURATION = 0;
+        private const int DEFAULT_POINTS_WON = 0;
+        private const int LAST_ELEMENT_INDEX = 1;
+
         private const string AFK_REASON_SELF = "AFKGameEndedSelf";
         private const string AFK_REASON_RIVAL = "AFKGameEndedRival";
 
-        private static readonly string[] DECK_SUITS = { "Oros", "Copas", "Espadas", "Bastos" };
-        private static readonly int[] DECK_RANKS = { 1, 2, 3, 4, 5, 6, 7, 10, 11, 12 };
+        private static readonly string[] deckSuits = { "Oros", "Copas", "Espadas", "Bastos" };
+        private static readonly int[] deckRanks = { 1, 2, 3, 4, 5, 6, 7, 10, 11, 12 };
 
         private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
@@ -61,7 +67,6 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public event Action<GameResultDto> OnGameFinished;
 
-
         public GameLogic(string roomCode, int gamemodeId, List<PlayerDto> players)
         {
             RoomCode = roomCode;
@@ -69,20 +74,25 @@ namespace ConquiánServidor.BusinessLogic.Game
             Players = players;
             playerCallbacks = new ConcurrentDictionary<int, IGameCallback>();
 
-            currentTurnPlayerId = Players[0].idPlayer;
+            currentTurnPlayerId = Players[PLAYER_1_INDEX].idPlayer;
             playerReviewingDiscardId = currentTurnPlayerId;
 
             hasHostPassedInitialDiscard = false;
             isCardDrawnFromDeck = false;
             mustDiscardToFinishTurn = false;
 
+            InitializePlayerCollections(players);
+            InitializeGame();
+
+            Logger.Info($"Game initialized for Room Code: {RoomCode}. Gamemode: {GamemodeId}");
+        }
+
+        private void InitializePlayerCollections(List<PlayerDto> players)
+        {
             PlayerHands = new Dictionary<int, List<CardsGame>>();
             PlayerMelds = new Dictionary<int, List<List<CardsGame>>>();
             PlayerHands = players.ToDictionary(player => player.idPlayer, player => new List<CardsGame>());
             PlayerMelds = players.ToDictionary(player => player.idPlayer, player => new List<List<CardsGame>>());
-
-            InitializeGame();
-            Logger.Info($"Game initialized for Room Code: {RoomCode}. Gamemode: {GamemodeId}");
         }
 
         private void InitializeGame()
@@ -97,9 +107,9 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             Deck = new List<CardsGame>();
 
-            foreach (var suit in DECK_SUITS)
+            foreach (var suit in deckSuits)
             {
-                foreach (var rank in DECK_RANKS)
+                foreach (var rank in deckRanks)
                 {
                     Deck.Add(new CardsGame(suit, rank));
                 }
@@ -113,27 +123,46 @@ namespace ConquiánServidor.BusinessLogic.Game
                 byte[] data = new byte[4];
                 rng.GetBytes(data);
                 int generatedValue = BitConverter.ToInt32(data, 0) & int.MaxValue;
-                return generatedValue % max;
+                int randomValue = generatedValue % max;
+                return randomValue;
             }
         }
 
         private void ShuffleDeck()
         {
             int n = Deck.Count;
+
             while (n > 1)
             {
                 n--;
                 int k = GetSecureRandomInt(n + 1);
-                CardsGame value = Deck[k];
-                Deck[k] = Deck[n];
-                Deck[n] = value;
+                SwapDeckCards(k, n);
             }
+        }
+
+        private void SwapDeckCards(int firstIndex, int secondIndex)
+        {
+            CardsGame temporaryCard = Deck[firstIndex];
+            Deck[firstIndex] = Deck[secondIndex];
+            Deck[secondIndex] = temporaryCard;
         }
 
         private void DealHands()
         {
+            int cardsToDeal = GetCardsToDeadByGameMode();
+
+            for (int i = 0; i < cardsToDeal; i++)
+            {
+                DealCardToEachPlayer();
+            }
+        }
+
+        private int GetCardsToDeadByGameMode()
+        {
             int cardsToDeal;
-            if ((GamemodeId == GAMEMODE_CLASSIC))
+            bool isClassicMode = (GamemodeId == GAMEMODE_CLASSIC);
+
+            if (isClassicMode)
             {
                 cardsToDeal = HAND_SIZE_CLASSIC;
             }
@@ -142,14 +171,16 @@ namespace ConquiánServidor.BusinessLogic.Game
                 cardsToDeal = HAND_SIZE_EXTENDED;
             }
 
-            for (int i = 0; i < cardsToDeal; i++)
+            return cardsToDeal;
+        }
+
+        private void DealCardToEachPlayer()
+        {
+            foreach (var player in Players)
             {
-                foreach (var player in Players)
-                {
-                    var card = Deck[0];
-                    Deck.RemoveAt(0);
-                    PlayerHands[player.idPlayer].Add(card);
-                }
+                var card = Deck[PLAYER_1_INDEX];
+                Deck.RemoveAt(PLAYER_1_INDEX);
+                PlayerHands[player.idPlayer].Add(card);
             }
         }
 
@@ -157,8 +188,9 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             StockPile = Deck;
             DiscardPile = new List<CardsGame>();
-            var firstDiscard = StockPile[0];
-            StockPile.RemoveAt(0);
+
+            var firstDiscard = StockPile[PLAYER_1_INDEX];
+            StockPile.RemoveAt(PLAYER_1_INDEX);
             DiscardPile.Add(firstDiscard);
         }
 
@@ -170,14 +202,19 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public int GetInitialTimeInSeconds()
         {
-            if ((GamemodeId == GAMEMODE_CLASSIC))
+            int timeInSeconds;
+            bool isClassicMode = (GamemodeId == GAMEMODE_CLASSIC);
+
+            if (isClassicMode)
             {
-                return TIME_LIMIT_SHORT_SECONDS;
+                timeInSeconds = TIME_LIMIT_SHORT_SECONDS;
             }
             else
             {
-                return TIME_LIMIT_LONG_SECONDS;
+                timeInSeconds = TIME_LIMIT_LONG_SECONDS;
             }
+
+            return timeInSeconds;
         }
 
         public void StartGameTimer()
@@ -192,29 +229,41 @@ namespace ConquiánServidor.BusinessLogic.Game
         private void OnTimerTick(object sender, ElapsedEventArgs e)
         {
             remainingSeconds--;
+            bool timeExpired = remainingSeconds <= MINIMUM_DURATION;
 
-            if (remainingSeconds <= 0)
+            if (timeExpired)
             {
                 Logger.Info($"Game timeout reached for Room Code: {RoomCode}. Stopping game.");
                 StopGame();
                 DetermineWinnerByPoints();
             }
 
-            BroadcastTime(remainingSeconds, 0, currentTurnPlayerId);
+            BroadcastTime(remainingSeconds, MINIMUM_DURATION, currentTurnPlayerId);
         }
 
         private void ChangeTurn()
         {
             hasHostPassedInitialDiscard = true;
             mustDiscardToFinishTurn = false;
-            var currentPlayerIndex = Players.FindIndex(p =>
-            {
-                return p.idPlayer == currentTurnPlayerId;
-            });
-            var nextPlayerIndex = (currentPlayerIndex + 1) % Players.Count;
+
+            var currentPlayerIndex = FindPlayerIndex(currentTurnPlayerId);
+            var nextPlayerIndex = CalculateNextPlayerIndex(currentPlayerIndex);
+
             currentTurnPlayerId = Players[nextPlayerIndex].idPlayer;
             playerReviewingDiscardId = currentTurnPlayerId;
             isCardDrawnFromDeck = false;
+        }
+
+        private int FindPlayerIndex(int playerId)
+        {
+            int playerIndex = Players.FindIndex(p => p.idPlayer == playerId);
+            return playerIndex;
+        }
+
+        private int CalculateNextPlayerIndex(int currentIndex)
+        {
+            int nextIndex = (currentIndex + 1) % Players.Count;
+            return nextIndex;
         }
 
         private void BroadcastTime(int gameSeconds, int turnSeconds, int currentPlayerId)
@@ -261,7 +310,9 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         public void StopGame()
         {
-            if (gameTimer != null)
+            bool timerExists = (gameTimer != null);
+
+            if (timerExists)
             {
                 gameTimer.Stop();
                 gameTimer.Elapsed -= OnTimerTick;
@@ -276,17 +327,26 @@ namespace ConquiánServidor.BusinessLogic.Game
             GameValidator.ValidateActionAllowed(mustDiscardToFinishTurn);
             GameValidator.ValidateMoveInputs(cardIds);
 
-            if (!PlayerHands.TryGetValue(playerId, out List<CardsGame> hand))
+            bool handExists = PlayerHands.TryGetValue(playerId, out List<CardsGame> hand);
+
+            if (!handExists)
             {
                 throw new InvalidOperationException(ServiceErrorType.OperationFailed.ToString());
             }
 
             var moveContext = BuildMoveContext(playerId, cardIds, hand);
-
             ValidateMeldRules(moveContext);
-
             ExecuteMeld(playerId, hand, moveContext);
 
+            var notificationContext = CreateMeldNotificationContext(playerId, hand, moveContext);
+            NotifyAndCheckGameStatus(notificationContext);
+        }
+
+        private MeldNotificationContext CreateMeldNotificationContext(
+            int playerId,
+            List<CardsGame> hand,
+            MoveContext moveContext)
+        {
             var notificationContext = new MeldNotificationContext
             {
                 PlayerId = playerId,
@@ -295,7 +355,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 UsingDiscardCard = moveContext.UsingDiscardCard
             };
 
-            NotifyAndCheckGameStatus(notificationContext);
+            return notificationContext;
         }
 
         private bool CheckWinCondition(int playerId)
@@ -313,28 +373,24 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private bool HasPlayerWon(int meldsCount)
         {
-            if (GamemodeId == GAMEMODE_CLASSIC)
+            bool playerWon;
+            bool isClassicMode = (GamemodeId == GAMEMODE_CLASSIC);
+
+            if (isClassicMode)
             {
-                return meldsCount >= MELDS_TO_WIN_CLASSIC;
+                playerWon = (meldsCount >= MELDS_TO_WIN_CLASSIC);
+            }
+            else
+            {
+                playerWon = (meldsCount >= MELDS_TO_WIN_EXTENDED);
             }
 
-            return meldsCount >= MELDS_TO_WIN_EXTENDED;
+            return playerWon;
         }
 
         private void BroadcastDiscardUpdate()
         {
-            CardDto topCardDto = null;
-            if (DiscardPile.Count > 0)
-            {
-                var c = DiscardPile[DiscardPile.Count - 1];
-                topCardDto = new CardDto 
-                { 
-                    Id = c.Id,
-                    Suit = c.Suit,
-                    Rank = c.Rank,
-                    ImagePath = c.ImagePath 
-                };
-            }
+            CardDto topCardDto = GetTopDiscardCardDto();
 
             Broadcast((callback) =>
             {
@@ -342,24 +398,56 @@ namespace ConquiánServidor.BusinessLogic.Game
             });
         }
 
+        private CardDto GetTopDiscardCardDto()
+        {
+            CardDto topCardDto = null;
+            bool discardPileHasCards = (DiscardPile.Count > PLAYER_NOT_FOUND);
+
+            if (discardPileHasCards)
+            {
+                var lastCardIndex = DiscardPile.Count - LAST_ELEMENT_INDEX;
+                var topCard = DiscardPile[lastCardIndex];
+                topCardDto = ConvertToCardDto(topCard);
+            }
+
+            return topCardDto;
+        }
+
+        private CardDto ConvertToCardDto(CardsGame card)
+        {
+            CardDto cardDto = new CardDto
+            {
+                Id = card.Id,
+                Suit = card.Suit,
+                Rank = card.Rank,
+                ImagePath = card.ImagePath
+            };
+
+            return cardDto;
+        }
+
         public void PassTurn(int playerId)
         {
-            if (playerId != currentTurnPlayerId)
+            bool isNotPlayerTurn = (playerId != currentTurnPlayerId);
+
+            if (isNotPlayerTurn)
             {
                 return;
             }
 
             GameValidator.ValidateActionAllowed(mustDiscardToFinishTurn);
 
-            if (!hasHostPassedInitialDiscard && playerId == Players[0].idPlayer && playerReviewingDiscardId == playerId)
+            bool isInitialHostDiscard = IsInitialHostDiscard(playerId);
+
+            if (isInitialHostDiscard)
             {
-                hasHostPassedInitialDiscard = true;
-                ChangeTurn();
-                playerReviewingDiscardId = currentTurnPlayerId;
+                HandleInitialHostDiscard();
                 return;
             }
 
-            if (playerReviewingDiscardId == playerId && !isCardDrawnFromDeck)
+            bool isPlayerReviewingAndNotDrawn = IsPlayerReviewingWithoutDraw(playerId);
+
+            if (isPlayerReviewingAndNotDrawn)
             {
                 playerReviewingDiscardId = null;
                 return;
@@ -371,20 +459,37 @@ namespace ConquiánServidor.BusinessLogic.Game
             }
         }
 
+        private bool IsInitialHostDiscard(int playerId)
+        {
+            bool isFirstPlayer = (playerId == Players[PLAYER_1_INDEX].idPlayer);
+            bool isReviewingPlayer = (playerReviewingDiscardId == playerId);
+            bool notPassedYet = !hasHostPassedInitialDiscard;
+
+            bool isInitialDiscard = (notPassedYet && isFirstPlayer && isReviewingPlayer);
+            return isInitialDiscard;
+        }
+
+        private void HandleInitialHostDiscard()
+        {
+            hasHostPassedInitialDiscard = true;
+            ChangeTurn();
+            playerReviewingDiscardId = currentTurnPlayerId;
+        }
+
+        private bool IsPlayerReviewingWithoutDraw(int playerId)
+        {
+            bool isReviewingPlayer = (playerReviewingDiscardId == playerId);
+            bool hasNotDrawn = !isCardDrawnFromDeck;
+
+            bool isReviewingWithoutDraw = (isReviewingPlayer && hasNotDrawn);
+            return isReviewingWithoutDraw;
+        }
+
         public void DrawFromDeck(int playerId)
         {
             try
             {
-                var context = new DrawValidationContext
-                {
-                    PlayerId = playerId,
-                    CurrentTurnPlayerId = currentTurnPlayerId,
-                    IsCardDrawnFromDeck = isCardDrawnFromDeck,
-                    MustDiscardToFinishTurn = mustDiscardToFinishTurn,
-                    PlayerReviewingDiscardId = playerReviewingDiscardId,
-                    StockCount = StockPile.Count
-                };
-
+                var context = CreateDrawValidationContext(playerId);
                 GameValidator.ValidateDraw(context);
             }
             catch (BusinessLogicException ex) when (ex.ErrorType == ServiceErrorType.DeckEmpty)
@@ -393,82 +498,109 @@ namespace ConquiánServidor.BusinessLogic.Game
                 throw;
             }
 
-            var card = StockPile[0];
-            StockPile.RemoveAt(0);
-            DiscardPile.Add(card);
+            DrawAndDiscardCard();
+            UpdateDrawState(playerId);
+            BroadcastDiscardUpdate();
+        }
 
-            isCardDrawnFromDeck = true;
-            playerReviewingDiscardId = playerId;
-
-            var cardDto = new CardDto
+        private DrawValidationContext CreateDrawValidationContext(int playerId)
+        {
+            var context = new DrawValidationContext
             {
-                Id = card.Id,
-                Suit = card.Suit,
-                Rank = card.Rank,
-                ImagePath = card.ImagePath
+                PlayerId = playerId,
+                CurrentTurnPlayerId = currentTurnPlayerId,
+                IsCardDrawnFromDeck = isCardDrawnFromDeck,
+                MustDiscardToFinishTurn = mustDiscardToFinishTurn,
+                PlayerReviewingDiscardId = playerReviewingDiscardId,
+                StockCount = StockPile.Count
             };
 
-            Broadcast((callback) =>
-            {
-                callback.NotifyOpponentDiscarded(cardDto);
-            });
+            return context;
+        }
+
+        private void DrawAndDiscardCard()
+        {
+            var card = StockPile[PLAYER_1_INDEX];
+            StockPile.RemoveAt(PLAYER_1_INDEX);
+            DiscardPile.Add(card);
+        }
+
+        private void UpdateDrawState(int playerId)
+        {
+            isCardDrawnFromDeck = true;
+            playerReviewingDiscardId = playerId;
         }
 
         public void DiscardCard(int playerId, string cardId)
         {
-            var card = PlayerHands[playerId].FirstOrDefault(c =>
-            {
-                return c.Id == cardId;
-            });
-
+            var card = FindCardInPlayerHand(playerId, cardId);
             GameValidator.ValidateDiscard(playerId, currentTurnPlayerId, card);
 
+            RemoveCardFromHand(playerId, card);
+            AddCardToDiscardPile(card);
+
+            var cardDto = ConvertToCardDto(card);
+            NotifyOpponentOfDiscard(playerId, cardDto);
+
+            ChangeTurn();
+        }
+
+        private CardsGame FindCardInPlayerHand(int playerId, string cardId)
+        {
+            var card = PlayerHands[playerId].FirstOrDefault(c => c.Id == cardId);
+            return card;
+        }
+
+        private void RemoveCardFromHand(int playerId, CardsGame card)
+        {
             PlayerHands[playerId].Remove(card);
+        }
+
+        private void AddCardToDiscardPile(CardsGame card)
+        {
             DiscardPile.Add(card);
+        }
 
-            var cardDto = new CardDto
-            {
-                Id = card.Id,
-                Suit = card.Suit,
-                Rank = card.Rank,
-                ImagePath = card.ImagePath
-            };
-
+        private void NotifyOpponentOfDiscard(int playerId, CardDto cardDto)
+        {
             NotifyOpponent(playerId, (callback) =>
             {
                 callback.NotifyOpponentDiscarded(cardDto);
                 callback.OnOpponentHandUpdated(PlayerHands[playerId].Count);
             });
-
-            ChangeTurn();
         }
 
         private void DetermineWinnerByPoints()
         {
             var playerIds = Players.Select(p => p.idPlayer).ToList();
-            int p1 = playerIds[PLAYER_1_INDEX];
-            int p2 = playerIds[PLAYER_2_INDEX];
+            int player1Id = playerIds[PLAYER_1_INDEX];
+            int player2Id = playerIds[PLAYER_2_INDEX];
 
-            int meldsP1 = PlayerMelds[p1].Count;
-            int meldsP2 = PlayerMelds[p2].Count;
+            int meldsPlayer1 = PlayerMelds[player1Id].Count;
+            int meldsPlayer2 = PlayerMelds[player2Id].Count;
 
-            if (meldsP1 > meldsP2)
+            bool player1HasMoreMelds = (meldsPlayer1 > meldsPlayer2);
+            bool player2HasMoreMelds = (meldsPlayer2 > meldsPlayer1);
+
+            if (player1HasMoreMelds)
             {
-                FinishGame(p1, false);
+                FinishGame(player1Id, false);
             }
-            else if (meldsP2 > meldsP1)
+            else if (player2HasMoreMelds)
             {
-                FinishGame(p2, false);
+                FinishGame(player2Id, false);
             }
             else
             {
-                FinishGame(-1, true);
+                FinishGame(NO_PLAYER_ID, true);
             }
         }
 
         private void FinishGame(int winnerId, bool isDraw)
         {
-            if (!TryMarkGameAsEnded())
+            bool gameCanEnd = TryMarkGameAsEnded();
+
+            if (!gameCanEnd)
             {
                 return;
             }
@@ -483,15 +615,24 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private bool TryMarkGameAsEnded()
         {
+            bool successfullyMarked;
+
             lock (endLock)
             {
-                if (isGameEnded)
+                bool alreadyEnded = isGameEnded;
+
+                if (alreadyEnded)
                 {
-                    return false;
+                    successfullyMarked = false;
                 }
-                isGameEnded = true;
-                return true;
+                else
+                {
+                    isGameEnded = true;
+                    successfullyMarked = true;
+                }
             }
+
+            return successfullyMarked;
         }
 
         private GameResultDto BuildGameResult(int winnerId, bool isDraw)
@@ -500,67 +641,126 @@ namespace ConquiánServidor.BusinessLogic.Game
             var (player1, player2) = GetPlayers();
             int duration = CalculateGameDuration();
 
-            return new GameResultDto
+            var result = new GameResultDto
             {
                 WinnerId = winnerId,
                 LoserId = loserId,
                 IsDraw = isDraw,
-                PointsWon = 0,
+                PointsWon = DEFAULT_POINTS_WON,
                 RoomCode = this.RoomCode,
                 GamemodeId = GamemodeId,
 
-                Player1Id = player1?.idPlayer ?? -1,
+                Player1Id = GetPlayerIdOrDefault(player1),
                 Player1Name = player1?.nickname,
                 Player1Score = GetPlayerScore(player1),
                 Player1PathPhoto = player1?.pathPhoto,
 
-                Player2Id = player2?.idPlayer ?? -1,
+                Player2Id = GetPlayerIdOrDefault(player2),
                 Player2Name = player2?.nickname,
                 Player2Score = GetPlayerScore(player2),
                 Player2PathPhoto = player2?.pathPhoto,
 
                 DurationSeconds = duration
             };
+
+            return result;
+        }
+
+        private int GetPlayerIdOrDefault(PlayerDto player)
+        {
+            int playerId;
+            bool playerExists = (player != null);
+
+            if (playerExists)
+            {
+                playerId = player.idPlayer;
+            }
+            else
+            {
+                playerId = NO_PLAYER_ID;
+            }
+
+            return playerId;
         }
 
         private int GetLoserId(int winnerId, bool isDraw)
         {
+            int loserId;
+
             if (isDraw)
             {
-                return -1;
+                loserId = NO_PLAYER_ID;
+            }
+            else
+            {
+                var loserPlayer = Players.FirstOrDefault(p => p.idPlayer != winnerId);
+                loserId = loserPlayer?.idPlayer ?? NO_PLAYER_ID;
             }
 
-            return Players.FirstOrDefault(p => p.idPlayer != winnerId)?.idPlayer ?? -1;
+            return loserId;
         }
 
         private (PlayerDto player1, PlayerDto player2) GetPlayers()
         {
-            PlayerDto player1 = Players.Count > 0 ? Players[PLAYER_1_INDEX] : null;
-            PlayerDto player2 = Players.Count > 1 ? Players[PLAYER_2_INDEX] : null;
+            PlayerDto player1 = GetPlayerAtIndex(PLAYER_1_INDEX);
+            PlayerDto player2 = GetPlayerAtIndex(PLAYER_2_INDEX);
+
             return (player1, player2);
+        }
+
+        private PlayerDto GetPlayerAtIndex(int index)
+        {
+            PlayerDto player;
+            bool indexIsValid = (Players.Count > index);
+
+            if (indexIsValid)
+            {
+                player = Players[index];
+            }
+            else
+            {
+                player = null;
+            }
+
+            return player;
         }
 
         private int CalculateGameDuration()
         {
-            int duration = GetInitialTimeInSeconds() - remainingSeconds;
-            if (duration < 0)
+            int initialTime = GetInitialTimeInSeconds();
+            int elapsedTime = initialTime - remainingSeconds;
+            bool durationIsNegative = (elapsedTime < MINIMUM_DURATION);
+
+            int duration;
+
+            if (durationIsNegative)
             {
-                return 0;
+                duration = MINIMUM_DURATION;
             }
             else
             {
-                return duration;
+                duration = elapsedTime;
             }
+
+            return duration;
         }
 
         private int GetPlayerScore(PlayerDto player)
         {
-            if (player == null || !PlayerMelds.ContainsKey(player.idPlayer))
+            int score;
+            bool playerIsNull = (player == null);
+            bool playerHasNoMelds = !PlayerMelds.ContainsKey(player?.idPlayer ?? NO_PLAYER_ID);
+
+            if (playerIsNull || playerHasNoMelds)
             {
-                return 0;
+                score = DEFAULT_SCORE;
+            }
+            else
+            {
+                score = PlayerMelds[player.idPlayer].Count;
             }
 
-            return PlayerMelds[player.idPlayer].Count;
+            return score;
         }
 
         public void BroadcastGameResult(GameResultDto result)
@@ -573,38 +773,53 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void NotifyOpponent(int actingPlayerId, Action<IGameCallback> action)
         {
-            int opponentId = playerCallbacks.Keys.FirstOrDefault(id => id != actingPlayerId);
+            int opponentId = FindOpponentId(actingPlayerId);
+            bool opponentFound = (opponentId != PLAYER_NOT_FOUND);
 
-            if (opponentId != 0 && playerCallbacks.TryGetValue(opponentId, out IGameCallback opponentCallback))
+            if (opponentFound && playerCallbacks.TryGetValue(opponentId, out IGameCallback opponentCallback))
             {
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        action(opponentCallback);
-                    }
-                    catch (System.ServiceModel.CommunicationException ex)
-                    {
-                        Logger.Warn(ex, $"Error de comunicación al notificar oponente ID {opponentId}.");
-                        Task.Run(() => ProcessAFK(opponentId));
-                    }
-                    catch (TimeoutException ex)
-                    {
-                        Logger.Warn(ex, $"Timeout al notificar oponente ID {opponentId}.");
-                        Task.Run(() => ProcessAFK(opponentId));
-                    }
-                    catch (ObjectDisposedException ex)
-                    {
-                        Logger.Warn(ex, $"Canal cerrado para oponente ID {opponentId}.");
-                        Task.Run(() => ProcessAFK(opponentId));
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Warn(ex, $"Failed to notify opponent ID {opponentId} (Background Task).");
-                        Task.Run(() => ProcessAFK(opponentId));
-                    }
-                });
+                ExecuteNotificationAsync(opponentId, opponentCallback, action);
             }
+        }
+
+        private int FindOpponentId(int actingPlayerId)
+        {
+            int opponentId = playerCallbacks.Keys.FirstOrDefault(id => id != actingPlayerId);
+            return opponentId;
+        }
+
+        private void ExecuteNotificationAsync(
+            int playerId,
+            IGameCallback callback,
+            Action<IGameCallback> action)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    action(callback);
+                }
+                catch (System.ServiceModel.CommunicationException ex)
+                {
+                    Logger.Warn(ex, $"Error de comunicación al notificar oponente ID {playerId}.");
+                    Task.Run(() => ProcessAFK(playerId));
+                }
+                catch (TimeoutException ex)
+                {
+                    Logger.Warn(ex, $"Timeout al notificar oponente ID {playerId}.");
+                    Task.Run(() => ProcessAFK(playerId));
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    Logger.Warn(ex, $"Canal cerrado para oponente ID {playerId}.");
+                    Task.Run(() => ProcessAFK(playerId));
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn(ex, $"Failed to notify opponent ID {playerId} (Background Task).");
+                    Task.Run(() => ProcessAFK(playerId));
+                }
+            });
         }
 
         private void Broadcast(Action<IGameCallback> action)
@@ -614,6 +829,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                 foreach (var kvp in playerCallbacks)
                 {
                     int pid = kvp.Key;
+
                     try
                     {
                         action(kvp.Value);
@@ -635,7 +851,7 @@ namespace ConquiánServidor.BusinessLogic.Game
                     }
                     catch (Exception ex)
                     {
-                        Logger.Warn(ex,$"Broadcast falló para {pid}.");
+                        Logger.Warn(ex, $"Broadcast falló para {pid}.");
                         Task.Run(() => ProcessAFK(pid));
                     }
                 }
@@ -646,83 +862,99 @@ namespace ConquiánServidor.BusinessLogic.Game
         {
             StopGame();
 
-            int opponentId = playerCallbacks.Keys.FirstOrDefault(id => id != leavingPlayerId);
+            int opponentId = FindOpponentId(leavingPlayerId);
+            bool opponentFound = (opponentId != PLAYER_NOT_FOUND);
 
-            if (opponentId != 0 && playerCallbacks.TryGetValue(opponentId, out IGameCallback callback))
+            if (opponentFound && playerCallbacks.TryGetValue(opponentId, out IGameCallback callback))
             {
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        callback.OnOpponentLeft();
-                    }
-                    catch (System.ServiceModel.CommunicationException ex)
-                    {
-                        Logger.Error(ex, $"Error de comunicación al notificar salida en Room {RoomCode}");
-                    }
-                    catch (TimeoutException ex)
-                    {
-                        Logger.Error(ex, $"Timeout al notificar salida en Room {RoomCode}");
-                    }
-                    catch (ObjectDisposedException ex)
-                    {
-                        Logger.Error(ex, $"Canal cerrado al notificar salida en Room {RoomCode}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex, $"Error notifying room exit {RoomCode}");
-                    }
-                });
+                NotifyOpponentLeftAsync(callback);
             }
+        }
+
+        private void NotifyOpponentLeftAsync(IGameCallback callback)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    callback.OnOpponentLeft();
+                }
+                catch (System.ServiceModel.CommunicationException ex)
+                {
+                    Logger.Error(ex, $"Error de comunicación al notificar salida en Room {RoomCode}");
+                }
+                catch (TimeoutException ex)
+                {
+                    Logger.Error(ex, $"Timeout al notificar salida en Room {RoomCode}");
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    Logger.Error(ex, $"Canal cerrado al notificar salida en Room {RoomCode}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, $"Error notifying room exit {RoomCode}");
+                }
+            });
         }
 
         public void SwapDrawnCard(int playerId, string cardIdToDiscard)
         {
-            if (PlayerHands.TryGetValue(playerId, out List<CardsGame> hand))
-            {
-                var cardToDiscard = hand.FirstOrDefault(c => c.Id == cardIdToDiscard);
+            bool handExists = PlayerHands.TryGetValue(playerId, out List<CardsGame> hand);
 
-                var context = new SwapValidationContext
-                {
-                    PlayerId = playerId,
-                    CurrentTurnPlayerId = currentTurnPlayerId,
-                    IsCardDrawnFromDeck = isCardDrawnFromDeck,
-                    PlayerReviewingDiscardId = playerReviewingDiscardId,
-                    MustDiscardToFinishTurn = mustDiscardToFinishTurn,
-                    CardToDiscard = cardToDiscard,
-                    DiscardPileCount = DiscardPile.Count
-                };
-
-                GameValidator.ValidateSwap(context);
-
-                var cardToTake = DiscardPile[DiscardPile.Count - 1];
-
-                hand.Add(cardToTake);
-                DiscardPile.Remove(cardToTake);
-
-                hand.Remove(cardToDiscard);
-                DiscardPile.Add(cardToDiscard);
-
-                var cardDto = new CardDto
-                {
-                    Id = cardToDiscard.Id,
-                    Suit = cardToDiscard.Suit,
-                    Rank = cardToDiscard.Rank,
-                    ImagePath = cardToDiscard.ImagePath
-                };
-
-                NotifyOpponent(playerId, (callback) =>
-                {
-                    callback.NotifyOpponentDiscarded(cardDto);
-                    callback.OnOpponentHandUpdated(hand.Count);
-                });
-
-                ChangeTurn();
-            }
-            else
+            if (!handExists)
             {
                 throw new InvalidOperationException(ServiceErrorType.OperationFailed.ToString());
             }
+
+            var cardToDiscard = FindCardInPlayerHand(playerId, cardIdToDiscard);
+            var context = CreateSwapValidationContext(playerId, cardToDiscard);
+
+            GameValidator.ValidateSwap(context);
+
+            ExecuteCardSwap(hand, cardToDiscard);
+
+            var cardDto = ConvertToCardDto(cardToDiscard);
+            NotifyOpponentOfSwap(playerId, hand, cardDto);
+
+            ChangeTurn();
+        }
+
+        private SwapValidationContext CreateSwapValidationContext(int playerId, CardsGame cardToDiscard)
+        {
+            var context = new SwapValidationContext
+            {
+                PlayerId = playerId,
+                CurrentTurnPlayerId = currentTurnPlayerId,
+                IsCardDrawnFromDeck = isCardDrawnFromDeck,
+                PlayerReviewingDiscardId = playerReviewingDiscardId,
+                MustDiscardToFinishTurn = mustDiscardToFinishTurn,
+                CardToDiscard = cardToDiscard,
+                DiscardPileCount = DiscardPile.Count
+            };
+
+            return context;
+        }
+
+        private void ExecuteCardSwap(List<CardsGame> hand, CardsGame cardToDiscard)
+        {
+            int lastDiscardIndex = DiscardPile.Count - LAST_ELEMENT_INDEX;
+            var cardToTake = DiscardPile[lastDiscardIndex];
+
+            hand.Add(cardToTake);
+            DiscardPile.Remove(cardToTake);
+
+            hand.Remove(cardToDiscard);
+            DiscardPile.Add(cardToDiscard);
+        }
+
+        private void NotifyOpponentOfSwap(int playerId, List<CardsGame> hand, CardDto cardDto)
+        {
+            NotifyOpponent(playerId, (callback) =>
+            {
+                callback.NotifyOpponentDiscarded(cardDto);
+                callback.OnOpponentHandUpdated(hand.Count);
+            });
         }
 
         private sealed class MoveContext
@@ -742,17 +974,35 @@ namespace ConquiánServidor.BusinessLogic.Game
                 DiscardCard = null
             };
 
-            if (DiscardPile.Count > 0)
+            CheckAndSetDiscardCardUsage(context, cardIds, playerId);
+            SetHandCardIds(context, cardIds);
+            SetCardsFromHand(context, hand);
+            BuildFullMeld(context);
+
+            return context;
+        }
+
+        private void CheckAndSetDiscardCardUsage(MoveContext context, List<string> cardIds, int playerId)
+        {
+            bool discardPileHasCards = (DiscardPile.Count > PLAYER_NOT_FOUND);
+
+            if (discardPileHasCards)
             {
-                var topDiscard = DiscardPile[DiscardPile.Count - 1];
-                if (cardIds.Contains(topDiscard.Id))
+                int lastDiscardIndex = DiscardPile.Count - LAST_ELEMENT_INDEX;
+                var topDiscard = DiscardPile[lastDiscardIndex];
+                bool usingTopDiscard = cardIds.Contains(topDiscard.Id);
+
+                if (usingTopDiscard)
                 {
                     GameValidator.ValidateDiscardUsage(playerId, playerReviewingDiscardId, isCardDrawnFromDeck);
                     context.UsingDiscardCard = true;
                     context.DiscardCard = topDiscard;
                 }
             }
+        }
 
+        private void SetHandCardIds(MoveContext context, List<string> cardIds)
+        {
             if (context.UsingDiscardCard)
             {
                 context.HandCardIds = cardIds.Where(id => id != context.DiscardCard.Id).ToList();
@@ -761,25 +1011,31 @@ namespace ConquiánServidor.BusinessLogic.Game
             {
                 context.HandCardIds = cardIds;
             }
+        }
 
+        private void SetCardsFromHand(MoveContext context, List<CardsGame> hand)
+        {
             context.CardsFromHand = hand.Where(card => context.HandCardIds.Contains(card.Id)).ToList();
+        }
 
+        private void BuildFullMeld(MoveContext context)
+        {
             context.FullMeld = new List<CardsGame>(context.CardsFromHand);
+
             if (context.UsingDiscardCard)
             {
                 context.FullMeld.Add(context.DiscardCard);
             }
-
-            return context;
         }
 
         private static void ValidateMeldRules(MoveContext context)
         {
             GameValidator.ValidateCardsInHand(context.CardsFromHand.Count, context.HandCardIds.Count);
-
             GameValidator.ValidateMeldSize(context.FullMeld.Count);
 
-            if (!GameValidator.IsValidMeldCombination(context.FullMeld))
+            bool isValidMeld = GameValidator.IsValidMeldCombination(context.FullMeld);
+
+            if (!isValidMeld)
             {
                 throw new BusinessLogicException(ServiceErrorType.InvalidMeld);
             }
@@ -787,32 +1043,36 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void ExecuteMeld(int playerId, List<CardsGame> hand, MoveContext context)
         {
-            hand.RemoveAll(card => context.HandCardIds.Contains(card.Id));
+            RemoveCardsFromHand(hand, context);
+            RemoveDiscardCardIfUsed(context);
+            AddMeldToPlayer(playerId, context);
+        }
 
+        private void RemoveCardsFromHand(List<CardsGame> hand, MoveContext context)
+        {
+            hand.RemoveAll(card => context.HandCardIds.Contains(card.Id));
+        }
+
+        private void RemoveDiscardCardIfUsed(MoveContext context)
+        {
             if (context.UsingDiscardCard)
             {
-                DiscardPile.RemoveAt(DiscardPile.Count - 1);
+                int lastDiscardIndex = DiscardPile.Count - LAST_ELEMENT_INDEX;
+                DiscardPile.RemoveAt(lastDiscardIndex);
                 playerReviewingDiscardId = null;
             }
+        }
 
+        private void AddMeldToPlayer(int playerId, MoveContext context)
+        {
             PlayerMelds[playerId].Add(context.FullMeld);
         }
 
         private void NotifyAndCheckGameStatus(MeldNotificationContext context)
         {
-            var cardDtos = context.FullMeld.Select(c => new CardDto
-            {
-                Id = c.Id,
-                Suit = c.Suit,
-                Rank = c.Rank,
-                ImagePath = c.ImagePath
-            }).ToArray();
+            var cardDtos = ConvertMeldToCardDtos(context.FullMeld);
 
-            NotifyOpponent(context.PlayerId, (callback) =>
-            {
-                callback.NotifyOpponentMeld(cardDtos);
-                callback.OnOpponentHandUpdated(context.HandCount);
-            });
+            NotifyOpponentOfMeld(context.PlayerId, context.HandCount, cardDtos);
 
             bool gameEnded = CheckWinCondition(context.PlayerId);
 
@@ -827,9 +1087,26 @@ namespace ConquiánServidor.BusinessLogic.Game
             }
         }
 
+        private CardDto[] ConvertMeldToCardDtos(List<CardsGame> meld)
+        {
+            var cardDtos = meld.Select(c => ConvertToCardDto(c)).ToArray();
+            return cardDtos;
+        }
+
+        private void NotifyOpponentOfMeld(int playerId, int handCount, CardDto[] cardDtos)
+        {
+            NotifyOpponent(playerId, (callback) =>
+            {
+                callback.NotifyOpponentMeld(cardDtos);
+                callback.OnOpponentHandUpdated(handCount);
+            });
+        }
+
         public void ProcessAFK(int afkPlayerId)
         {
-            if (!TryMarkGameAsEnded())
+            bool gameCanEnd = TryMarkGameAsEnded();
+
+            if (!gameCanEnd)
             {
                 return;
             }
@@ -843,20 +1120,26 @@ namespace ConquiánServidor.BusinessLogic.Game
 
         private void NotifyPlayerAFK(int playerId, string reason)
         {
-            if (!playerCallbacks.TryGetValue(playerId, out var callback))
+            bool callbackExists = playerCallbacks.TryGetValue(playerId, out var callback);
+
+            if (!callbackExists)
             {
                 return;
             }
 
-            SafeNotifyAsync(() => callback.NotifyGameEndedByAFK(reason),
-                $"Error al notificar AFK al jugador {playerId}");
+            SafeNotifyAsync(
+                () => callback.NotifyGameEndedByAFK(reason),
+                $"Error al notificar AFK al jugador {playerId}"
+            );
         }
 
         private void NotifyRivalAFK(int afkPlayerId)
         {
-            int rivalId = Players.FirstOrDefault(p => p.idPlayer != afkPlayerId)?.idPlayer ?? 0;
+            var rivalPlayer = Players.FirstOrDefault(p => p.idPlayer != afkPlayerId);
+            int rivalId = rivalPlayer?.idPlayer ?? PLAYER_NOT_FOUND;
+            bool rivalExists = (rivalId != PLAYER_NOT_FOUND);
 
-            if (rivalId == 0)
+            if (!rivalExists)
             {
                 return;
             }

@@ -110,6 +110,10 @@ namespace ConquiánServidor.Tests.BusinessLogic
         public void NotifyNewFriendRequest_TargetOnline_CallsCallback()
         {
             int targetId = 1;
+
+            var mockCommObject = mockCallback.As<ICommunicationObject>();
+            mockCommObject.Setup(c => c.State).Returns(CommunicationState.Opened);
+
             presenceManager.Subscribe(targetId, mockCallback.Object);
 
             presenceManager.NotifyNewFriendRequest(targetId);
@@ -131,6 +135,10 @@ namespace ConquiánServidor.Tests.BusinessLogic
         public void NotifyFriendListUpdate_TargetOnline_CallsCallback()
         {
             int targetId = 1;
+
+            var mockCommObject = mockCallback.As<ICommunicationObject>();
+            mockCommObject.Setup(c => c.State).Returns(CommunicationState.Opened);
+
             presenceManager.Subscribe(targetId, mockCallback.Object);
 
             presenceManager.NotifyFriendListUpdate(targetId);

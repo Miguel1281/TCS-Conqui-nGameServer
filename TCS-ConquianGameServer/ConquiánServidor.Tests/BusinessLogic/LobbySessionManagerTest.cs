@@ -1,6 +1,7 @@
-﻿using ConquiánServidor.Contracts.DataContracts;
+﻿using ConquiánServidor.BusinessLogic.Lobby;
+using ConquiánServidor.Contracts.DataContracts;
 using System;
-using ConquiánServidor.BusinessLogic.Lobby;
+using System.ServiceModel;
 using Xunit;
 
 namespace ConquiánServidor.Tests.BusinessLogic
@@ -28,7 +29,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
         public void AddPlayerToLobby_ReturnsNull_WhenSessionNotFound()
         {
             var manager = new LobbySessionManager();
+
             var result = manager.AddPlayerToLobby("NOPE", new PlayerDto { idPlayer = 2 });
+
             Assert.Null(result);
         }
 
@@ -39,20 +42,22 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var host = new PlayerDto { idPlayer = 1 };
             manager.CreateLobby("R1", host);
             var player = new PlayerDto { idPlayer = 2 };
+
             var added = manager.AddPlayerToLobby("R1", player);
             Assert.Equal(2, added.idPlayer);
         }
 
         [Fact]
-        public void AddPlayerToLobby_ReturnsNull_WhenLobbyIsFull()
+        public void AddPlayerToLobby_Throws_WhenLobbyIsFull()
         {
             var manager = new LobbySessionManager();
             var host = new PlayerDto { idPlayer = 1 };
             var other = new PlayerDto { idPlayer = 2 };
             manager.CreateLobby("R1", host);
             manager.AddPlayerToLobby("R1", other);
-            var result = manager.AddPlayerToLobby("R1", new PlayerDto { idPlayer = 3 });
-            Assert.Null(result);
+
+            Assert.Throws<FaultException<ServiceFaultDto>>(() =>
+                manager.AddPlayerToLobby("R1", new PlayerDto { idPlayer = 3 }));
         }
 
         [Fact]
@@ -72,7 +77,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var host = new PlayerDto { idPlayer = 1 };
             manager.CreateLobby("R1", host);
             manager.BanPlayer("R1", 3);
-            Assert.Throws<InvalidOperationException>(() => manager.AddPlayerToLobby("R1", new PlayerDto { idPlayer = 3 }));
+
+            Assert.Throws<FaultException<ServiceFaultDto>>(() =>
+                manager.AddPlayerToLobby("R1", new PlayerDto { idPlayer = 3 }));
         }
 
         [Fact]
@@ -94,16 +101,16 @@ namespace ConquiánServidor.Tests.BusinessLogic
         }
 
         [Fact]
-        public void AddGuestToLobby_ReturnsNull_WhenLobbyIsFull()
+        public void AddGuestToLobby_ThrowsFaultException_WhenLobbyIsFull()
         {
             var manager = new LobbySessionManager();
             var host = new PlayerDto { idPlayer = 1 };
             var other = new PlayerDto { idPlayer = 2 };
             manager.CreateLobby("R1", host);
             manager.AddPlayerToLobby("R1", other);
-            var guest = manager.AddGuestToLobby("R1");
-            Assert.Null(guest);
+            Assert.Throws<FaultException<ServiceFaultDto>>(() => manager.AddGuestToLobby("R1"));
         }
+
 
         [Fact]
         public void RemovePlayerFromLobby_ReturnsNull_WhenSessionNotFound()
@@ -131,8 +138,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var manager = new LobbySessionManager();
             var host = new PlayerDto { idPlayer = 1 };
             manager.CreateLobby("R1", host);
-            var removed = manager.RemovePlayerFromLobby("R1", 2);
-            Assert.Null(removed);
+
+            Assert.Throws<FaultException<ServiceFaultDto>>(() =>
+                manager.RemovePlayerFromLobby("R1", 2));
         }
 
         [Fact]
@@ -194,8 +202,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
         public void GetLobbyCodeForPlayer_ReturnsNull_WhenNotFound()
         {
             var manager = new LobbySessionManager();
-            var code = manager.GetLobbyCodeForPlayer(1);
-            Assert.Null(code);
+
+            Assert.Throws<FaultException<ServiceFaultDto>>(() =>
+                manager.GetLobbyCodeForPlayer(1));
         }
 
         [Fact]

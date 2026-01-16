@@ -50,6 +50,11 @@ namespace ConquiánServidor.BusinessLogic.Lobby
         {
             var session = GetLobbySession(roomCode);
 
+            if (session == null)
+            {
+                return null;
+            }
+
             lock (session)
             {
                 if (session.KickedPlayers.Contains(player.idPlayer))
@@ -84,6 +89,11 @@ namespace ConquiánServidor.BusinessLogic.Lobby
         public PlayerDto AddGuestToLobby(string roomCode)
         {
             var session = GetLobbySession(roomCode);
+
+            if (session == null)
+            {
+                return null;
+            }
 
             if (!availableGuestIds.TryPop(out int guestId))
             {
@@ -130,6 +140,11 @@ namespace ConquiánServidor.BusinessLogic.Lobby
         public PlayerDto RemovePlayerFromLobby(string roomCode, int idPlayer)
         {
             var session = GetLobbySession(roomCode);
+
+            if (session == null)
+            {
+                return null;
+            }
 
             lock (session)
             {

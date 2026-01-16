@@ -3,14 +3,8 @@ using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.Properties.Langs;
-using ConquiánServidor.Utilities.Email;
-using ConquiánServidor.Utilities.Email.Templates;
 using NLog;
 using System;
-using System.Data.SqlClient;
-using System.Net.Mail;
 using System.ServiceModel;
 using System.Threading.Tasks;
 

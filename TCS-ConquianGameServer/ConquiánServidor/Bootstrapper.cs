@@ -8,8 +8,6 @@ using ConquiánServidor.BusinessLogic.UserProfile;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.ConquiánDB.Repositories; 
-using ConquiánServidor.DataAccess.Abstractions;
-using ConquiánServidor.DataAccess.Repositories;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.ExceptionHandler;
 using NLog;

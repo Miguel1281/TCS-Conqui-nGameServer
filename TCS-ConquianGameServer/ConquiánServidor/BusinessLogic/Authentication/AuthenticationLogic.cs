@@ -4,7 +4,7 @@ using ConquiánServidor.BusinessLogic.Validation;
 using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.Contracts.DataContracts;
-using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.Utilities;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;

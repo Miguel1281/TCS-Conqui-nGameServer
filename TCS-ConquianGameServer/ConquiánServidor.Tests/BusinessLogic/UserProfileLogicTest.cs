@@ -2,7 +2,7 @@
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
-using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.ConquiánDB.Abstractions;
 using DbEntity = ConquiánServidor.ConquiánDB;
 using Moq;
 using System.Collections.Generic;

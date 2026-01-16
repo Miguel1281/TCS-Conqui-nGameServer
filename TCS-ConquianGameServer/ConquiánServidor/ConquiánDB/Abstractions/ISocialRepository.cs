@@ -1,8 +1,7 @@
-﻿using ConquiánServidor.ConquiánDB;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.DataAccess.Abstractions
+namespace ConquiánServidor.ConquiánDB.Abstractions
 {
     public interface ISocialRepository
     {

@@ -1,7 +1,7 @@
 ﻿using ConquiánServidor.BusinessLogic.Exceptions;
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
-using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.Properties.Langs;
 using ConquiánServidor.Utilities.Email;
 using ConquiánServidor.Utilities.Email.Templates;

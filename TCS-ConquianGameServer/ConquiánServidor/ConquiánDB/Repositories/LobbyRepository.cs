@@ -1,4 +1,4 @@
-﻿using ConquiánServidor.DataAccess.Abstractions;
+﻿using ConquiánServidor.ConquiánDB.Abstractions;
 using System.Data.Entity;
 using System.Threading.Tasks;
 

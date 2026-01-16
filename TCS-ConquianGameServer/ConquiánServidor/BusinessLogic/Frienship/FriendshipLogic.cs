@@ -4,7 +4,7 @@ using ConquiánServidor.ConquiánDB;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
 using System.Data.Entity.Infrastructure;
-using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.ConquiánDB.Abstractions;
 using NLog;
 using System.Collections.Generic;
 using System.Linq;

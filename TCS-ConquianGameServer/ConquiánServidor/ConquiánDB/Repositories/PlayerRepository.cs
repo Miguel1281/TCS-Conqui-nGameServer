@@ -1,5 +1,4 @@
-﻿using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.DataAccess.Abstractions;
+﻿using ConquiánServidor.ConquiánDB.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -7,10 +6,16 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.DataAccess.Repositories
+namespace ConquiánServidor.ConquiánDB.Repositories
 {
     public class PlayerRepository : IPlayerRepository
     {
+        private const int NO_CHANGES_SAVED = 0;
+        private const int LEVEL_NOT_FOUND = -1;
+        private const int LEVEL_INCREMENT = 1;
+        private const int RNG_UPPER_BOUND_ADJUSTMENT = 1;
+        private const int RANDOM_BYTES_SIZE = 4;
+
         private readonly ConquiánDBEntities context;
 
         public PlayerRepository(ConquiánDBEntities context)
@@ -25,120 +30,203 @@ namespace ConquiánServidor.DataAccess.Repositories
 
         public async Task<bool> DoesNicknameExistAsync(string nickname)
         {
-            return await context.Player.AnyAsync(p => p.nickname == nickname);
+            bool nicknameExists = await context.Player.AnyAsync(p => p.nickname == nickname);
+            return nicknameExists;
         }
 
         public async Task<Player> GetPlayerByEmailAsync(string email)
         {
-            return await context.Player.FirstOrDefaultAsync(p => p.email == email);
+            var player = await context.Player.FirstOrDefaultAsync(p => p.email == email);
+            return player;
         }
 
         public async Task<Player> GetPlayerByIdAsync(int idPlayer)
         {
             context.Configuration.LazyLoadingEnabled = false;
-            return await context.Player
+
+            var player = await context.Player
                 .Include(p => p.LevelRules)
                 .FirstOrDefaultAsync(p => p.idPlayer == idPlayer);
+
+            return player;
         }
+
         public async Task<Player> GetPlayerByNicknameAsync(string nickname)
         {
             context.Configuration.LazyLoadingEnabled = false;
 
-            return await context.Player
-                .Include(p => p.LevelRules) 
+            var player = await context.Player
+                .Include(p => p.LevelRules)
                 .FirstOrDefaultAsync(p => p.nickname == nickname);
+
+            return player;
         }
 
         public async Task<Player> GetPlayerForVerificationAsync(string email)
         {
-            return await context.Player.FirstOrDefaultAsync(p => p.email == email && p.password != null);
+            var player = await context.Player
+                .FirstOrDefaultAsync(p => p.email == email && p.password != null);
+
+            return player;
         }
 
         public async Task<int> SaveChangesAsync()
         {
-            return await context.SaveChangesAsync();
+            int changesSaved = await context.SaveChangesAsync();
+            return changesSaved;
         }
 
         public async Task<bool> DeletePlayerAsync(Player playerToDelete)
         {
-            if (playerToDelete == null)
+            bool playerIsNull = (playerToDelete == null);
+
+            if (playerIsNull)
             {
-                return false;
+                const bool DELETION_FAILED = false;
+                return DELETION_FAILED;
             }
 
             context.Player.Remove(playerToDelete);
-            int result = await context.SaveChangesAsync();
-            return result > 0;
+            int changesSaved = await context.SaveChangesAsync();
+
+            bool deletionSucceeded = (changesSaved > NO_CHANGES_SAVED);
+            return deletionSucceeded;
         }
 
         public async Task<int> UpdatePlayerPointsAsync(int playerId)
         {
-            int earnedPoints = 0;
+            int earnedPoints = NO_CHANGES_SAVED;
 
-            var player = await context.Player
-                .Include(p => p.LevelRules)
-                .FirstOrDefaultAsync(p => p.idPlayer == playerId);
+            var player = await GetPlayerWithLevelRulesAsync(playerId);
+            bool playerHasValidLevelRules = ValidatePlayerAndLevelRules(player);
 
-            if (player != null && player.LevelRules != null)
+            if (playerHasValidLevelRules)
             {
-                int minReward = player.LevelRules.MinPointsReward;
-                int maxReward = player.LevelRules.MaxPointsReward;
-                earnedPoints = GetNextInt(minReward, maxReward + 1);
-
-                player.currentPoints += earnedPoints;
-
-                while (true)
-                {
-                    var nextLevelRule = await context.LevelRules
-                        .FirstOrDefaultAsync(lr => lr.LevelNumber == player.idLevel + 1);
-
-                    if (nextLevelRule == null || player.currentPoints < nextLevelRule.PointsRequired)
-                    {
-                        break;
-                    }
-
-                    player.idLevel = nextLevelRule.LevelNumber;
-                    player.LevelRules = nextLevelRule;
-                }
-
+                earnedPoints = CalculateRandomRewardPoints(player);
+                AddPointsToPlayer(player, earnedPoints);
+                await UpdatePlayerLevelIfEligibleAsync(player);
                 await context.SaveChangesAsync();
             }
 
             return earnedPoints;
         }
 
-        private static int GetNextInt(int min, int max)
+        private async Task<Player> GetPlayerWithLevelRulesAsync(int playerId)
+        {
+            var player = await context.Player
+                .Include(p => p.LevelRules)
+                .FirstOrDefaultAsync(p => p.idPlayer == playerId);
+
+            return player;
+        }
+
+        private bool ValidatePlayerAndLevelRules(Player player)
+        {
+            bool playerExists = (player != null);
+            bool hasLevelRules = (player?.LevelRules != null);
+
+            bool isValid = (playerExists && hasLevelRules);
+            return isValid;
+        }
+
+        private int CalculateRandomRewardPoints(Player player)
+        {
+            int minReward = player.LevelRules.MinPointsReward;
+            int maxReward = player.LevelRules.MaxPointsReward;
+            int upperBound = maxReward + RNG_UPPER_BOUND_ADJUSTMENT;
+
+            int randomPoints = GetSecureRandomInt(minReward, upperBound);
+            return randomPoints;
+        }
+
+        private void AddPointsToPlayer(Player player, int points)
+        {
+            player.currentPoints += points;
+        }
+
+        private async Task UpdatePlayerLevelIfEligibleAsync(Player player)
+        {
+            bool shouldContinueChecking = true;
+
+            while (shouldContinueChecking)
+            {
+                int nextLevelNumber = player.idLevel + LEVEL_INCREMENT;
+                var nextLevelRule = await GetLevelRuleByLevelNumberAsync(nextLevelNumber);
+
+                bool cannotLevelUp = ShouldStopLevelUpCheck(nextLevelRule, player);
+
+                if (cannotLevelUp)
+                {
+                    shouldContinueChecking = false;
+                }
+                else
+                {
+                    PromotePlayerToNextLevel(player, nextLevelRule);
+                }
+            }
+        }
+
+        private async Task<LevelRules> GetLevelRuleByLevelNumberAsync(int levelNumber)
+        {
+            var levelRule = await context.LevelRules
+                .FirstOrDefaultAsync(lr => lr.LevelNumber == levelNumber);
+
+            return levelRule;
+        }
+
+        private bool ShouldStopLevelUpCheck(LevelRules nextLevelRule, Player player)
+        {
+            bool nextLevelDoesNotExist = (nextLevelRule == null);
+            bool playerLacksRequiredPoints = (player.currentPoints < nextLevelRule?.PointsRequired);
+
+            bool shouldStop = (nextLevelDoesNotExist || playerLacksRequiredPoints);
+            return shouldStop;
+        }
+
+        private void PromotePlayerToNextLevel(Player player, LevelRules nextLevelRule)
+        {
+            player.idLevel = nextLevelRule.LevelNumber;
+            player.LevelRules = nextLevelRule;
+        }
+
+        private static int GetSecureRandomInt(int min, int max)
         {
             using (var rng = new RNGCryptoServiceProvider())
             {
-                byte[] data = new byte[4];
+                byte[] data = new byte[RANDOM_BYTES_SIZE];
                 rng.GetBytes(data);
-                int value = BitConverter.ToInt32(data, 0) & int.MaxValue;
-                return (value % (max - min)) + min;
+                int generatedValue = BitConverter.ToInt32(data, 0) & int.MaxValue;
+                int range = max - min;
+                int randomValue = (generatedValue % range) + min;
+
+                return randomValue;
             }
         }
 
         public async Task<int> GetNextLevelThresholdAsync(int currentLevelId)
         {
-            var nextLevel = await context.LevelRules
-                            .Where(lr => lr.LevelNumber == currentLevelId + 1)
-                            .Select(lr => (int?)lr.PointsRequired)
-                            .FirstOrDefaultAsync();
+            int nextLevelNumber = currentLevelId + LEVEL_INCREMENT;
 
-            return nextLevel ?? -1;
+            var nextLevelPoints = await context.LevelRules
+                .Where(lr => lr.LevelNumber == nextLevelNumber)
+                .Select(lr => (int?)lr.PointsRequired)
+                .FirstOrDefaultAsync();
+
+            int threshold = nextLevelPoints ?? LEVEL_NOT_FOUND;
+            return threshold;
         }
 
         public async Task<List<Game>> GetPlayerGamesAsync(int idPlayer)
         {
-            return await context.Game
+            var playerGames = await context.Game
                 .Include("Gamemode")
-                .Include("GamePlayer")  
-                .Include("GamePlayer.Player") 
+                .Include("GamePlayer")
+                .Include("GamePlayer.Player")
                 .Where(g => g.GamePlayer.Any(gp => gp.idPlayer == idPlayer))
                 .OrderByDescending(g => g.idGame)
                 .ToListAsync();
+
+            return playerGames;
         }
     }
-
-
 }

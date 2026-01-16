@@ -1,11 +1,10 @@
-﻿using ConquiánServidor.ConquiánDB;
-using ConquiánServidor.DataAccess.Abstractions;
+﻿using ConquiánServidor.ConquiánDB.Abstractions;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace ConquiánServidor.DataAccess.Repositories
+namespace ConquiánServidor.ConquiánDB.Repositories
 {
     public class SocialRepository : ISocialRepository
     {

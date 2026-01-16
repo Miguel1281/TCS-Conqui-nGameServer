@@ -1,7 +1,6 @@
-﻿using ConquiánServidor.ConquiánDB;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace ConquiánServidor.DataAccess.Abstractions
+namespace ConquiánServidor.ConquiánDB.Abstractions
 {
     public interface ILobbyRepository
     {

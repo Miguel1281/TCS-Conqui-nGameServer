@@ -6,7 +6,6 @@ using ConquiánServidor.ConquiánDB.Abstractions;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
 using ConquiánServidor.Contracts.ServiceContracts;
-using ConquiánServidor.DataAccess.Abstractions;
 using ConquiánServidor.Properties.Langs;
 using System;
 using System.Collections.Generic;

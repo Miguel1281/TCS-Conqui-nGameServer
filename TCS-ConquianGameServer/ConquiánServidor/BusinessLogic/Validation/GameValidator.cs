@@ -14,10 +14,14 @@ namespace ConquiánServidor.BusinessLogic.Validation
 
         private const int SPANISH_DECK_LIMIT_BEFORE_JUMP = 7;
         private const int SPANISH_DECK_FIGURE_START = 10;
+        private const int RANK_INCREMENT = 1;
+        private const int FIRST_CARD_INDEX = 0;
 
-       public static void ValidateTurnOwner(int playerId, int currentTurnPlayerId)
+        public static void ValidateTurnOwner(int playerId, int currentTurnPlayerId)
         {
-            if (playerId != currentTurnPlayerId)
+            bool isNotPlayerTurn = (playerId != currentTurnPlayerId);
+
+            if (isNotPlayerTurn)
             {
                 throw new BusinessLogicException(ServiceErrorType.NotYourTurn);
             }
@@ -33,15 +37,22 @@ namespace ConquiánServidor.BusinessLogic.Validation
 
         public static void ValidateMoveInputs(List<string> cardIds)
         {
-            if (cardIds == null || cardIds.Count < MINIMUM_INPUT_CARDS)
+            bool inputIsInvalid = (cardIds == null || cardIds.Count < MINIMUM_INPUT_CARDS);
+
+            if (inputIsInvalid)
             {
                 throw new BusinessLogicException(ServiceErrorType.GameRuleViolation);
             }
         }
 
-        public static void ValidateDiscardUsage(int playerId, int? playerReviewingDiscardId, bool isCardDrawnFromDeck)
+        public static void ValidateDiscardUsage(
+            int playerId,
+            int? playerReviewingDiscardId,
+            bool isCardDrawnFromDeck)
         {
-            if (playerId != playerReviewingDiscardId && !isCardDrawnFromDeck)
+            bool cannotUseDiscard = (playerId != playerReviewingDiscardId && !isCardDrawnFromDeck);
+
+            if (cannotUseDiscard)
             {
                 throw new BusinessLogicException(ServiceErrorType.InvalidCardAction);
             }
@@ -49,7 +60,9 @@ namespace ConquiánServidor.BusinessLogic.Validation
 
         public static void ValidateCardsInHand(int countToPlay, int countRequired)
         {
-            if (countToPlay != countRequired)
+            bool countMismatch = (countToPlay != countRequired);
+
+            if (countMismatch)
             {
                 throw new BusinessLogicException(ServiceErrorType.GameRuleViolation);
             }
@@ -57,7 +70,9 @@ namespace ConquiánServidor.BusinessLogic.Validation
 
         public static void ValidateMeldSize(int count)
         {
-            if (count < MINIMUM_MELD_SIZE)
+            bool meldTooSmall = (count < MINIMUM_MELD_SIZE);
+
+            if (meldTooSmall)
             {
                 throw new BusinessLogicException(ServiceErrorType.InvalidMeld);
             }
@@ -74,12 +89,16 @@ namespace ConquiánServidor.BusinessLogic.Validation
 
             ValidateActionAllowed(context.MustDiscardToFinishTurn);
 
-            if (context.PlayerReviewingDiscardId != null)
+            bool hasReviewingPlayer = (context.PlayerReviewingDiscardId != null);
+
+            if (hasReviewingPlayer)
             {
                 throw new BusinessLogicException(ServiceErrorType.PendingDiscardAction);
             }
 
-            if (context.StockCount == EMPTY_COUNT)
+            bool deckIsEmpty = (context.StockCount == EMPTY_COUNT);
+
+            if (deckIsEmpty)
             {
                 throw new BusinessLogicException(ServiceErrorType.DeckEmpty);
             }
@@ -89,7 +108,9 @@ namespace ConquiánServidor.BusinessLogic.Validation
         {
             ValidateTurnOwner(playerId, currentTurnPlayerId);
 
-            if (card == null)
+            bool cardIsNull = (card == null);
+
+            if (cardIsNull)
             {
                 throw new BusinessLogicException(ServiceErrorType.GameRuleViolation);
             }
@@ -99,24 +120,32 @@ namespace ConquiánServidor.BusinessLogic.Validation
         {
             ValidateTurnOwner(context.PlayerId, context.CurrentTurnPlayerId);
 
-            if (!context.IsCardDrawnFromDeck)
+            bool hasNotDrawnCard = !context.IsCardDrawnFromDeck;
+
+            if (hasNotDrawnCard)
             {
                 throw new BusinessLogicException(ServiceErrorType.InvalidCardAction);
             }
 
-            if (context.PlayerReviewingDiscardId != context.PlayerId)
+            bool isNotReviewingPlayer = (context.PlayerReviewingDiscardId != context.PlayerId);
+
+            if (isNotReviewingPlayer)
             {
                 throw new BusinessLogicException(ServiceErrorType.InvalidCardAction);
             }
 
             ValidateActionAllowed(context.MustDiscardToFinishTurn);
 
-            if (context.CardToDiscard == null)
+            bool cardToDiscardIsNull = (context.CardToDiscard == null);
+
+            if (cardToDiscardIsNull)
             {
                 throw new BusinessLogicException(ServiceErrorType.GameRuleViolation);
             }
 
-            if (context.DiscardPileCount == EMPTY_COUNT)
+            bool discardPileIsEmpty = (context.DiscardPileCount == EMPTY_COUNT);
+
+            if (discardPileIsEmpty)
             {
                 throw new BusinessLogicException(ServiceErrorType.EmptyDiscaard);
             }
@@ -124,43 +153,100 @@ namespace ConquiánServidor.BusinessLogic.Validation
 
         public static bool IsValidMeldCombination(List<CardsGame> cards)
         {
-            if (cards == null || cards.Count < MINIMUM_MELD_SIZE)
+            bool cardsAreInvalid = (cards == null || cards.Count < MINIMUM_MELD_SIZE);
+
+            if (cardsAreInvalid)
             {
-                return false;
+                const bool INVALID_MELD = false;
+                return INVALID_MELD;
             }
 
-            cards = cards.OrderBy(c => c.Rank).ToList();
+            List<CardsGame> sortedCards = cards.OrderBy(c => c.Rank).ToList();
 
-            bool isTercia = cards.All(c => c.Rank == cards[0].Rank);
-            bool distinctSuits = cards.Select(c => c.Suit).Distinct().Count() == cards.Count;
+            bool isTercia = CheckIfTercia(sortedCards);
 
-            if (isTercia && distinctSuits)
+            if (isTercia)
             {
-                return true;
+                const bool VALID_TERCIA = true;
+                return VALID_TERCIA;
             }
 
-            bool isCorrida = cards.All(c => c.Suit == cards[0].Suit);
-            if (!isCorrida)
+            bool isCorrida = CheckIfCorrida(sortedCards);
+            return isCorrida;
+        }
+
+        private static bool CheckIfTercia(List<CardsGame> cards)
+        {
+            int firstCardRank = cards[FIRST_CARD_INDEX].Rank;
+            bool allSameRank = cards.All(c => c.Rank == firstCardRank);
+
+            int distinctSuitCount = cards.Select(c => c.Suit).Distinct().Count();
+            bool allDifferentSuits = (distinctSuitCount == cards.Count);
+
+            bool isTercia = (allSameRank && allDifferentSuits);
+            return isTercia;
+        }
+
+        private static bool CheckIfCorrida(List<CardsGame> cards)
+        {
+            bool allSameSuit = CheckIfAllSameSuit(cards);
+
+            if (!allSameSuit)
             {
-                return false;
+                const bool INVALID_CORRIDA = false;
+                return INVALID_CORRIDA;
             }
 
-            for (int i = 0; i < cards.Count - 1; i++)
-            {
-                int currentRank = cards[i].Rank;
-                int nextRank = cards[i + 1].Rank;
+            bool hasConsecutiveRanks = CheckIfConsecutiveRanks(cards);
+            return hasConsecutiveRanks;
+        }
 
-                if (currentRank == SPANISH_DECK_LIMIT_BEFORE_JUMP && nextRank == SPANISH_DECK_FIGURE_START)
+        private static bool CheckIfAllSameSuit(List<CardsGame> cards)
+        {
+            string firstCardSuit = cards[FIRST_CARD_INDEX].Suit;
+            bool allSameSuit = cards.All(c => c.Suit == firstCardSuit);
+            return allSameSuit;
+        }
+
+        private static bool CheckIfConsecutiveRanks(List<CardsGame> cards)
+        {
+            for (int i = FIRST_CARD_INDEX; i < cards.Count - 1; i++)
+            {
+                bool isConsecutive = AreRanksConsecutive(cards, i);
+
+                if (!isConsecutive)
                 {
-                    continue;
-                }
-
-                if (nextRank != currentRank + 1)
-                {
-                    return false;
+                    const bool SEQUENCE_BROKEN = false;
+                    return SEQUENCE_BROKEN;
                 }
             }
-            return true;
+
+            const bool ALL_CONSECUTIVE = true;
+            return ALL_CONSECUTIVE;
+        }
+
+        private static bool AreRanksConsecutive(List<CardsGame> cards, int currentIndex)
+        {
+            int currentRank = cards[currentIndex].Rank;
+            int nextRank = cards[currentIndex + 1].Rank;
+
+            bool isSpanishDeckJump = IsSpanishDeckJump(currentRank, nextRank);
+
+            if (isSpanishDeckJump)
+            {
+                const bool VALID_JUMP = true;
+                return VALID_JUMP;
+            }
+
+            bool ranksAreConsecutive = (nextRank == currentRank + RANK_INCREMENT);
+            return ranksAreConsecutive;
+        }
+
+        private static bool IsSpanishDeckJump(int currentRank, int nextRank)
+        {
+            bool isJumpFrom7To10 = (currentRank == SPANISH_DECK_LIMIT_BEFORE_JUMP &&
+                                    nextRank == SPANISH_DECK_FIGURE_START);
+            return isJumpFrom7To10;
         }
     }
 }

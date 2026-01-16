@@ -235,6 +235,7 @@
     <Compile Include="Services\Presence.cs" />
     <Compile Include="Services\SignUp.cs" />
     <Compile Include="Services\UserProfile.cs" />
+    <Compile Include="Utilities\Email\Templates\BaseEmailTemplate.cs" />
     <Compile Include="Utilities\Email\EmailService.cs" />
     <Compile Include="Utilities\Email\IEmailService.cs" />
     <Compile Include="Utilities\Email\IEmailTemplate.cs" />

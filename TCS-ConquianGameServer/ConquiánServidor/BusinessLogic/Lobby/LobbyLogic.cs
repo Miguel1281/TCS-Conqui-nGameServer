@@ -2,7 +2,7 @@
 using ConquiánServidor.BusinessLogic.Interfaces;
 using ConquiánServidor.Contracts.DataContracts;
 using ConquiánServidor.Contracts.Enums;
-using ConquiánServidor.DataAccess.Abstractions;
+using ConquiánServidor.ConquiánDB.Abstractions;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -203,11 +203,13 @@ namespace ConquiánServidor.BusinessLogic.Lobby
             }
 
             var lobby = await lobbyRepository.GetLobbyByRoomCodeAsync(roomCode);
+
             if (lobby == null)
             {
                 Logger.Warn($"Guest join failed: Room Code {roomCode} not found.");
                 throw new BusinessLogicException(ServiceErrorType.LobbyNotFound);
             }
+
             if (lobby.idStatusLobby != (int)LobbyStatus.Waiting)
             {
                 Logger.Warn($"Guest join failed: Room Code {roomCode} is full or in-game.");

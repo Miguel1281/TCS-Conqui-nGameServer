@@ -328,6 +328,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
             var game = CreateGame();
             TransitionToDrawPhase(game);
             int turnPlayer = game.GetCurrentTurnPlayerId();
+
+            game.DiscardPile.Clear();
+
             game.PlayerHands[turnPlayer].Clear();
             game.PlayerHands[turnPlayer].Add(new CardsGame("Oros", 1));
             game.PlayerHands[turnPlayer].Add(new CardsGame("Copas", 1));
@@ -347,6 +350,9 @@ namespace ConquiánServidor.Tests.BusinessLogic
             int turnPlayer = game.GetCurrentTurnPlayerId();
             bool gameFinished = false;
             game.OnGameFinished += (result) => gameFinished = true;
+
+            game.DiscardPile.Clear();
+
             game.PlayerMelds[turnPlayer].Add(new List<CardsGame> { new CardsGame("Bastos", 10), new CardsGame("Bastos", 11), new CardsGame("Bastos", 12) });
             game.PlayerHands[turnPlayer].Clear();
             game.PlayerHands[turnPlayer].Add(new CardsGame("Oros", 1));
